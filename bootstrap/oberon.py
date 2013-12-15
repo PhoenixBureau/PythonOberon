@@ -22,7 +22,20 @@ test_strings = [line.strip() for line in '''
     a = "23"
     a = ""
 
+    g = ARRAY 3 OF INTEGER
+    g = ARRAY 3 OF ARRAY 3, 8 OF INTEGER
+
   '''.splitlines() if line and not line.isspace()]
+
+
+RESERVED_WORDS = set('''\
+  ARRAY
+  '''.split())
+
+
+BASE_TYPES = set('''\
+  INTEGER
+  '''.split())
 
 
 def realize(s, e, sc):
@@ -56,6 +69,22 @@ class Const:
     return 'Const(%s)' % (self.value,)
 
 
+class Typ:
+  def __init__(self, i, e):
+    self.i, self.e = i, e
+    self.value = [i, e]
+  def __repr__(self):
+    return 'Typ(%s)' % (self.value,)
+
+
+class Array:
+  def __init__(self, i, e):
+    self.i, self.e = i, e
+    self.value = [i, e]
+  def __repr__(self):
+    return 'Array(%s)' % (self.value,)
+
+
 class OberonParser(omega.BaseParser):
   __grammar = '''
 
@@ -75,7 +104,8 @@ class OberonParser(omega.BaseParser):
 
     identChar = letter | digit ;
 
-    ident = letter:start identChar*:rest -> (start + "".join(rest));
+    uident = letter:start identChar*:rest -> (start + "".join(rest)) ;
+    ident = uident:w ?(w not in RESERVED_WORDS) -> (w);
 
     qualident = (ident:a '.' -> (a))?:c ident:b -> (Qualident(c, b)) ;
     identdef = ident:i '*'?:public -> (IdentDef(i, public)) ;
@@ -94,9 +124,17 @@ class OberonParser(omega.BaseParser):
 
     expression = charconstant | string | number | qualident ;
 
-    ConstantDeclaration = identdef:i spaces '=' spaces expression:e -> (Const(i, e)) ;
+    ConstExpression = expression ;
+    ConstantDeclaration = identdef:i spaces '=' spaces ConstExpression:e -> (Const(i, e)) ;
 
-    oberon = ConstantDeclaration ;
+    typ = qualident | ArrayType ;
+    TypeDeclaration = identdef:i spaces '=' spaces typ:e -> (Typ(i, e)) ;
+
+    length = ConstExpression ;
+    indicies = length:head (spaces ',' spaces length)*:tail -> ([head] + tail) ;
+    ArrayType = "ARRAY" spaces indicies:ind spaces "OF" spaces typ:t -> (Array(ind, t)) ;
+
+    oberon = ConstantDeclaration | TypeDeclaration ;
     '''
 
 if __name__ == '__main__':
