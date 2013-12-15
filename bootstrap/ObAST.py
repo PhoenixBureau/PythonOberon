@@ -17,43 +17,25 @@ def realize(s, e, sc):
   return f
 
 
-class Qualident:
+class ObAST(object):
+  def __init__(self, *stuff):
+    self.value = list(stuff)
+  def __repr__(self):
+    return '%s(%s)' % (self.__class__.__name__, self.value)
+
+
+class Qualident(ObAST):
   def __init__(self, a, b):
     self.a, self.b = a, b
     self.value = b if a is None else (a + '.' + b)
-  def __repr__(self):
-    return 'Qualident(' + self.value + ')'
 
 
-class IdentDef:
+class IdentDef(ObAST):
   def __init__(self, i, public):
     self.i, self.public = i, public
     self.value = i if public is None else (i + '*')
-  def __repr__(self):
-    return 'IdentDef(' + self.value + ')'
 
 
-class Const:
-  def __init__(self, i, e):
-    self.i, self.e = i, e
-    self.value = [i, e]
-  def __repr__(self):
-    return 'Const(%s)' % (self.value,)
-
-
-class Typ:
-  def __init__(self, i, e):
-    self.i, self.e = i, e
-    self.value = [i, e]
-  def __repr__(self):
-    return 'Typ(%s)' % (self.value,)
-
-
-class Array:
-  def __init__(self, i, e):
-    self.i, self.e = i, e
-    self.value = [i, e]
-  def __repr__(self):
-    return 'Array(%s)' % (self.value,)
-
-
+class Const(ObAST): pass
+class Typ(ObAST): pass
+class Array(ObAST): pass
