@@ -1,6 +1,7 @@
 from collections import defaultdict
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
 from ram import sparseMemory
+from parts import ClkDriver, control_unit, thinker
 
 
 ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
@@ -21,7 +22,6 @@ adr = ibv(20)
 
 memory = defaultdict(int)
 memory[0] = ibv(32, 23)
-RAM = sparseMemory(memory, codebus, outbus, adr, wr, stall, clk)
 
 
 IR = ibv(32)
@@ -40,52 +40,18 @@ R = [ibv(32, i) for i in range(16)]
 N, Z, C, OV = (Signal(0) for _ in range(4))
 
 
-def ClkDriver(clk):
-  halfPeriod = delay(10)
-  @always(halfPeriod)
-  def driveClk():
-    clk.next = not clk
-  return driveClk
-
-
-def HelloWorld(clk):
-
-  @always(clk.posedge)
-  def sayHello():
-    IR.next = IR.val + 1
-    A.next = R[ira].val
-    B.next = R[irc].val
-    C0.next = R[irc].val
-    C1.next = concat(*([v] * 16 + [imm])) if q else R[irc].val
-##assign C1 = q ? {{16{v}}, imm} : C0;
-
-  return sayHello
-
-
-def control_unit(clk):
-  @always(clk.posedge)
-  def next_PC():
-#    IR.next = codebus.val
-    if not rst:
-      pcmux = 0
-    elif stall:
-      pcmux = PC
-##(BR & cond & u) ? off + nxpc :
-##(BR & cond & ~u) ? C0[19:2] :
-    else:
-      pcmux = PC + 1
-    PC.next = pcmux
-  return next_PC
-
 def iii(clk):
   @always(clk.negedge)
   def jjj():
-    print "%s Hello World!" % now(), PC
-    print bin(IR)[2:], bin(irc)[2:], A, B
+    print bin(IR)[2:], bin(irc)[2:], A, B, now(), PC
   return jjj
 
 
-clkdriver_inst = ClkDriver(clk)
-hello_inst = HelloWorld(clk)
-sim = Simulation(RAM, clkdriver_inst, hello_inst, iii(clk), control_unit(clk))
+sim = Simulation(
+  ClkDriver(clk),
+  sparseMemory(memory, codebus, outbus, adr, wr, stall, clk),
+  thinker(clk, IR, A, B, C0, C1, v, imm, q, R, ira, irb, irc),
+  control_unit(clk, IR, codebus, rst, stall, PC),
+  iii(clk),
+  )
 sim.run(150)
