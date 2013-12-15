@@ -1,7 +1,28 @@
 #!/usr/bin/env python
 '''
 '''
-from omega import BaseParser
+import omega
+
+
+test_strings = [line.strip() for line in '''
+
+    a =23
+    a=FFH
+    bar=2.3
+    ney*=6.
+
+    a=2.7E3
+    a=2.7E-3
+
+    a = hi
+    a = he.llo
+    a = "h"
+    a = 40X
+
+    a = "23"
+    a = ""
+
+  '''.splitlines() if line and not line.isspace()]
 
 
 def realize(s, e, sc):
@@ -11,8 +32,35 @@ def realize(s, e, sc):
   return f
 
 
-class OberonParser(BaseParser):
+class Qualident:
+  def __init__(self, a, b):
+    self.a, self.b = a, b
+    self.value = b if a is None else (a + '.' + b)
+  def __repr__(self):
+    return 'Qualident(' + self.value + ')'
+
+
+class IdentDef:
+  def __init__(self, i, public):
+    self.i, self.public = i, public
+    self.value = i if public is None else (i + '*')
+  def __repr__(self):
+    return 'IdentDef(' + self.value + ')'
+
+
+class Const:
+  def __init__(self, i, e):
+    self.i, self.e = i, e
+    self.value = [i, e]
+  def __repr__(self):
+    return 'Const(%s)' % (self.value,)
+
+
+class OberonParser(omega.BaseParser):
   __grammar = '''
+
+    space = ' ' | '\r' | '\n' | '\t' ;
+    spaces = space*;
 
     uppercase = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I'
                     | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S'
@@ -29,6 +77,9 @@ class OberonParser(BaseParser):
 
     ident = letter:start identChar*:rest -> (start + "".join(rest));
 
+    qualident = (ident:a '.' -> (a))?:c ident:b -> (Qualident(c, b)) ;
+    identdef = ident:i '*'?:public -> (IdentDef(i, public)) ;
+
     number = real | integer ;
     integer = digit+:i -> (int("".join(i))) |
               hexdigit+:i 'H' -> (int("".join(i), 16)) ;
@@ -41,24 +92,13 @@ class OberonParser(BaseParser):
 
     string = '"' (~exactly('"') anything)*:st '"' -> ("".join(st)) ;
 
-    oberon = charconstant | string | number | ident ;
+    expression = charconstant | string | number | qualident ;
+
+    ConstantDeclaration = identdef:i spaces '=' spaces expression:e -> (Const(i, e)) ;
+
+    oberon = ConstantDeclaration ;
     '''
 
 if __name__ == '__main__':
-  for inp in '''
-
-    hi
-    23
-    FFH
-    2.3
-    6.
-
-    2.7E3
-    2.7E-3
-
-    "h" 40X
-
-    "23" ""
-
-  '''.split():
-    print repr(OberonParser.match(inp))
+  for inp in test_strings:
+    print repr(inp), '->', repr(OberonParser.match(inp))
