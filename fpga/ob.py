@@ -1,7 +1,9 @@
+from collections import defaultdict
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
+from ram import sparseMemory
 
 
-ibv = lambda bits, n=0: intbv(n, min=0, max=2**bits)
+ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 
 
 clk = Signal(0)
@@ -14,22 +16,27 @@ ben = Signal(0)
 inbus = ibv(32)
 outbus = ibv(32)
 codebus = ibv(32)
-adr = intbv(0, max=2**20)
+adr = ibv(20)
 
 
-IR = Signal(ibv(32))
+memory = defaultdict(int)
+memory[0] = ibv(32, 23)
+RAM = sparseMemory(memory, codebus, outbus, adr, wr, stall, clk)
+
+
+IR = ibv(32)
 p, q, u, v, w = IR(31), IR(30), IR(29), IR(28), IR(16)
 op, ira, irb, irc = IR(20, 16), IR(28, 24), IR(24, 20), IR(4, 0)
 imm = IR(16, 0)
 
-PC = Signal(ibv(18))
+PC = ibv(18)
 
 (A, B, C0, C1, regmux,
  s3, t3, quotinent, fsum, fprod, fquot) = (Signal(intbv(0, min=0, max=2**32))
                                            for _ in range(11))
-aluRes = Signal(ibv(33))
-product = Signal(ibv(64))
-R = [Signal(ibv(32, i)) for i in range(16)]
+aluRes = ibv(33)
+product = ibv(64)
+R = [ibv(32, i) for i in range(16)]
 N, Z, C, OV = (Signal(0) for _ in range(4))
 
 
@@ -80,5 +87,5 @@ def iii(clk):
 
 clkdriver_inst = ClkDriver(clk)
 hello_inst = HelloWorld(clk)
-sim = Simulation(clkdriver_inst, hello_inst, iii(clk), control_unit(clk))
+sim = Simulation(RAM, clkdriver_inst, hello_inst, iii(clk), control_unit(clk))
 sim.run(150)
