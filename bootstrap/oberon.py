@@ -34,6 +34,12 @@ test_strings = [line.strip() for line in '''
     g = ARRAY 3 OF INTEGER
     g = ARRAY 3 OF ARRAY 3, 8 OF INTEGER
 
+    r = RECORD barry:INTEGER END
+    r = RECORD(h.i) barry:INTEGER END
+    r = RECORD barry, larry, gary:INTEGER END
+    r = RECORD barry:INTEGER ; gary:INTEGER END
+    r = RECORD barry: ARRAY 3 OF INTEGER END
+
   '''.splitlines() if line and not line.isspace()]
 
 
@@ -42,6 +48,7 @@ class OberonParser(omega.BaseParser):
 
     space = ' ' | '\r' | '\n' | '\t' ;
     spaces = space*;
+    token :t = spaces seq(t);
 
     uppercase = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I'
                     | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S'
@@ -79,12 +86,23 @@ class OberonParser(omega.BaseParser):
     ConstExpression = expression ;
     ConstantDeclaration = identdef:i spaces '=' spaces ConstExpression:e -> (Const(i, e)) ;
 
-    typ = qualident | ArrayType ;
+    typ = qualident | ArrayType | RecordType ;
     TypeDeclaration = identdef:i spaces '=' spaces typ:e -> (Typ(i, e)) ;
 
     length = ConstExpression ;
     indicies = length:head (spaces ',' spaces length)*:tail -> ([head] + tail) ;
     ArrayType = "ARRAY" spaces indicies:ind spaces "OF" spaces typ:t -> (Array(ind, t)) ;
+
+    BaseType = qualident ;
+    FieldListSequence = spaces FieldList:head spaces ( ';' spaces FieldList )*:tail -> ([head] + tail) ;
+    FieldList = IdentList:idl ':' typ:t -> ((idl, t)) ;
+    IdentList = spaces identdef:head ( ',' spaces identdef )*:tail -> ([head] + tail) ;
+    RecordType = "RECORD" spaces
+                   ( '(' spaces BaseType:a spaces ')' -> (a) )?:basetype
+                   FieldListSequence:fls
+                 spaces "END"
+                 ->
+                 ((basetype, fls)) ;
 
     oberon = ConstantDeclaration | TypeDeclaration ;
     '''
