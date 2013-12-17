@@ -33,12 +33,15 @@ test_strings = [line.strip() for line in '''
 
     g = ARRAY 3 OF INTEGER
     g = ARRAY 3 OF ARRAY 3, 8 OF INTEGER
+    g = ARRAY 3 OF POINTER TO INTEGER
 
     r = RECORD barry:INTEGER END
     r = RECORD(h.i) barry:INTEGER END
     r = RECORD barry, larry, gary:INTEGER END
     r = RECORD barry:INTEGER ; gary:INTEGER END
     r = RECORD barry: ARRAY 3 OF INTEGER END
+
+    i,j, k: INTEGER
 
   '''.splitlines() if line and not line.isspace()]
 
@@ -86,7 +89,7 @@ class OberonParser(omega.BaseParser):
     ConstExpression = expression ;
     ConstantDeclaration = identdef:i spaces '=' spaces ConstExpression:e -> (Const(i, e)) ;
 
-    typ = qualident | ArrayType | RecordType ;
+    typ = qualident | ArrayType | RecordType | PointerType ;
     TypeDeclaration = identdef:i spaces '=' spaces typ:e -> (Typ(i, e)) ;
 
     length = ConstExpression ;
@@ -104,7 +107,11 @@ class OberonParser(omega.BaseParser):
                  ->
                  ((basetype, fls)) ;
 
-    oberon = ConstantDeclaration | TypeDeclaration ;
+    PointerType = "POINTER" spaces "TO" spaces typ:t -> (("POINTER", t)) ;
+
+    VariableDeclaration = IdentList:i spaces ':' spaces typ:t -> (("var", i, t)) ;
+
+    oberon = ConstantDeclaration | TypeDeclaration | VariableDeclaration ;
     '''
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 
 
 RESERVED_WORDS = set('''\
-  ARRAY RECORD
+  ARRAY RECORD POINTER
   '''.split())
 
 
