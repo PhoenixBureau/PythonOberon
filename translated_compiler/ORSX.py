@@ -69,13 +69,8 @@ KWX[pointer] = "POINTER"
 KWX[procedure] = "PROCEDURE"
 KWX = dict((v, k) for k, v in KWX.iteritems())
 
-'''
-  TYPE Ident* = ARRAY IdLen OF CHAR;
-
-  VAR ival*, slen*: LONGINT;  (*results of Get*)
-    rval*: REAL;
-'''
-
+ival = 0
+rval = 0.0
 slen = 0
 
 id_ = []
@@ -130,7 +125,7 @@ def Pos():
 ##  PROCEDURE Mark*(msg: ARRAY OF CHAR);
 ##    VAR p: LONGINT;
 ##  BEGIN p := Pos();
-##    IF (p > errpos) & (errcnt < 25) THEN
+##    if (p > errpos) & (errcnt < 25) THEN
 ##      Texts.WriteLn(W); Texts.WriteString(W, "  pos "); Texts.WriteInt(W, p, 1); Texts.Write(W, " ");
 ##      Texts.WriteString(W, msg); Texts.Append(Oberon.Log, W.buf)
 ##    END ;
@@ -149,14 +144,14 @@ def Mark(msg):
 ##    VAR i, k: INTEGER;
 ##  BEGIN i := 0;
 ##    REPEAT
-##      IF i < IdLen-1 THEN id[i] := ch; i += 1 END ;
+##      if i < IdLen-1 THEN id[i] := ch; i += 1 END ;
 ##      ch = TextsRead(R)
 ##    UNTIL (ch < "0") OR (ch > "9") & (ch < "A") OR (ch > "Z") & (ch < "a") OR (ch > "z");
 ##    id[i] := 0X; 
-##    IF i < 10 THEN k := KWX[i-1];  (*search for keyword*)
+##    if i < 10 THEN k := KWX[i-1];  (*search for keyword*)
 ##      WHILE (id # keyTab[k].id) & (k < KWX[i]) DO INC(k) END ;
-##      IF k < KWX[i] THEN sym := keyTab[k].sym ELSE sym := ident END
-##    ELSE sym := ident
+##      if k < KWX[i] THEN sym := keyTab[k].sym else sym := ident END
+##    else sym := ident
 ##    END
 ##  END Identifier;
 
@@ -185,8 +180,8 @@ def Identifier(sym=None):
 ##    VAR i: INTEGER;
 ##  BEGIN i := 0; ch = TextsRead(R);
 ##    WHILE ~R.eot & (ch # 22X) DO
-##      IF ch >= " " THEN
-##        IF i < stringBufSize-1 THEN str[i] := ch; i += 1 ELSE Mark("string too long") END ;
+##      if ch >= " " THEN
+##        if i < stringBufSize-1 THEN str[i] := ch; i += 1 else Mark("string too long") END ;
 ##      END ;
 ##      ch = TextsRead(R)
 ##    END ;
@@ -213,16 +208,16 @@ def String():
 ##  BEGIN i := 0; ch = TextsRead(R);
 ##    WHILE ~R.eot & (ch # "$") DO
 ##      WHILE (ch = " ") OR (ch = 9X) OR (ch = 0DX) DO ch = TextsRead(R) END ;  (*skip*)
-##      IF ("0" <= ch) & (ch <= "9") THEN m := ORD(ch) - 30H
-##      ELSIF ("A" <= ch) & (ch <= "F") THEN m := ORD(ch) - 37H
-##      ELSE m := 0; Mark("hexdig expected")
+##      if ("0" <= ch) & (ch <= "9") THEN m := ORD(ch) - 30H
+##      elif ("A" <= ch) & (ch <= "F") THEN m := ORD(ch) - 37H
+##      else m := 0; Mark("hexdig expected")
 ##      END ;
 ##      ch = TextsRead(R);
-##      IF ("0" <= ch) & (ch <= "9") THEN n := ORD(ch) - 30H
-##      ELSIF ("A" <= ch) & (ch <= "F") THEN n := ORD(ch) - 37H
-##      ELSE n := 0; Mark("hexdig expected")
+##      if ("0" <= ch) & (ch <= "9") THEN n := ORD(ch) - 30H
+##      elif ("A" <= ch) & (ch <= "F") THEN n := ORD(ch) - 37H
+##      else n := 0; Mark("hexdig expected")
 ##      END ;
-##      IF i < stringBufSize THEN str[i] := CHR(m*10H + n); i += 1 ELSE Mark("string too long") END ;
+##      if i < stringBufSize THEN str[i] := CHR(m*10H + n); i += 1 else Mark("string too long") END ;
 ##      ch = TextsRead(R)
 ##    END ;
 ##    ch = TextsRead(R); slen := i  (*no 0X appended!*)
@@ -260,17 +255,29 @@ def HexString():
   ch = TextsRead(R); slen = i # (*no 0X appended!*)
 
 
-'''
-  PROCEDURE Ten(e: LONGINT): REAL;
-    VAR x, t: REAL;
-  BEGIN x := 1.0; t := 10.0;
-    WHILE e > 0 DO
-      IF ODD(e) THEN x := t * x END ;
-      t := t * t; e := e DIV 2
-    END ;
-    RETURN x
-  END Ten;
+##  PROCEDURE Ten(e: LONGINT): REAL;
+##    VAR x, t: REAL;
+##  BEGIN x := 1.0; t := 10.0;
+##    WHILE e > 0 DO
+##      if ODD(e) THEN x := t * x END ;
+##      t := t * t; e := e DIV 2
+##    END ;
+##    RETURN x
+##  END Ten;
 
+def ODD(n):
+  return int(n) == n and n % 2
+
+def Ten(e):
+  x = 1.0; t = 10.0;
+  while e > 0:
+    if ODD(e):
+      x = t * x
+    t = t * t; e = e / 2
+  return x
+
+
+'''
   PROCEDURE Number(VAR sym: INTEGER);
     CONST max = 2147483647 (*2^31*); maxM = 16777216; (*2^24*)
     VAR i, k, e, n, s, h: LONGINT; x: REAL;
@@ -278,137 +285,236 @@ def HexString():
       negE: BOOLEAN;
   BEGIN ival := 0; i := 0; n := 0; k := 0;
     REPEAT
-      IF n < 16 THEN d[n] := ORD(ch)-30H; INC(n) ELSE Mark("too many digits"); n := 0 END ;
+      if n < 16 THEN d[n] := ORD(ch)-30H; INC(n) else Mark("too many digits"); n := 0 END ;
       ch = TextsRead(R)
     UNTIL (ch < "0") OR (ch > "9") & (ch < "A") OR (ch > "F");
-    IF (ch = "H") OR (ch = "R") OR (ch = "X") THEN  (*hex*)
+    if (ch = "H") OR (ch = "R") OR (ch = "X") THEN  (*hex*)
       REPEAT h := d[i];
-        IF h >= 10 THEN h := h-7 END ;
+        if h >= 10 THEN h := h-7 END ;
         k := k*10H + h; i += 1 (*no overflow check*)
       UNTIL i = n;
-      IF ch = "X" THEN sym := char;
-        IF k < 100H THEN ival := k ELSE Mark("illegal value"); ival := 0 END
-      ELSIF ch = "R" THEN sym := real; rval := SYSTEM.VAL(REAL, k)
-      ELSE sym := int; ival := k
+      if ch = "X" THEN sym := char;
+        if k < 100H THEN ival := k else Mark("illegal value"); ival := 0 END
+      elif ch = "R" THEN sym := real; rval := SYSTEM.VAL(REAL, k)
+      else sym := int; ival := k
       END ;
       ch = TextsRead(R)
-    ELSIF ch = "." THEN
+    elif ch = "." THEN
       ch = TextsRead(R);
-      IF ch = "." THEN (*double dot*) ch := 7FX;  (*decimal integer*)
+      if ch = "." THEN (*double dot*) ch := 7FX;  (*decimal integer*)
         REPEAT
-          IF d[i] < 10 THEN
+          if d[i] < 10 THEN
             h := k*10 + d[i];
-            IF h < max THEN k := h ELSE Mark("too large") END
-          ELSE Mark("bad integer")
+            if h < max THEN k := h else Mark("too large") END
+          else Mark("bad integer")
           END ;
           i += 1
         UNTIL i = n;
         sym := int; ival := k
-      ELSE (*real number*) x := 0.0; e := 0;
+      else (*real number*) x := 0.0; e := 0;
         REPEAT (*integer part*) h := k*10 + d[i];
-          IF h < maxM THEN k := h ELSE Mark("too many digits") END ;
+          if h < maxM THEN k := h else Mark("too many digits") END ;
           i += 1
         UNTIL i = n;
         WHILE (ch >= "0") & (ch <= "9") DO (*fraction*)
           h := k*10 + ORD(ch) - 30H;
-          IF h < maxM THEN k := h ELSE Mark("too many digits*") END ;
+          if h < maxM THEN k := h else Mark("too many digits*") END ;
           DEC(e); ch = TextsRead(R)
         END ;
         x := FLT(k);
-        IF (ch = "E") OR (ch = "D") THEN  (*scale factor*)
+        if (ch = "E") OR (ch = "D") THEN  (*scale factor*)
           ch = TextsRead(R); s := 0; 
-          IF ch = "-" THEN negE := TRUE; ch = TextsRead(R)
-          ELSE negE := FALSE;
-            IF ch = "+" THEN ch = TextsRead(R) END
+          if ch = "-" THEN negE := TRUE; ch = TextsRead(R)
+          else negE := FALSE;
+            if ch = "+" THEN ch = TextsRead(R) END
           END ;
-          IF (ch >= "0") & (ch <= "9") THEN
+          if (ch >= "0") & (ch <= "9") THEN
             REPEAT s := s*10 + ORD(ch)-30H; ch = TextsRead(R)
             UNTIL (ch < "0") OR (ch >"9");
-            IF negE THEN e := e-s ELSE e := e+s END
-          ELSE Mark("digit?")
+            if negE THEN e := e-s else e := e+s END
+          else Mark("digit?")
           END
         END ;
-        IF e < 0 THEN
-          IF e >= -maxExp THEN x := x / Ten(-e) ELSE x := 0.0 END
-        ELSIF e > 0 THEN
-          IF e <= maxExp THEN x := Ten(e) * x ELSE x := 0.0; Mark("too large") END
+        if e < 0 THEN
+          if e >= -maxExp THEN x := x / Ten(-e) else x := 0.0 END
+        elif e > 0 THEN
+          if e <= maxExp THEN x := Ten(e) * x else x := 0.0; Mark("too large") END
         END ;
         sym := real; rval := x
       END
-    ELSE  (*decimal integer*)
+    else  (*decimal integer*)
       REPEAT
-        IF d[i] < 10 THEN
-          IF k <= (max-d[i]) DIV 10 THEN k := k*10 + d[i] ELSE Mark("too large"); k := 0 END
-        ELSE Mark("bad integer")
+        if d[i] < 10 THEN
+          if k <= (max-d[i]) DIV 10 THEN k := k*10 + d[i] else Mark("too large"); k := 0 END
+        else Mark("bad integer")
         END ;
         i += 1
       UNTIL i = n;
       sym := int; ival := k
     END
   END Number;
+'''
 
+def Number(sym):
+  global ival, rval, ch
+  max = 2147483647 # (*2^31*);
+  maxM = 16777216; # (*2^24*)
+  d = []
+##  VAR e, s, h: LONGINT; x: REAL;
+##    negE: BOOLEAN;
+
+  ival = 0; i = 0; n = 0; k = 0;
+
+  while True:
+    if n < 16:
+      d[n] = ord(ch)-0x30; n += 1
+    else:
+      Mark("too many digits"); n = 0
+    ch = TextsRead(R)
+    if (ch < "0") or (ch > "9") and (ch < "A") or (ch > "F"):
+      break
+
+  if (ch = "H") or (ch = "R") or (ch = "X"): #  (*hex*)
+    while True:
+      h = d[i];
+      if h >= 10: h = h-7
+      k = k * 0x10 + h; i += 1 # (*no overflow check*)
+      if i == n:
+        break
+    if ch == "X":
+      sym = char;
+      if k < 0x100:
+        ival = k
+      else:
+        Mark("illegal value"); ival = 0
+    elif ch == "R":
+      sym = real; rval = float(k)
+    else:
+      sym = int_; ival := k
+
+    ch = TextsRead(R)
+
+  elif ch == ".":
+    ch = TextsRead(R);
+    if ch = ".": # (*double dot*)
+      ch = 7FX; # (*decimal integer*)
+      while True:
+        if d[i] < 10 THEN
+          h := k*10 + d[i];
+          if h < max THEN k := h else Mark("too large") END
+        else Mark("bad integer")
+        END ;
+        i += 1
+      UNTIL i = n;
+      sym := int; ival := k
+    else (*real number*) x := 0.0; e := 0;
+      REPEAT (*integer part*) h := k*10 + d[i];
+        if h < maxM THEN k := h else Mark("too many digits") END ;
+        i += 1
+      UNTIL i = n;
+      WHILE (ch >= "0") & (ch <= "9") DO (*fraction*)
+        h := k*10 + ORD(ch) - 30H;
+        if h < maxM THEN k := h else Mark("too many digits*") END ;
+        DEC(e); ch = TextsRead(R)
+      END ;
+      x := FLT(k);
+      if (ch = "E") OR (ch = "D") THEN  (*scale factor*)
+        ch = TextsRead(R); s := 0; 
+        if ch = "-" THEN negE := TRUE; ch = TextsRead(R)
+        else negE := FALSE;
+          if ch = "+" THEN ch = TextsRead(R) END
+        END ;
+        if (ch >= "0") & (ch <= "9") THEN
+          REPEAT s := s*10 + ORD(ch)-30H; ch = TextsRead(R)
+          UNTIL (ch < "0") OR (ch >"9");
+          if negE THEN e := e-s else e := e+s END
+        else Mark("digit?")
+        END
+      END ;
+      if e < 0 THEN
+        if e >= -maxExp THEN x := x / Ten(-e) else x := 0.0 END
+      elif e > 0 THEN
+        if e <= maxExp THEN x := Ten(e) * x else x := 0.0; Mark("too large") END
+      END ;
+      sym := real; rval := x
+    END
+  else  (*decimal integer*)
+    REPEAT
+      if d[i] < 10 THEN
+        if k <= (max-d[i]) DIV 10 THEN k := k*10 + d[i] else Mark("too large"); k := 0 END
+      else Mark("bad integer")
+      END ;
+      i += 1
+    UNTIL i = n;
+    sym := int; ival := k
+  END
+END Number;
+
+
+
+'''
   PROCEDURE comment;
   BEGIN ch = TextsRead(R);
     REPEAT
       WHILE ~R.eot & (ch # "*") DO
-        IF ch = "(" THEN ch = TextsRead(R);
-          IF ch = "*" THEN comment END
-        ELSE ch = TextsRead(R)
+        if ch = "(" THEN ch = TextsRead(R);
+          if ch = "*" THEN comment END
+        else ch = TextsRead(R)
         END
       END ;
       WHILE ch = "*" DO ch = TextsRead(R) END
     UNTIL (ch = ")") OR R.eot;
-    IF ~R.eot THEN ch = TextsRead(R) ELSE Mark("unterminated comment") END
+    if ~R.eot THEN ch = TextsRead(R) else Mark("unterminated comment") END
   END comment;
 
   PROCEDURE Get*(VAR sym: INTEGER);
   BEGIN
     REPEAT
       WHILE ~R.eot & (ch <= " ") DO ch = TextsRead(R) END;
-      IF ch < "A" THEN
-        IF ch < "0" THEN
-          IF ch = 22X THEN String; sym := string
-          ELSIF ch = "#" THEN ch = TextsRead(R); sym := neq
-          ELSIF ch = "$" THEN HexString; sym := string
-          ELSIF ch = "&" THEN ch = TextsRead(R); sym := and
-          ELSIF ch = "(" THEN ch = TextsRead(R); 
-            IF ch = "*" THEN sym := null; comment ELSE sym := lparen END
-          ELSIF ch = ")" THEN ch = TextsRead(R); sym := rparen
-          ELSIF ch = "*" THEN ch = TextsRead(R); sym := times
-          ELSIF ch = "+" THEN ch = TextsRead(R); sym := plus
-          ELSIF ch = "," THEN ch = TextsRead(R); sym := comma
-          ELSIF ch = "-" THEN ch = TextsRead(R); sym := minus
-          ELSIF ch = "." THEN ch = TextsRead(R);
-            IF ch = "." THEN ch = TextsRead(R); sym := upto ELSE sym := period END
-          ELSIF ch = "/" THEN ch = TextsRead(R); sym := rdiv
-          ELSE ch = TextsRead(R); (* ! % ' *) sym := null
+      if ch < "A" THEN
+        if ch < "0" THEN
+          if ch = 22X THEN String; sym := string
+          elif ch = "#" THEN ch = TextsRead(R); sym := neq
+          elif ch = "$" THEN HexString; sym := string
+          elif ch = "&" THEN ch = TextsRead(R); sym := and
+          elif ch = "(" THEN ch = TextsRead(R); 
+            if ch = "*" THEN sym := null; comment else sym := lparen END
+          elif ch = ")" THEN ch = TextsRead(R); sym := rparen
+          elif ch = "*" THEN ch = TextsRead(R); sym := times
+          elif ch = "+" THEN ch = TextsRead(R); sym := plus
+          elif ch = "," THEN ch = TextsRead(R); sym := comma
+          elif ch = "-" THEN ch = TextsRead(R); sym := minus
+          elif ch = "." THEN ch = TextsRead(R);
+            if ch = "." THEN ch = TextsRead(R); sym := upto else sym := period END
+          elif ch = "/" THEN ch = TextsRead(R); sym := rdiv
+          else ch = TextsRead(R); (* ! % ' *) sym := null
           END
-        ELSIF ch < ":" THEN Number(sym)
-        ELSIF ch = ":" THEN ch = TextsRead(R);
-          IF ch = "=" THEN ch = TextsRead(R); sym := becomes ELSE sym := colon END 
-        ELSIF ch = ";" THEN ch = TextsRead(R); sym := semicolon
-        ELSIF ch = "<" THEN  ch = TextsRead(R);
-          IF ch = "=" THEN ch = TextsRead(R); sym := leq ELSE sym := lss END
-        ELSIF ch = "=" THEN ch = TextsRead(R); sym := eql
-        ELSIF ch = ">" THEN ch = TextsRead(R);
-          IF ch = "=" THEN ch = TextsRead(R); sym := geq ELSE sym := gtr END
-        ELSE (* ? @ *) ch = TextsRead(R); sym := null
+        elif ch < ":" THEN Number(sym)
+        elif ch = ":" THEN ch = TextsRead(R);
+          if ch = "=" THEN ch = TextsRead(R); sym := becomes else sym := colon END 
+        elif ch = ";" THEN ch = TextsRead(R); sym := semicolon
+        elif ch = "<" THEN  ch = TextsRead(R);
+          if ch = "=" THEN ch = TextsRead(R); sym := leq else sym := lss END
+        elif ch = "=" THEN ch = TextsRead(R); sym := eql
+        elif ch = ">" THEN ch = TextsRead(R);
+          if ch = "=" THEN ch = TextsRead(R); sym := geq else sym := gtr END
+        else (* ? @ *) ch = TextsRead(R); sym := null
         END
-      ELSIF ch < "[" THEN Identifier(sym)
-      ELSIF ch < "a" THEN
-        IF ch = "[" THEN sym := lbrak
-        ELSIF ch = "]" THEN  sym := rbrak
-        ELSIF ch = "^" THEN sym := arrow
-        ELSE (* _ ` *) sym := null
+      elif ch < "[" THEN Identifier(sym)
+      elif ch < "a" THEN
+        if ch = "[" THEN sym := lbrak
+        elif ch = "]" THEN  sym := rbrak
+        elif ch = "^" THEN sym := arrow
+        else (* _ ` *) sym := null
         END ;
         ch = TextsRead(R)
-      ELSIF ch < "{" THEN Identifier(sym) ELSE
-        IF ch = "{" THEN sym := lbrace
-        ELSIF ch = "}" THEN sym := rbrace
-        ELSIF ch = "|" THEN sym := bar
-        ELSIF ch = "~" THEN  sym := not
-        ELSIF ch = 7FX THEN  sym := upto
-        ELSE sym := null
+      elif ch < "{" THEN Identifier(sym) else
+        if ch = "{" THEN sym := lbrace
+        elif ch = "}" THEN sym := rbrace
+        elif ch = "|" THEN sym := bar
+        elif ch = "~" THEN  sym := not
+        elif ch = 7FX THEN  sym := upto
+        else sym := null
         END ;
         ch = TextsRead(R)
       END
