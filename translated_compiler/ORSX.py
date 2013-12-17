@@ -111,7 +111,8 @@ def Pos():
 def Mark(msg):
   global errpos, errcnt
   p = Pos()
-  if p > errpos and errcnt < 25:
+##  if p > errpos and errcnt < 25:
+  if True:
     print "pos", p, msg
     raise ValueError
   errcnt += 1
