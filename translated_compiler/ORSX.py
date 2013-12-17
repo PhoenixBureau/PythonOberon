@@ -113,6 +113,7 @@ def Mark(msg):
   p = Pos()
   if p > errpos and errcnt < 25:
     print "pos", p, msg
+    raise ValueError
   errcnt += 1
   errpos = p + 4
 
