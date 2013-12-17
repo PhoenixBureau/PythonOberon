@@ -69,7 +69,23 @@ KWX[import_] = "IMPORT"
 KWX[module] = "MODULE"
 KWX[pointer] = "POINTER"
 KWX[procedure] = "PROCEDURE"
+
 XWK = KWX.copy()
+XWK[31] = 'ident'
+XWK[52] = 'semicolon'
+XWK[40] = 'comma'
+XWK[1] = 'times'
+XWK[9] = 'eql'
+XWK[27] = 'not_'
+XWK[18] = 'period'
+XWK[5] = 'and_'
+XWK[28] = 'lparen'
+XWK[10] = 'neq'
+#XWK[] = ''
+#XWK[] = ''
+#XWK[] = ''
+#XWK[] = ''
+
 KWX = dict((v, k) for k, v in KWX.iteritems())
 
 ival = 0
@@ -160,7 +176,8 @@ def String():
 
 
 def HexString():
-  i = 0; ch = TextsRead(R);
+  global ch, slen
+  i = 0; ch = TextsRead(R)
   while not R_eot and (ch != "$"):
     while (ch == " ") or (ch == 0x9) or (ch == 0x0D):
       ch = TextsRead(R)
@@ -170,25 +187,29 @@ def HexString():
     elif ("A" <= ch) and (ch <= "F"):
       m = ord(ch) - 0x37
     else:
-      m = 0; Mark("hexdig expected")
+      m = 0
+      Mark("hexdig expected")
 
-    ch = TextsRead(R);
+    ch = TextsRead(R)
 
     if ("0" <= ch) and (ch <= "9"):
       n = ord(ch) - 0x30
     elif ("A" <= ch) and (ch <= "F"):
       n = ord(ch) - 0x37
     else:
-      n = 0; Mark("hexdig expected")
+      n = 0
+      Mark("hexdig expected")
 
     if i < stringBufSize:
-      str_[i] = chr(m * 0x10 + n); i += 1
+      str_[i] = chr(m * 0x10 + n)
+      i += 1
     else:
       Mark("string too long")
 
     ch = TextsRead(R)
 
-  ch = TextsRead(R); slen = i # (*no 0X appended!*)
+  ch = TextsRead(R)
+  slen = i # (*no 0X appended!*)
 
 
 def ODD(n):
@@ -204,8 +225,8 @@ def Ten(e):
   return x
 
 
-def Number(sym):
-  global ival, rval, ch, k # , sym
+def Number():
+  global ival, rval, ch, k, sym
   max = 2147483647 # (*2^31*);
   maxM = 16777216; # (*2^24*)
   d = [None] * 16
@@ -214,18 +235,22 @@ def Number(sym):
 
   while True:
     if n < 16:
-      d[n] = ord(ch)-0x30; n += 1
+      d[n] = ord(ch)-0x30
+      n += 1
     else:
-      Mark("too many digits"); n = 0
+      Mark("too many digits")
+      n = 0
     ch = TextsRead(R)
     if (ch < "0") or (ch > "9") and (ch < "A") or (ch > "F"):
       break
 
   if (ch == "H") or (ch == "R") or (ch == "X"): #  (*hex*)
     while True:
-      h = d[i];
-      if h >= 10: h = h-7
-      k = k * 0x10 + h; i += 1 # (*no overflow check*)
+      h = d[i]
+      if h >= 10:
+        h = h-7
+      k = k * 0x10 + h
+      i += 1 # (*no overflow check*)
       if i == n:
         break
     if ch == "X":
@@ -233,21 +258,24 @@ def Number(sym):
       if k < 0x100:
         ival = k
       else:
-        Mark("illegal value"); ival = 0
+        Mark("illegal value")
+        ival = 0
     elif ch == "R":
-      sym = real; rval = float(k)
+      sym = real
+      rval = float(k)
     else:
-      sym = int_; ival = k
+      sym = int_
+      ival = k
 
     ch = TextsRead(R)
 
   elif ch == ".":
-    ch = TextsRead(R);
+    ch = TextsRead(R)
     if ch == ".": # (*double dot*)
-      ch = 0x7F; # (*decimal integer*)
+      ch = 0x7F # (*decimal integer*)
       while True:
         if d[i] < 10:
-          h = k*10 + d[i];
+          h = k*10 + d[i]
           if h < max:
             k = h
           else:
@@ -257,12 +285,13 @@ def Number(sym):
         i += 1
         if i == n:
           break
-      sym = int_; ival = k
+      sym = int_
+      ival = k
 
     else: # (*real number*)
       x = 0.0; e = 0;
       while True: # (*integer part*)
-        h = k*10 + d[i];
+        h = k*10 + d[i]
         if h < maxM:
           k = h
         else:
@@ -271,26 +300,30 @@ def Number(sym):
         if i == n:
           break
       while (ch >= "0") and (ch <= "9"): # (*fraction*)
-        h = k*10 + ord(ch) - 0x30;
+        h = k*10 + ord(ch) - 0x30
         if h < maxM:
           k = h
         else:
           Mark("too many digits*")
-        e -= 1; ch = TextsRead(R)
+        e -= 1
+        ch = TextsRead(R)
 
-      x = float(k);
+      x = float(k)
       if (ch == "E") or (ch == "D"): # (*scale factor*)
-        ch = TextsRead(R); s = 0; 
+        ch = TextsRead(R)
+        s = 0 
         if ch == "-":
-          negE = True; ch = TextsRead(R)
+          negE = True
+          ch = TextsRead(R)
         else:
-          negE = False;
+          negE = False
           if ch == "+":
             ch = TextsRead(R)
 
         if (ch >= "0") & (ch <= "9"):
           while True:
-            s = s*10 + ord(ch)-0x30; ch = TextsRead(R)
+            s = s*10 + ord(ch)-0x30
+            ch = TextsRead(R)
             if (ch < "0") or (ch >"9"):
               break
           if negE:
@@ -309,9 +342,11 @@ def Number(sym):
         if e <= maxExp:
           x = Ten(e) * x
         else:
-          x = 0.0; Mark("too large")
+          x = 0.0
+          Mark("too large")
 
-      sym = real; rval = x
+      sym = real
+      rval = x
 
   else: #  (*decimal integer*)
     while True:
@@ -319,28 +354,32 @@ def Number(sym):
         if k <= (max-d[i]) / 10:
           k = k*10 + d[i]
         else:
-          Mark("too large"); k = 0
+          Mark("too large")
+          k = 0
       else:
         Mark("bad integer")
 
       i += 1
       if i == n:
         break
-    sym = int; ival = k
+    sym = int_
+    ival = k
 
 
 def comment():
-  ch = TextsRead(R);
+  global ch
+  ch = TextsRead(R)
   while True:
     while not R_eot and (ch != "*"):
       if ch == "(":
-        ch = TextsRead(R);
+        ch = TextsRead(R)
         if ch == "*":
           comment()
       else:
         ch = TextsRead(R)
 
-    while ch == "*": ch = TextsRead(R)
+    while ch == "*":
+      ch = TextsRead(R)
     if (ch == ")") or R_eot:
       break
   if not R_eot:
@@ -357,71 +396,87 @@ def Get():
     if ch < "A":
       if ch < "0":
         if ch == 0x22:
-          String(); sym = string
+          String()
+          sym = string
         elif ch == "#":
-          ch = TextsRead(R); sym = neq
+          ch = TextsRead(R)
+          sym = neq
         elif ch == "$":
-          HexString(); sym = string
+          HexString()
+          sym = string
         elif ch == "&":
-          ch = TextsRead(R); sym = and_
+          ch = TextsRead(R)
+          sym = and_
         elif ch == "(":
           ch = TextsRead(R); 
           if ch == "*":
-            sym = null; comment()
+            sym = null
+            comment()
           else:
             sym = lparen
         elif ch == ")":
-          ch = TextsRead(R); sym = rparen
+          ch = TextsRead(R)
+          sym = rparen
         elif ch == "*":
-          ch = TextsRead(R); sym = times
+          ch = TextsRead(R)
+          sym = times
         elif ch == "+":
-          ch = TextsRead(R); sym = plus
+          ch = TextsRead(R)
+          sym = plus
         elif ch == ",":
-          ch = TextsRead(R); sym = comma
+          ch = TextsRead(R)
+          sym = comma
         elif ch == "-":
-          ch = TextsRead(R); sym = minus
+          ch = TextsRead(R)
+          sym = minus
         elif ch == ".":
           ch = TextsRead(R);
           if ch == ".":
-            ch = TextsRead(R); sym = upto
+            ch = TextsRead(R)
+            sym = upto
           else:
             sym = period
         elif ch == "/":
-          ch = TextsRead(R); sym = rdiv
+          ch = TextsRead(R)
+          sym = rdiv
         else:
-          ch = TextsRead(R); # (* ! % ' *)
+          ch = TextsRead(R) # (* ! % ' *)
           sym = null
 
       elif ch < ":":
-        Number(sym)
+        Number()
       elif ch == ":" :
         ch = TextsRead(R);
         if ch == "=" :
-          ch = TextsRead(R);
+          ch = TextsRead(R)
           sym = becomes
         else:
           sym = colon
 
       elif ch == ";" :
-        ch = TextsRead(R); sym = semicolon
+        ch = TextsRead(R)
+        sym = semicolon
       elif ch == "<" :
-        ch = TextsRead(R);
+        ch = TextsRead(R)
         if ch == "=" :
-          ch = TextsRead(R);
+          ch = TextsRead(R)
           sym = leq
         else:
           sym = lss
 
       elif ch == "=" :
-        ch = TextsRead(R); sym = eql
+        ch = TextsRead(R)
+        sym = eql
       elif ch == ">" :
-        ch = TextsRead(R);
+        ch = TextsRead(R)
         if ch == "=" :
-          ch = TextsRead(R); sym = geq
+          ch = TextsRead(R)
+          sym = geq
         else:
           sym = gtr
       else: # (* ? @ *)
-        ch = TextsRead(R); sym = null
+        ch = TextsRead(R)
+        sym = null
 
     elif ch < "[":
       Identifier()
@@ -481,4 +536,5 @@ def doit():
 
 if __name__ == '__main__':
   for tok in doit():
+    print
     print tok
