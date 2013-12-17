@@ -38,7 +38,7 @@ PC = ibv(18)
 
 aluRes = ibv(33)
 product = ibv(64)
-R = [ibv(32, i) for i in range(16)]
+R = [ibv(32, 9) for i in range(16)]
 N, Z, C, OV = (Signal(0) for _ in range(4))
 
 
@@ -55,7 +55,8 @@ Cond = condition(ira, IR[27], N, Z, C, OV)
 sim = Simulation(
   ClkDriver(clk),
   sparseMemory(memory, codebus, outbus, adr, wr, stall, clk),
-  thinker(clk, IR, A, B, C0, C1, v, imm, q, R, ira, irb, irc, adr, PC),
+  thinker(clk, IR, A, B, C0, C1, v, imm, q, R, ira, irb, irc, adr, PC,
+          N, Z, C, OV, op, u, aluRes),
   control_unit(clk, IR, codebus, rst, stall, PC, Cond, imm, u, C0),
   iii(clk),
   )

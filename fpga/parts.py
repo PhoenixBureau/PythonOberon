@@ -51,8 +51,42 @@ def control_unit(clk, IR, codebus, rst, stall, PC, cond, off, u, C0):
   return next_PC
 
 
+Mov = 0; Lsl = 1; Asr = 2; Ror= 3; And = 4; Ann = 5; Ior = 6; Xor = 7;
+Add = 8; Sub = 9; Cmp = 9; Mul = 10; Div = 11;
+Fad = 12; Fsb = 13; Fml = 14; Fdv = 15;
+Ldr = 8; Str = 10;
+
+
+def ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes):
+##  MOV ?
+  if op == Mov:
+##  (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
+    if q:
+      if ~u:
+        res = concat(*([v] * 16 + [imm]))
+      else:
+        res = concat(imm, *([intbv(0)] * 16))
+    else:
+##  (~u ? C0 : ... )) :
+      if ~u:
+        res = C0.val
+      else:
+# ... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
+        if ~irc[0]:
+          res = H # wtf is H?
+        else:
+          res = concat(
+            N, Z, C, OV,
+            intbv(0)[20:],
+            intbv(0b01010000),
+            )
+  aluRes.next = res
+
+
 def thinker(clk, IR, A, B, C0, C1, v, imm, q, R,
-               ira, irb, irc, adr, PC):
+            ira, irb, irc, adr, PC,
+            N, Z, C, OV, op, u, aluRes
+            ):
 
   @always(clk.posedge)
   def think():
@@ -62,6 +96,8 @@ def thinker(clk, IR, A, B, C0, C1, v, imm, q, R,
     C1.next = concat(*([v] * 16 + [imm])) if q else R[irc].val
     adr.next = PC.val # for now..
 ##assign C1 = q ? {{16{v}}, imm} : C0;
+    ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes)
+    R[ira].next = aluRes.next
 
   return think
 
