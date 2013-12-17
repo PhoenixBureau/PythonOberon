@@ -149,7 +149,7 @@ def Mark(msg):
 ##    VAR i, k: INTEGER;
 ##  BEGIN i := 0;
 ##    REPEAT
-##      IF i < IdLen-1 THEN id[i] := ch; INC(i) END ;
+##      IF i < IdLen-1 THEN id[i] := ch; i += 1 END ;
 ##      ch = TextsRead(R)
 ##    UNTIL (ch < "0") OR (ch > "9") & (ch < "A") OR (ch > "Z") & (ch < "a") OR (ch > "z");
 ##    id[i] := 0X; 
@@ -186,11 +186,11 @@ def Identifier(sym=None):
 ##  BEGIN i := 0; ch = TextsRead(R);
 ##    WHILE ~R.eot & (ch # 22X) DO
 ##      IF ch >= " " THEN
-##        IF i < stringBufSize-1 THEN str[i] := ch; INC(i) ELSE Mark("string too long") END ;
+##        IF i < stringBufSize-1 THEN str[i] := ch; i += 1 ELSE Mark("string too long") END ;
 ##      END ;
 ##      ch = TextsRead(R)
 ##    END ;
-##    str[i] := 0X; INC(i); ch = TextsRead(R); slen := i
+##    str[i] := 0X; i += 1; ch = TextsRead(R); slen := i
 ##  END String;
 
 
@@ -222,17 +222,16 @@ def String():
 ##      ELSIF ("A" <= ch) & (ch <= "F") THEN n := ORD(ch) - 37H
 ##      ELSE n := 0; Mark("hexdig expected")
 ##      END ;
-##      IF i < stringBufSize THEN str[i] := CHR(m*10H + n); INC(i) ELSE Mark("string too long") END ;
+##      IF i < stringBufSize THEN str[i] := CHR(m*10H + n); i += 1 ELSE Mark("string too long") END ;
 ##      ch = TextsRead(R)
 ##    END ;
 ##    ch = TextsRead(R); slen := i  (*no 0X appended!*)
 ##  END HexString;
 
-def HexString()
-#  VAR i, m, n: INTEGER;
-  i := 0; ch = TextsRead(R);
+def HexString():
+  i = 0; ch = TextsRead(R);
   while not R_eot and (ch != "$"):
-    while (ch == " ") or (ch == 0x9) or (ch = 0DX):
+    while (ch == " ") or (ch == 0x9) or (ch == 0x0D):
       ch = TextsRead(R)
 
     if ("0" <= ch) and (ch <= "9"):
@@ -244,18 +243,22 @@ def HexString()
 
     ch = TextsRead(R);
 
-    IF ("0" <= ch) & (ch <= "9") THEN n := ORD(ch) - 30H
-    ELSIF ("A" <= ch) & (ch <= "F") THEN n := ORD(ch) - 37H
-    ELSE n := 0; Mark("hexdig expected")
-    END ;
+    if ("0" <= ch) and (ch <= "9"):
+      n = ord(ch) - 0x30
+    elif ("A" <= ch) and (ch <= "F"):
+      n = ord(ch) - 0x37
+    else:
+      n = 0; Mark("hexdig expected")
 
-    IF i < stringBufSize THEN str[i] := CHR(m*10H + n); INC(i) ELSE Mark("string too long") END ;
+    if i < stringBufSize:
+      str_[i] = chr(m * 0x10 + n); i += 1
+    else:
+      Mark("string too long")
 
     ch = TextsRead(R)
 
-  END ;
-  ch = TextsRead(R); slen := i  (*no 0X appended!*)
-END HexString;
+  ch = TextsRead(R); slen = i # (*no 0X appended!*)
+
 
 '''
   PROCEDURE Ten(e: LONGINT): REAL;
@@ -281,7 +284,7 @@ END HexString;
     IF (ch = "H") OR (ch = "R") OR (ch = "X") THEN  (*hex*)
       REPEAT h := d[i];
         IF h >= 10 THEN h := h-7 END ;
-        k := k*10H + h; INC(i) (*no overflow check*)
+        k := k*10H + h; i += 1 (*no overflow check*)
       UNTIL i = n;
       IF ch = "X" THEN sym := char;
         IF k < 100H THEN ival := k ELSE Mark("illegal value"); ival := 0 END
@@ -298,13 +301,13 @@ END HexString;
             IF h < max THEN k := h ELSE Mark("too large") END
           ELSE Mark("bad integer")
           END ;
-          INC(i)
+          i += 1
         UNTIL i = n;
         sym := int; ival := k
       ELSE (*real number*) x := 0.0; e := 0;
         REPEAT (*integer part*) h := k*10 + d[i];
           IF h < maxM THEN k := h ELSE Mark("too many digits") END ;
-          INC(i)
+          i += 1
         UNTIL i = n;
         WHILE (ch >= "0") & (ch <= "9") DO (*fraction*)
           h := k*10 + ORD(ch) - 30H;
@@ -338,7 +341,7 @@ END HexString;
           IF k <= (max-d[i]) DIV 10 THEN k := k*10 + d[i] ELSE Mark("too large"); k := 0 END
         ELSE Mark("bad integer")
         END ;
-        INC(i)
+        i += 1
       UNTIL i = n;
       sym := int; ival := k
     END
