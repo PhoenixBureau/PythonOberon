@@ -11,6 +11,8 @@ MODULE ORS; (* NW 19.9.93 / 10.10.2013  Scanner in Oberon-07*)
   If Get delivers ident, then the identifier (a string) is in variable id, if int or char
   in ival, if real in rval, and if string in str (and slen) *)
 '''
+import sys
+
 #  CONST
 IdLen = 32; WS = 4; # (*Word size*)
 NKW = 34; # (*nof keywords*)
@@ -67,6 +69,7 @@ KWX[import_] = "IMPORT"
 KWX[module] = "MODULE"
 KWX[pointer] = "POINTER"
 KWX[procedure] = "PROCEDURE"
+XWK = KWX.copy()
 KWX = dict((v, k) for k, v in KWX.iteritems())
 
 ival = 0
@@ -83,7 +86,9 @@ def TextsRead(r):
   global _pos
   try:
     _pos += 1
-    return next(_R)
+    c = next(_R)
+    print >> sys.stderr, c,
+    return c
   except StopIteration:
     global R_eot
     R_eot = True
@@ -471,7 +476,7 @@ def doit():
     Get()
     if sym == null:
       break
-    yield sym, _e(id_), ival, rval, slen, _e(str_)
+    yield XWK.get(sym, sym), _e(id_), ival, rval, slen, _e(str_)
 
 
 if __name__ == '__main__':
