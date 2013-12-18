@@ -109,7 +109,7 @@ def CheckRegs():
 
 def SaveRegs(r): #(* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
   rs = r; rd = 0;
-  REPEAT rs -= 1; Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
+  while True: rs -= 1; Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
   rs = r; rd = 0;
   while rs < RH: Put0(Mov, rd, 0, rs); rs += 1; rd += 1 END ;
   RH = rd
@@ -118,7 +118,7 @@ END SaveRegs;
 def RestoreRegs(r: LONGINT; VAR x: Item); (*R[0 .. r-1] to be restored*)
   VAR rd: LONGINT;  (*r > 0*)
 BEGIN Put0(Mov, r, 0, 0); rd = 0;
-  REPEAT Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); rd += 1 UNTIL rd = r
+  while True: Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); rd += 1 UNTIL rd = r
 END RestoreRegs;
 
 def SetCC(VAR x: Item; n):
@@ -164,7 +164,7 @@ def merged(L0, L1: LONGINT): LONGINT;
   VAR L2, L3: LONGINT;
 BEGIN 
   if L0 != 0: L3 = L0;
-    REPEAT L2 = L3; L3 = code[L2] % 0x40000 UNTIL L3 == 0;
+    while True: L2 = L3; L3 = code[L2] % 0x40000 UNTIL L3 == 0;
     code[L2] = code[L2] + L1; L1 = L0
   END ;
   RETURN L1
