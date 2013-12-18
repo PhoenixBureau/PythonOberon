@@ -202,37 +202,63 @@ def NilCheck():
     Trap(EQ, 4)
 
 
-def load(VAR x: Item);
-  VAR op: LONGINT;
-BEGIN
-  if x.type.size == 1: op = Ldr+1 else: op = Ldr END ;
+def load(x);
+  if x.type.size == 1:
+    op = Ldr+1
+  else:
+    op = Ldr
+
   if x.mode != Reg:
+
     if x.mode == ORB.Var:
-      if x.r > 0: (*local*) Put2(op, RH, SP, x.a)
-      else: GetSB(x.r); Put2(op, RH, SB, x.a)
-      END ;
+      if x.r > 0: # (*local*)
+        Put2(op, RH, SP, x.a)
+      else:
+        GetSB(x.r);
+        Put2(op, RH, SB, x.a)
       x.r = RH; incR()
-    elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a); Put2(op, RH, RH, x.b); x.r = RH; incR()
+
+    elif x.mode == ORB.Par:
+      Put2(Ldr, RH, SP, x.a)
+      Put2(op, RH, RH, x.b)
+      x.r = RH; incR()
+
     elif x.mode == ORB.Const:
+
       if x.type.form == ORB.Proc:
-        if x.r > 0: ORS.Mark("not allowed")
-        elif x.r == 0: Put3(BL, 7, 0); Put1a(Sub, RH, LNK, pc*4 - x.a)
-        else: GetSB(x.r); Put1(Add, RH, SB, x.a + 0x100) (*mark as progbase-relative*)
-        END
-      elif (x.a <= 0x0FFFF) and (x.a >= -0x10000): Put1(Mov, RH, 0, x.a)
-      else: Put1(Mov+U, RH, 0, x.a / 0x10000 % 0x10000);
-        if x.a % 0x10000 != 0: Put1(Ior, RH, RH, x.a % 0x10000) END
-      END ;
+        if x.r > 0:
+          ORS.Mark("not allowed")
+        elif x.r == 0:
+          Put3(BL, 7, 0)
+          Put1a(Sub, RH, LNK, pc*4 - x.a)
+        else:
+          GetSB(x.r)
+          Put1(Add, RH, SB, x.a + 0x100) # (*mark as progbase-relative*)
+
+      elif (x.a <= 0x0FFFF) and (x.a >= -0x10000):
+        Put1(Mov, RH, 0, x.a)
+
+      else:
+        Put1(Mov+U, RH, 0, x.a / 0x10000 % 0x10000);
+        if x.a % 0x10000 != 0:
+          Put1(Ior, RH, RH, x.a % 0x10000)
+
       x.r = RH; incR()
-    elif x.mode == RegI: Put2(op, x.r, x.r, x.a)
+
+    elif x.mode == RegI:
+      Put2(op, x.r, x.r, x.a)
+
     elif x.mode == Cond:
-      Put3(BC, negated(x.r), 2);
-      x.b = FixLink(x.b); Put1(Mov, RH, 0, 1); Put3(BC, 7, 1);
-      x.a = FixLink(x.a); Put1(Mov, RH, 0, 0); x.r = RH; incR()
-    END ;
+      Put3(BC, negated(x.r), 2)
+      x.b = FixLink(x.b)
+      Put1(Mov, RH, 0, 1)
+      Put3(BC, 7, 1)
+      x.a = FixLink(x.a)
+      Put1(Mov, RH, 0, 0)
+      x.r = RH; incR()
+
     x.mode = Reg
-  END
-END load;
+
 
 def loadAdr(VAR x: Item);
 BEGIN
