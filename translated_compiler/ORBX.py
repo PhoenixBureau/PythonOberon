@@ -9,7 +9,7 @@ MODULE ORB;   (*NW 7.10.2013   in Oberon-07*)
     the symbol table (universe), and that of the pseudo-module SYSTEM are initialized. *)
 
 '''
-import ORSX
+import ORSX, Files
 
 versionkey = 1; maxTypTab = 64;
 Head = 0;
@@ -71,6 +71,7 @@ def NewObj(obj, id_, class_):
     ORSX.Mark("mult def")
 
   return obj
+
 
 def _e(l):
   return ''.join(char for char in l if char and isinstance(char, basestring))
@@ -153,15 +154,15 @@ def ThisModule(name, orgname, non, key):
 
 
 
-def Read(R, x):
-  b = FilesReadByte(R)
+def Read(R):
+  b = Files.ReadByte(R)
   if b < 0x80:
     x = b
   else:
     x = b - 0x100
   return x
  
-def InType(R, thismod, T):
+def InType(R, thismod):
   ref = Read(R)
   if ref < 0:
     T = typtab[-ref] # (*already read*)
@@ -174,65 +175,65 @@ def InType(R, thismod, T):
     t.form = form
 
     if form == Pointer:
-      InType(R, thismod, t.base);
+      t.base = InType(R, thismod)
       t.size = 4
 
     elif form == Array:
-      InType(R, thismod, t.base)
-      Files.ReadNum(R, t.len)
-      Files.ReadNum(R, t.size)
+      t.base = InType(R, thismod)
+      t.len = Files.ReadNum(R, )
+      t.size = Files.ReadNum(R, )
 
     elif form == Record:
-      InType(R, thismod, t.base)
+      t.base = InType(R, thismod)
       if t.base.form == NoTyp:
         t.base = None;
         obj = None
       else:
         obj = t.base.dsc
-      Files.ReadNum(R, t.len) # (*TD adr/exno*)
-      Files.ReadNum(R, t.nofpar) #  (*ext level*)
-      Files.ReadNum(R, t.size)
+      t.len = Files.ReadNum(R) # (*TD adr/exno*)
+      t.nofpar = Files.ReadNum(R) #  (*ext level*)
+      t.size = Files.ReadNum(R)
       Read(R, class_);
       while class_ != 0: # (*fields*)
         fld = Object()
         fld.class_ = class_
-        Files.ReadString(R, fld.name);
+        fld.name = Files.ReadString(R);
         if fld.name[0] != 0x0:
           fld.expo = True
-          InType(R, thismod, fld.type)
+          fld.type = InType(R, thismod)
         else:
           fld.expo = False
           fld.type = nilType
-        Files.ReadNum(R, fld.val)
+        fld.val = Files.ReadNum(R)
         fld.next = obj
         obj = fld
-        Read(R, class_)
+        class_ = Read(R)
       t.dsc = obj
 
     elif form == Proc:
-      InType(R, thismod, t.base);
+      t.base = InType(R, thismod)
       obj = None
       np = 0
-      Read(R, class_);
+      class_ = Read(R)
       while class_ != 0: # (*parameters*)
         NEW(par)
         par.class_ = class_
-        Read(R, readonly)
+        readonly = Read(R)
         par.rdo = readonly == 1 
-        InType(R, thismod, par.type)
+        par.type = InType(R, thismod)
         par.next = obj
         obj = par
-        INC(np)
-        Read(R, class_)
+        np += 1
+        class_ = Read(R)
       t.dsc = obj
       t.nofpar = np
       t.size = 4
 
-    Files.ReadString(R, modname);
+    modname = Files.ReadString(R)
 
     if modname[0] != 0x0: # (*re-import*)
-      Files.ReadInt(R, key)
-      Files.ReadString(R, name);
+      key = Files.ReadInt(R)
+      name = Files.ReadString(R)
       mod = ThisModule(modname, modname, False, key);
       obj = mod.dsc # (*search type*)
       while (obj != None) and (obj.name != name):
@@ -240,7 +241,7 @@ def InType(R, thismod, T):
       if obj != None:
         T = obj.type # (*type object found in object list of mod*)
       else:           # (*insert new type object in object list of mod*)
-        NEW(obj)
+        obj = Object()
         obj.name = name
         obj.class_ = Typ
         obj.next = mod.dsc
@@ -250,11 +251,13 @@ def InType(R, thismod, T):
         T = t
 
       typtab[ref] = T
+  return T
 
 def Import(modid, modid1):
+  global nofmod
   if modid1 == "SYSTEM":
     thismod = ThisModule(modid, modid1, True, key)
-    DEC(nofmod)
+    nofmod -= 1
     thismod.lev = 0
     thismod.dsc = system
     thismod.rdo = True
@@ -263,42 +266,42 @@ def Import(modid, modid1):
     F = Files.Old(fname)
     if F != None:
       Files.Set(R, F, 0)
-      Files.ReadInt(R, key)
-      Files.ReadInt(R, key)
-      Files.ReadString(R, modname);
+      Files.ReadInt(R) # discard.
+      key = Files.ReadInt(R)
+      modname = Files.ReadString(R);
       thismod = ThisModule(modid, modid1, True, key)
       thismod.rdo = True;
 
-      Read(R, class_) # (*version key*)
+      class_ = Read(R) # (*version key*)
       if class_ != versionkey:
-        ORS.Mark("wrong version")
+        ORSX.Mark("wrong version")
 
-      Read(R, class_);
+      class_ = Read(R)
       while class_ != 0:
-        NEW(obj)
+        obj = Object()
         obj.class_ = class_
-        Files.ReadString(R, obj.name);
-        InType(R, thismod, obj.type)
+        obj.name = Files.ReadString(R)
+        obj.typ = eInType(R, thismod)
         obj.lev = -thismod.lev;
         if class_ == Typ:
           t = obj.type
           t.typobj = obj
-          Read(R, k) # (*fixup bases of previously declared pointer types*)
+          k = Read(R) # (*fixup bases of previously declared pointer types*)
           while k != 0:
             typtab[k].base = t
-            Read(R, k)
+            k = Read(R)
         else:
           if class_ == Const:
             if obj.type.form == Real:
-              Files.ReadInt(R, obj.val)
+              obj.val = Files.ReadInt(R)
             else:
-              Files.ReadNum(R, obj.val)
+              obj.val = Files.ReadNum(R)
           elif class_ == Var:
-            Files.ReadNum(R, obj.val)
+            obj.val = Files.ReadNum(R)
             obj.rdo = True
         obj.next = thismod.dsc
         thismod.dsc = obj
-        Read(R, class_)
+        class_ = Read(R)
 
     else:
       ORS.Mark("import not available")
