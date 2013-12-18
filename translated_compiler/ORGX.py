@@ -60,18 +60,18 @@ str = {} # : ARRAY maxStrx OF 0xCAR;
 
 #(*instruction assemblers according to formats*)
 
-def Put0(op, a, b, c: LONGINT);
+def Put0(op, a, b, c):
 BEGIN (*emit format-0 instruction*)
   code[pc] = ((a*0x10 + b) * 0x10 + op) * 0x10000 + c; pc += 1
 END Put0;
 
-def Put1(op, a, b, im: LONGINT);
+def Put1(op, a, b, im):
 BEGIN (*emit format-1 instruction,  -0x10000 <= im < 0x10000*)
   if im < 0: op += 0x1000 END ;  (*set v-bit*)
   code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im % 0x10000); pc += 1
 END Put1;
 
-def Put1a(op, a, b, im: LONGINT);
+def Put1a(op, a, b, im):
 BEGIN (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
   if (im >= -0x10000) and (im <= 0x0FFFF): Put1(op, a, b, im)
   else: Put1(Mov+U, RH, 0, im / 0x10000);
@@ -80,12 +80,12 @@ BEGIN (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
   END
 END Put1a;
 
-def Put2(op, a, b, off: LONGINT);
+def Put2(op, a, b, off):
 BEGIN (*emit load/store instruction*)
   code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off % 0x100000); pc += 1
 END Put2;
 
-def Put3(op, cond, off: LONGINT);
+def Put3(op, cond, off):
 BEGIN (*emit bran0xc instruction*)
   code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
 END Put3;
@@ -101,7 +101,7 @@ BEGIN
   if pc >= maxCode - 40: ORS.Mark("Program too long"); END
 END CheckRegs;
 
-def SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
+def SaveRegs(r): (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
   VAR rs, rd: LONGINT;  (*r > 0*)
 BEGIN rs = r; rd = 0;
   REPEAT rs -= 1; Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
@@ -116,11 +116,11 @@ BEGIN Put0(Mov, r, 0, 0); rd = 0;
   REPEAT Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); rd += 1 UNTIL rd = r
 END RestoreRegs;
 
-def SetCC(VAR x: Item; n: LONGINT);
+def SetCC(VAR x: Item; n):
 BEGIN x.mode = Cond; x.a = 0; x.b = 0; x.r = n
 END SetCC;
 
-def Trap(cond, num: LONGINT);
+def Trap(cond, num):
 BEGIN Put3(BLR, cond, ORS.Pos()*0x100 + num*0x10 + MT)
 END Trap;
 
@@ -136,17 +136,17 @@ def invalSB;
 BEGIN curSB = 1
 END invalSB;
 
-def fix(at, with: LONGINT);
+def fix(at, with):
 BEGIN code[at] = code[at] / C24 * C24 + (with % C24)
 END fix;
 
-def FixLink*(L: LONGINT);
+def FixLink*(L):
   VAR L1: LONGINT;
 BEGIN invalSB;
   while L != 0: L1 = code[L] % 0x40000; fix(L, pc-L-1); L = L1 END
 END FixLink;
 
-def FixLinkWith(L0, dst: LONGINT);
+def FixLinkWith(L0, dst):
   VAR L1: LONGINT;
 BEGIN
   while L0 != 0:
@@ -167,7 +167,7 @@ END merged;
 
 (* loading of operands and addresses into registers *)
 
-def GetSB(base: LONGINT);
+def GetSB(base):
 BEGIN
   if (version != 0) and ((base != curSB) or (base != 0)):
     Put2(Ldr, SB, -base, pc-fixorgD); fixorgD = pc-1; curSB = base
@@ -251,7 +251,7 @@ END loadStringAdr;
 
 (* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
 
-def MakeConstItem*(VAR x: Item; typ: ORB.Type; val: LONGINT);
+def MakeConstItem*(VAR x: Item; typ: ORB.Type; val):
 BEGIN x.mode = ORB.Const; x.type = typ; x.a = val
 END MakeConstItem;
 
@@ -259,7 +259,7 @@ def MakeRealItem*(VAR x: Item; val: REAL);
 BEGIN x.mode = ORB.Const; x.type = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
 END MakeRealItem;
 
-def MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer to ORG-string array*)
+def MakeStringItem*(VAR x: Item; len): (*copies string from ORS-buffer to ORG-string array*)
   VAR i: LONGINT;
 BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   if strx + len + 4 < maxStrx:
@@ -269,7 +269,7 @@ BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   END
 END MakeStringItem;
 
-def MakeItem*(VAR x: Item; y: ORB.Object; curlev: LONGINT);
+def MakeItem*(VAR x: Item; y: ORB.Object; curlev):
 BEGIN x.mode = y.class_; x.type = y.type; x.a = y.val; x.rdo = y.rdo;
   if y.class_ == ORB.Par: x.b = 0
   elif y.class_ == ORB.Typ: x.a = y.type.len; x.r = -y.lev
@@ -340,7 +340,7 @@ BEGIN
   x.mode = RegI; x.a = 0; x.b = 0
 END DeRef;
 
-def Q(T: ORB.Type; VAR dcw: LONGINT);
+def Q(T: ORB.Type; VAR dcw):
 BEGIN (*one entry of type descriptor extension table*)
   if T.base != NIL:
     Q(T.base, dcw); data[dcw] = (T.mno*0x1000 + T.len) * 0x1000 + dcw - fixorgT;
@@ -348,7 +348,7 @@ BEGIN (*one entry of type descriptor extension table*)
   END
 END Q;
 
-def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw: LONGINT);
+def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw):
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): data[dcw] = off; dcw += 1
@@ -361,7 +361,7 @@ BEGIN
   END
 END FindPtrFlds;
 
-def BuildTD*(T: ORB.Type; VAR dc: LONGINT);
+def BuildTD*(T: ORB.Type; VAR dc):
   VAR dcw, k, s: LONGINT;  (*dcw == word address*)
 BEGIN dcw = dc / 4; s = T.size; (*convert size for heap allocation*)
   if s <= 24: s = 32 elif s <= 56: s = 64 elif s <= 120: s = 128
@@ -721,7 +721,7 @@ def For0*(VAR x, y: Item);
 BEGIN load(y)
 END For0;
 
-def For1*(VAR x, y, z, w: Item; VAR L: LONGINT);
+def For1*(VAR x, y, z, w: Item; VAR L):
 BEGIN 
   if z.mode == ORB.Const: Put1a(Cmp, RH, y.r, z.a)
   else: load(z); Put0(Cmp, RH-1, y.r, z.r); RH -= 1
@@ -744,7 +744,7 @@ def Here*(): LONGINT;
 BEGIN invalSB; RETURN pc
 END Here;
 
-def FJump*(VAR L: LONGINT);
+def FJump*(VAR L):
 BEGIN Put3(BC, 7, L); L = pc-1
 END FJump;
 
@@ -754,11 +754,11 @@ BEGIN
   Put3(BC, negated(x.r), x.a); FixLink(x.b); x.a = pc-1
 END CFJump;
 
-def BJump*(L: LONGINT);
+def BJump*(L):
 BEGIN Put3(BC, 7, L-pc-1)
 END BJump;
 
-def CBJump*(VAR x: Item; L: LONGINT);
+def CBJump*(VAR x: Item; L):
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
   Put3(BC, negated(x.r), L-pc-1); FixLink(x.b); FixLinkWith(x.a, L)
@@ -768,7 +768,7 @@ def Fixup*(VAR x: Item);
 BEGIN FixLink(x.a)
 END Fixup;
 
-def PrepCall*(VAR x: Item; VAR r: LONGINT);
+def PrepCall*(VAR x: Item; VAR r):
 BEGIN
   if x.type.form == ORB.Proc:
     if x.mode != ORB.Const:
@@ -780,7 +780,7 @@ BEGIN
   r = RH
 END PrepCall;
 
-def Call*(VAR x: Item; r: LONGINT);
+def Call*(VAR x: Item; r):
 BEGIN
   if inhibitCalls and (x.r != 11): ORS.Mark("inadmissible call") else: inhibitCalls = FALSE END ;
   if r > 0: SaveRegs(r) END ;
@@ -1019,7 +1019,7 @@ BEGIN pc = 0; tdx = 0; strx = 0; RH = 0; fixorgP = 0; fixorgD = 0; fixorgT = 0;
   if v == 0: pc = 8 END
 END Open;
 
-def SetDataSize*(dc: LONGINT);
+def SetDataSize*(dc):
 BEGIN varsize = dc
 END SetDataSize;
 
@@ -1043,7 +1043,7 @@ BEGIN
   RETURN n
 END NofPtrs;
 
-def FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr: LONGINT);
+def FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr):
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): Files.WriteInt(R, adr)
@@ -1056,7 +1056,7 @@ BEGIN
   END
 END FindPtrs;
 
-def Close*(VAR modid: ORS.Ident; key, nofent: LONGINT);
+def Close*(VAR modid: ORS.Ident; key, nofent):
   VAR obj: ORB.Object;
     i, comsize, nofimps, nofptrs, size: LONGINT;
     name: ORS.Ident;
