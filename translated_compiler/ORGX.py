@@ -96,7 +96,7 @@ END CheckRegs;
 def SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
   VAR rs, rd: LONGINT;  (*r > 0*)
 BEGIN rs = r; rd = 0;
-  REPEAT DEC(rs); Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
+  REPEAT rs -= 1; Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
   rs = r; rd = 0;
   while rs < RH: Put0(Mov, rd, 0, rs); rs += 1; rd += 1 END ;
   RH = rd
@@ -225,7 +225,7 @@ BEGIN
     if x.mode == ORB.Const: x.r = 15 - x.a*8
     else: load(x);
       if code[pc-1] DIV 40000000H != -2: Put1(Cmp, x.r, x.r, 0) END ;
-      x.r = NE; DEC(RH)
+      x.r = NE; RH -= 1
     END ;
     x.mode = Cond; x.a = 0; x.b = 0
   else: ORS.Mark("not Boolean?")
@@ -255,7 +255,7 @@ def MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer 
   VAR i: LONGINT;
 BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   if strx + len + 4 < maxStrx:
-    while len > 0: str[strx] = ORS.str[i]; strx += 1; i += 1; DEC(len) END ;
+    while len > 0: str[strx] = ORS.str[i]; strx += 1; i += 1; len -= 1 END ;
     while strx MOD 4 != 0: str[strx] = 0X; strx += 1 END
   else: ORS.Mark("too many strings")
   END
@@ -314,7 +314,7 @@ BEGIN s = x.type.base.size; lim = x.type.len;
     elif x.mode == ORB.Par:
       Put2(Ldr, RH, SP, x.a);
       Put0(Add, y.r, RH, y.r); x.mode = RegI; x.r = y.r; x.a = x.b
-    elif x.mode == RegI: Put0(Add, x.r, x.r, y.r); DEC(RH)
+    elif x.mode == RegI: Put0(Add, x.r, x.r, y.r); RH -= 1
     END
   END
 END Index;
@@ -376,11 +376,11 @@ BEGIN (*fetch tag into RH*)
   END ;
   Put2(Ldr, RH, RH, T.nofpar*4); incR;
   loadTypTagAdr(T);  (*tag of T*)
-  Put0(Cmp, RH, RH-1, RH-2); DEC(RH, 2);
+  Put0(Cmp, RH, RH-1, RH-2); RH -= 2;
   if isguard:
     if check: Trap(NE, 2) END
   else: SetCC(x, EQ);
-    if ~varpar: DEC(RH) END
+    if ~varpar: RH -= 1 END
   END
 END TypeTest;
 
@@ -442,13 +442,13 @@ BEGIN
     if (x.mode == ORB.Const) and (y.mode == ORB.Const): x.a = x.a + y.a
     elif y.mode == ORB.Const: load(x);
       if y.a != 0: Put1a(Add, x.r, x.r, y.a) END
-    else: load(x); load(y); Put0(Add, RH-2, x.r, y.r); DEC(RH); x.r = RH-1
+    else: load(x); load(y); Put0(Add, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
     END
   else: (*op == ORS.minus*)
     if (x.mode == ORB.Const) and (y.mode == ORB.Const): x.a = x.a - y.a
     elif y.mode == ORB.Const: load(x);
       if y.a != 0: Put1a(Sub, x.r, x.r, y.a) END
-    else: load(x); load(y); Put0(Sub, RH-2, x.r, y.r); DEC(RH); x.r = RH-1
+    else: load(x); load(y); Put0(Sub, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
     END
   END
 END AddOp;
@@ -467,7 +467,7 @@ BEGIN
   elif y.mode == ORB.Const: load(x); Put1a(Mul, x.r, x.r, y.a)
   elif (x.mode == ORB.Const) and (x.a >= 2) and (log2(x.a, e) == 1): load(y); Put1(Lsl, y.r, y.r, e); x.mode = Reg; x.r = y.r
   elif x.mode == ORB.Const: load(y); Put1a(Mul, y.r, y.r, x.a); x.mode = Reg; x.r = y.r
-  else: load(x); load(y); Put0(Mul, RH-2, x.r, y.r); DEC(RH); x.r = RH-1
+  else: load(x); load(y); Put0(Mul, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
   END
 END MulOp;
 
@@ -482,7 +482,7 @@ BEGIN
       if y.a > 0: load(x); Put1a(Div, x.r, x.r, y.a) else: ORS.Mark("bad divisor") END
     else: load(y);
       if check: Trap(LE, 6) END ;
-      load(x); Put0(Div, RH-2, x.r, y.r); DEC(RH); x.r = RH-1
+      load(x); Put0(Div, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
     END
   else: (*op == ORS.mod*)
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
@@ -493,7 +493,7 @@ BEGIN
       if y.a > 0: load(x); Put1a(Div, x.r, x.r, y.a); Put0(Mov+U, x.r, 0, 0) else: ORS.Mark("bad modulus") END
     else: load(y);
       if check: Trap(LE, 6) END ;
-      load(x); Put0(Div, RH-2, x.r, y.r); Put0(Mov+U, RH-2, 0, 0); DEC(RH); x.r = RH-1
+      load(x); Put0(Div, RH-2, x.r, y.r); Put0(Mov+U, RH-2, 0, 0); RH -= 1; x.r = RH-1
     END
   END
 END DivOp;
@@ -507,7 +507,7 @@ BEGIN load(x); load(y);
   elif op == ORS.times: Put0(Fml, RH-2, x.r, y.r)
   elif op == ORS.rdiv: Put0(Fdv, RH-2, x.r, y.r)
   END ;
-  DEC(RH); x.r = RH-1
+  RH -= 1; x.r = RH-1
 END RealOp;
 
 (* Code generation for set operators *)
@@ -533,15 +533,15 @@ BEGIN
     if x.mode == ORB.Const:
       if x.a != 0: Put1(Xor, y.r, y.r, -1); Put1a(And, RH-1, y.r, x.a) END ;
       x.mode = Reg; x.r = RH-1
-    else: DEC(RH); Put0(Ann, RH-1, x.r, y.r)
+    else: RH -= 1; Put0(Ann, RH-1, x.r, y.r)
     END
   END
 END Set;
 
 def In*(VAR x, y: Item);  (* x = x IN y *)
 BEGIN load(y);
-  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) MOD 20H); DEC(RH)
-  else: load(x); Put1(Add, x.r, x.r, 1); Put0(Ror, y.r, y.r, x.r); DEC(RH, 2)
+  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) MOD 20H); RH -= 1
+  else: load(x); Put1(Add, x.r, x.r, 1); Put0(Ror, y.r, y.r, x.r); RH -= 2
   END ;
   SetCC(x, MI)
 END In;
@@ -570,7 +570,7 @@ BEGIN
     elif op == ORS.times: Put0(And, RH-2, x.r, y.r)
     elif op == ORS.rdiv: Put0(Xor, RH-2, x.r, y.r)
     END ;
-    DEC(RH); x.r = RH-1
+    RH -= 1; x.r = RH-1
   END 
 END SetOp;
 
@@ -581,8 +581,8 @@ BEGIN
   if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
     load(x);
     if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] DIV 40000000H != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
-    DEC(RH)
-  else: load(x); load(y); Put0(Cmp, x.r, x.r, y.r); DEC(RH, 2)
+    RH -= 1
+  else: load(x); load(y); Put0(Cmp, x.r, x.r, y.r); RH -= 2
   END ;
   SetCC(x, relmap[op - ORS.eql])
 END IntRelation;
@@ -590,8 +590,8 @@ END IntRelation;
 def SetRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN load(x);
   if (op == ORS.eql) or (op == ORS.neq):
-    if y.mode == ORB.Const: Put1a(Cmp, x.r, x.r, y.a); DEC(RH)
-    else: load(y); Put0(Cmp, x.r, x.r, y.r); DEC(RH, 2)
+    if y.mode == ORB.Const: Put1a(Cmp, x.r, x.r, y.a); RH -= 1
+    else: load(y); Put0(Cmp, x.r, x.r, y.r); RH -= 2
     END ;
     SetCC(x, relmap[op - ORS.eql])
   else: ORS.Mark("illegal relation") 
@@ -600,8 +600,8 @@ END SetRelation;
 
 def RealRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN load(x);
-  if (y.mode == ORB.Const) and (y.a == 0): DEC(RH)
-  else: load(y); Put0(Fsb, x.r, x.r, y.r); DEC(RH, 2)
+  if (y.mode == ORB.Const) and (y.a == 0): RH -= 1
+  else: load(y); Put0(Fsb, x.r, x.r, y.r); RH -= 2
   END ;
   SetCC(x, relmap[op - ORS.eql])
 END RealRelation;
@@ -615,13 +615,13 @@ BEGIN
   Put2(Ldr+1, RH+1, y.r, 0); Put1(Add, y.r, y.r, 1);
   Put0(Cmp, RH+2, RH, RH+1); Put3(BC, NE, 2);
   Put1(Cmp, RH+2, RH, 0); Put3(BC, NE, -8);
-  DEC(RH, 2); SetCC(x, relmap[op - ORS.eql])
+  RH -= 2; SetCC(x, relmap[op - ORS.eql])
 END StringRelation;
 
 (* Code generation of Assignments *)
 
 def StrToChar*(VAR x: Item);
-BEGIN x.type = ORB.charType; DEC(strx, 4); x.a = ORD(str[x.a])
+BEGIN x.type = ORB.charType; strx -= 4; x.a = ORD(str[x.a])
 END StrToChar;
 
 def Store*(VAR x, y: Item); (* x = y *)
@@ -633,10 +633,10 @@ BEGIN  load(y);
     else: GetSB(x.r); Put2(op, y.r, SB, x.a)
     END
   elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a); Put2(op, y.r, RH, x.b);
-  elif x.mode == RegI: Put2(op, y.r, x.r, x.a); DEC(RH);
+  elif x.mode == RegI: Put2(op, y.r, x.r, x.a); RH -= 1;
   else: ORS.Mark("bad mode in Store")
   END ;
-  DEC(RH)
+  RH -= 1
 END Store;
 
 def StoreStruct*(VAR x, y: Item); (* x = y *)
@@ -663,7 +663,7 @@ BEGIN loadAdr(x); loadAdr(y);
   END ;
   Put2(Ldr, RH+1, y.r, 0); Put1(Add, y.r, y.r, 4);
   Put2(Str, RH+1, x.r, 0); Put1(Add, x.r, x.r, 4);
-  Put1(Sub, RH, RH, 1); Put3(BC, NE, -6); DEC(RH, 2)
+  Put1(Sub, RH, RH, 1); Put3(BC, NE, -6); RH -= 2
 END StoreStruct;
 
 def CopyString*(VAR x, y: Item);  (*from x to y*)
@@ -677,7 +677,7 @@ BEGIN loadAdr(y); len = y.type.len;
   loadStringAdr(x);
   Put2(Ldr, RH, x.r, 0); Put1(Add, x.r, x.r, 4);
   Put2(Str, RH, y.r, 0); Put1(Add, y.r, y.r, 4);
-  Put1(Asr, RH, RH, 24); Put3(BC, NE, -6); DEC(RH, 2)
+  Put1(Asr, RH, RH, 24); Put3(BC, NE, -6); RH -= 2
 END CopyString;
 
 (* Code generation for parameters *)
@@ -716,7 +716,7 @@ END For0;
 def For1*(VAR x, y, z, w: Item; VAR L: LONGINT);
 BEGIN 
   if z.mode == ORB.Const: Put1a(Cmp, RH, y.r, z.a)
-  else: load(z); Put0(Cmp, RH-1, y.r, z.r); DEC(RH)
+  else: load(z); Put0(Cmp, RH-1, y.r, z.r); RH -= 1
   END ;
   L = pc;
   if w.a > 0: Put3(BC, GT, 0)
@@ -727,7 +727,7 @@ BEGIN
 END For1;
 
 def For2*(VAR x, y, w: Item);
-BEGIN load(x); DEC(RH); Put1a(Add, x.r, x.r, w.a)
+BEGIN load(x); RH -= 1; Put1a(Add, x.r, x.r, w.a)
 END For2;
 
 (* Branches, procedure calls, procedure prolog and epilog *)
@@ -764,7 +764,7 @@ def PrepCall*(VAR x: Item; VAR r: LONGINT);
 BEGIN
   if x.type.form == ORB.Proc:
     if x.mode != ORB.Const:
-      load(x); code[pc-1] = code[pc-1] + 0B000000H; x.r = 11; DEC(RH); inhibitCalls = TRUE;
+      load(x); code[pc-1] = code[pc-1] + 0B000000H; x.r = 11; RH -= 1; inhibitCalls = TRUE;
       if check: Trap(EQ, 5) END
     END
   else: ORS.Mark("not a procedure")
@@ -831,11 +831,11 @@ BEGIN
   if y.type.form == ORB.NoTyp: y.mode = ORB.Const; y.a = 1 END ;
   if (x.mode == ORB.Var) and (x.r > 0):
     zr = RH; Put2(Ldr+v, zr, SP, x.a); incR;
-    if y.mode == ORB.Const: Put1(op, zr, zr, y.a) else: load(y); Put0(op, zr, zr, y.r); DEC(RH) END ;
-    Put2(Str+v, zr, SP, x.a); DEC(RH)
+    if y.mode == ORB.Const: Put1(op, zr, zr, y.a) else: load(y); Put0(op, zr, zr, y.r); RH -= 1 END ;
+    Put2(Str+v, zr, SP, x.a); RH -= 1
   else: loadAdr(x); zr = RH; Put2(Ldr+v, RH, x.r, 0); incR;
-    if y.mode == ORB.Const: Put1(op, zr, zr, y.a) else: load(y); Put0(op, zr, zr, y.r); DEC(RH) END ;
-    Put2(Str+v, zr, x.r, 0); DEC(RH, 2)
+    if y.mode == ORB.Const: Put1(op, zr, zr, y.a) else: load(y); Put0(op, zr, zr, y.r); RH -= 1 END ;
+    Put2(Str+v, zr, x.r, 0); RH, 2 -= 1
   END
 END Increment;
 
@@ -844,14 +844,14 @@ def Include*(inorex: LONGINT; VAR x, y: Item);
 BEGIN loadAdr(x); zr = RH; Put2(Ldr, RH, x.r, 0); incR;
   if inorex == 0: (*include*)
     if y.mode == ORB.Const: Put1(Ior, zr, zr, LSL(1, y.a))
-    else: load(y); Put1(Mov, RH, 0, 1); Put0(Lsl, y.r, RH, y.r); Put0(Ior, zr, zr, y.r); DEC(RH)
+    else: load(y); Put1(Mov, RH, 0, 1); Put0(Lsl, y.r, RH, y.r); Put0(Ior, zr, zr, y.r); RH -= 1
     END
   else: (*exclude*)
     if y.mode == ORB.Const: Put1(And, zr, zr, -LSL(1, y.a)-1)
-    else: load(y); Put1(Mov, RH, 0, 1); Put0(Lsl, y.r, RH, y.r); Put1(Xor, y.r, y.r, -1); Put0(And, zr, zr, y.r); DEC(RH)
+    else: load(y); Put1(Mov, RH, 0, 1); Put0(Lsl, y.r, RH, y.r); Put1(Xor, y.r, y.r, -1); Put0(And, zr, zr, y.r); RH -= 1
     END
   END ;
-  Put2(Str, zr, x.r, 0); DEC(RH, 2)
+  Put2(Str, zr, x.r, 0); RH -= 2
 END Include;
 
 def Assert*(VAR x: Item);
@@ -871,7 +871,7 @@ END New;
 def Pack*(VAR x, y: Item);
   VAR z: Item;
 BEGIN z = x; load(x); load(y);
-  Put1(Lsl, y.r, y.r, 23); Put0(Add, x.r, x.r, y.r); DEC(RH); Store(z, x)
+  Put1(Lsl, y.r, y.r, 23); Put0(Add, x.r, x.r, y.r); RH -= 1; Store(z, x)
 END Pack;
 
 def Unpk*(VAR x, y: Item);
@@ -882,7 +882,7 @@ BEGIN  z = x; load(x); e0.mode = Reg; e0.r = RH; e0.type = ORB.intType;
 END Unpk;
 
 def Led*(VAR x: Item);
-BEGIN load(x); Put1(Mov, RH, 0, -60); Put2(Str, x.r, RH, 0); DEC(RH)
+BEGIN load(x); Put1(Mov, RH, 0, -60); Put2(Str, x.r, RH, 0); RH -= 1
 END Led;
 
 def Get*(VAR x, y: Item);
@@ -903,7 +903,7 @@ BEGIN load(x); load(y);
   END ;
   Put2(Ldr, RH, x.r, 0); Put1(Add, x.r, x.r, 4);
   Put2(Str, RH, y.r, 0); Put1(Add, y.r, y.r, 4);
-  Put1(Sub, z.r, z.r, 1); Put3(BC, NE, -6); DEC(RH, 3)
+  Put1(Sub, z.r, z.r, 1); Put3(BC, NE, -6); RH -= 3
 END Copy;
 
 def LDPSR*(VAR x: Item);
@@ -913,7 +913,7 @@ END LDPSR;
 def LDREG*(VAR x, y: Item);
 BEGIN
   if y.mode == ORB.Const: Put1a(Mov, x.a, 0, y.a)
-  else: load(y); Put0(Mov, x.a, 0, y.r); DEC(RH)
+  else: load(y); Put0(Mov, x.a, 0, y.r); RH -= 1
   END
 END LDREG;
 
@@ -930,7 +930,7 @@ BEGIN
 END Abs;
 
 def Odd*(VAR x: Item);
-BEGIN load(x); Put1(And, x.r, x.r, 1); SetCC(x, NE); DEC(RH)
+BEGIN load(x); Put1(And, x.r, x.r, 1); SetCC(x, NE); RH -= 1
 END Odd;
 
 def Floor*(VAR x: Item);
@@ -958,26 +958,26 @@ def Shift*(fct: LONGINT; VAR x, y: Item);
 BEGIN load(x);
   if fct == 0: op = Lsl elif fct == 1: op = Asr else: op = Ror END ;
   if y.mode == ORB.Const: Put1(op, x.r, x.r, y.a MOD 20H)
-  else: load(y); Put0(op, RH-2, x.r, y.r); DEC(RH); x.r = RH-1
+  else: load(y); Put0(op, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
   END
 END Shift;
 
 def ADC*(VAR x, y: Item);
-BEGIN load(x); load(y); Put0(Add+2000H, x.r, x.r, y.r); DEC(RH)
+BEGIN load(x); load(y); Put0(Add+2000H, x.r, x.r, y.r); RH -= 1
 END ADC;
 
 def SBC*(VAR x, y: Item);
-BEGIN load(x); load(y); Put0(Sub+2000H, x.r, x.r, y.r); DEC(RH)
+BEGIN load(x); load(y); Put0(Sub+2000H, x.r, x.r, y.r); RH -= 1
 END SBC;
 
 def UML*(VAR x, y: Item);
-BEGIN load(x); load(y); Put0(Mul+2000H, x.r, x.r, y.r); DEC(RH)
+BEGIN load(x); load(y); Put0(Mul+2000H, x.r, x.r, y.r); RH -= 1
 END UML;
 
 def Bit*(VAR x, y: Item);
 BEGIN load(x); Put2(Ldr, x.r, x.r, 0);
-  if y.mode == ORB.Const: Put1(Ror, x.r, x.r, y.a+1); DEC(RH)
-  else: load(y); Put1(Add, y.r, y.r, 1); Put0(Ror, x.r, x.r, y.r); DEC(RH, 2)
+  if y.mode == ORB.Const: Put1(Ror, x.r, x.r, y.a+1); RH -= 1
+  else: load(y); Put1(Add, y.r, y.r, 1); Put0(Ror, x.r, x.r, y.r); RH -= 2
   END ;
   SetCC(x, MI)
 END Bit;
