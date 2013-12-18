@@ -39,19 +39,19 @@ class Module(Object):
 
 class Type:
   def __init__(self,):
-    form, ref, mno = 0,0,0
-    nofpar = 0
-    len_ = 0
-    dsc, typobj = None
-    base = None
-    size = 0
+    self.form, self.ref, self.mno = 0,0,0
+    self.nofpar = 0
+    self.len_ = 0
+    self.dsc = self.typobj = None
+    self.base = None
+    self.size = 0
 
 topScope = None
 universe, system = None,None
 byteType, boolType, charType = None,None,None
 intType, realType, setType, nilType, noType, strType = None,None,None,None,None,None
 nofmod, Ref = 0,0
-typtab = []
+typtab = {}
 
 
 def NewObj(obj, id_, class_):
@@ -493,87 +493,96 @@ def Export(modid, newSF, key):
   return modid, newSF, key
 
 
-'''
+def Init():
+  global topScope, nofmod
+  topScope = universe
+  nofmod = 1
 
-  def Init*;
-  BEGIN topScope = universe; nofmod = 1
-  END Init;
   
-  def type(ref, form: INTEGER; size: LONGINT): Type;
-    VAR tp: Type;
-  BEGIN NEW(tp); tp.form = form; tp.size = size; tp.ref = ref; tp.base = None;
-    typtab[ref] = tp; return tp
-  END type;
+def type_(ref, form, size):
+  tp = Type()
+  tp.form = form
+  tp.size = size
+  tp.ref = ref
+  tp.base = None
+  typtab[ref] = tp
+  return tp
 
-  def enter(name: ARRAY OF CHAR; cl: INTEGER; type: Type; n: LONGINT);
-    VAR obj: Object;
-  BEGIN NEW(obj); obj.name = name; obj.class = cl; obj.type = type; obj.val = n; obj.dsc = None;
-    if cl == Typ: type.typobj = obj END ;
-    obj.next = system; system = obj
-  END enter;
-  
-BEGIN
-  byteType = type(Byte, Int, 1);
-  boolType = type(Bool, Bool, 1);
-  charType = type(Char, Char,1);
-  intType = type(Int, Int, 4);
-  realType = type(Real, Real, 4);
-  setType = type(Set, Set,4);
-  nilType = type(NilTyp, NilTyp, 4);
-  noType = type(NoTyp, NoTyp, 4);
-  strType = type(String, String, 8);
-    
-  (*initialize universe with data types and in-line procedures;
-    LONGINT is synonym to INTEGER, LONGREAL to REAL.
-    LED, ADC, SBC; LDPSR, LDREG, REG, COND, MSK are not in language definition*)
-  system = None;  (*n == procno*10 + nofpar*)
-  enter("UML", SFunc, intType, 132);  (*functions*)
-  enter("SBC", SFunc, intType, 122);
-  enter("ADC", SFunc, intType, 112);
-  enter("ROR", SFunc, intType, 92);
-  enter("ASR", SFunc, intType, 82);
-  enter("LSL", SFunc, intType, 72);
-  enter("LEN", SFunc, intType, 61);
-  enter("CHR", SFunc, charType, 51);
-  enter("ORD", SFunc, intType, 41);
-  enter("FLT", SFunc, realType, 31);
-  enter("FLOOR", SFunc, intType, 21);
-  enter("ODD", SFunc, boolType, 11);
-  enter("ABS", SFunc, intType, 1);
-  enter("LED", SProc, noType, 81);  (*procedures*)
-  enter("UNPK", SProc, noType, 72);
-  enter("PACK", SProc, noType, 62);
-  enter("NEW", SProc, noType, 51);
-  enter("ASSERT", SProc, noType, 41);
-  enter("EXCL", SProc, noType, 32);
-  enter("INCL", SProc, noType, 22);
-  enter("DEC", SProc, noType, 11);
-  enter("INC", SProc, noType, 1);
-  enter("SET", Typ, setType, 0);   (*types*)
-  enter("BOOLEAN", Typ, boolType, 0);
-  enter("BYTE", Typ, byteType, 0);
-  enter("CHAR", Typ, charType, 0);
-  enter("LONGREAL", Typ, realType, 0);
-  enter("REAL", Typ, realType, 0);
-  enter("LONGINT", Typ, intType, 0);
-  enter("INTEGER", Typ, intType, 0);
-  topScope = None; OpenScope; topScope.next = system; universe = topScope;
-  
-  system = None;  (* initialize "unsafe" pseudo-module SYSTEM*)
-  enter("H", SFunc, intType, 201);     (*functions*)
-  enter("COND", SFunc, boolType, 191);
-  enter("SIZE", SFunc, intType, 181);
-  enter("ADR", SFunc, intType, 171);
-  enter("VAL", SFunc, intType, 162);
-  enter("REG", SFunc, intType, 151);
-  enter("BIT", SFunc, boolType, 142);
-  enter("LDREG", SProc, noType, 142);  (*procedures*)
-  enter("LDPSR", SProc, noType, 131);
-  enter("COPY", SProc, noType, 123);
-  enter("PUT", SProc, noType, 112);
-  enter("GET", SProc, noType, 102);
-END ORB.
-'''
+byteType = type_(Byte, Int, 1);
+boolType = type_(Bool, Bool, 1);
+charType = type_(Char, Char,1);
+intType = type_(Int, Int, 4);
+realType = type_(Real, Real, 4);
+setType = type_(Set, Set,4);
+nilType = type_(NilTyp, NilTyp, 4);
+noType = type_(NoTyp, NoTyp, 4);
+strType = type_(String, String, 8);
 
+def enter(name, cl, ty, n):
+  global system
+  obj = Object()
+  obj.name = name
+  obj.class_ = cl
+  obj.type_ = ty
+  obj.val = n
+  obj.dsc = None
+  if cl == Typ:
+    ty.typobj = obj
+  obj.next = system
+  system = obj
 
+ 
+##  (*initialize universe with data types and in-line procedures;
+##    LONGINT is synonym to INTEGER, LONGREAL to REAL.
+##    LED, ADC, SBC; LDPSR, LDREG, REG, COND, MSK are not in language definition*)
+
+system = None #  (*n == procno*10 + nofpar*)
+enter("UML", SFunc, intType, 132); # (*functions*)
+enter("SBC", SFunc, intType, 122);
+enter("ADC", SFunc, intType, 112);
+enter("ROR", SFunc, intType, 92);
+enter("ASR", SFunc, intType, 82);
+enter("LSL", SFunc, intType, 72);
+enter("LEN", SFunc, intType, 61);
+enter("CHR", SFunc, charType, 51);
+enter("ORD", SFunc, intType, 41);
+enter("FLT", SFunc, realType, 31);
+enter("FLOOR", SFunc, intType, 21);
+enter("ODD", SFunc, boolType, 11);
+enter("ABS", SFunc, intType, 1);
+enter("LED", SProc, noType, 81); # (*procedures*)
+enter("UNPK", SProc, noType, 72);
+enter("PACK", SProc, noType, 62);
+enter("NEW", SProc, noType, 51);
+enter("ASSERT", SProc, noType, 41);
+enter("EXCL", SProc, noType, 32);
+enter("INCL", SProc, noType, 22);
+enter("DEC", SProc, noType, 11);
+enter("INC", SProc, noType, 1);
+enter("SET", Typ, setType, 0);  # (*types*)
+enter("BOOLEAN", Typ, boolType, 0);
+enter("BYTE", Typ, byteType, 0);
+enter("CHAR", Typ, charType, 0);
+enter("LONGREAL", Typ, realType, 0);
+enter("REAL", Typ, realType, 0);
+enter("LONGINT", Typ, intType, 0);
+enter("INTEGER", Typ, intType, 0);
+
+topScope = None;
 OpenScope()
+topScope.next = system
+universe = topScope
+
+system = None; # (* initialize "unsafe" pseudo-module SYSTEM*)
+enter("H", SFunc, intType, 201); #    (*functions*)
+enter("COND", SFunc, boolType, 191);
+enter("SIZE", SFunc, intType, 181);
+enter("ADR", SFunc, intType, 171);
+enter("VAL", SFunc, intType, 162);
+enter("REG", SFunc, intType, 151);
+enter("BIT", SFunc, boolType, 142);
+enter("LDREG", SProc, noType, 142); # (*procedures*)
+enter("LDPSR", SProc, noType, 131);
+enter("COPY", SProc, noType, 123);
+enter("PUT", SProc, noType, 112);
+enter("GET", SProc, noType, 102);
