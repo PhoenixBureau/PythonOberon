@@ -59,7 +59,7 @@ END Put0;
 
 def Put1(op, a, b, im: LONGINT);
 BEGIN (*emit format-1 instruction,  -10000H <= im < 10000H*)
-  if im < 0: INC(op, 1000H) END ;  (*set v-bit*)
+  if im < 0: op += 1000H END ;  (*set v-bit*)
   code[pc] = (((a+40H) * 10H + b) * 10H + op) * 10000H + (im MOD 10000H); pc += 1
 END Put1;
 
@@ -803,7 +803,7 @@ BEGIN invalSB;
   if ~int: (*procedure prolog*)
     a = 4; r = 0;
     Put1(Sub, SP, SP, locblksize); Put2(Str, LNK, SP, 0);
-    while a < parblksize: Put2(Str, r, SP, a); r += 1; INC(a, 4) END
+    while a < parblksize: Put2(Str, r, SP, a); r += 1; a += 4 END
   else: (*interrupt procedure*)
     Put1(Sub, SP, SP, 8); Put2(Str, 0, SP, 0); Put2(Str, 1, SP, 4)
     (*R0 and R1 saved, but NOT LNK*)
@@ -1063,8 +1063,8 @@ BEGIN  (*exit code*)
     elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
         and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType): i = 0; (*count commands*)
       while obj.name[i] != 0X: i += 1 END ;
-      i = (i+4) DIV 4 * 4; INC(comsize, i+4)
-    elif obj.class_ == ORB.Var: INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
+      i = (i+4) DIV 4 * 4; comsize += i+4
+    elif obj.class_ == ORB.Var: nofptrs += NofPtrs(obj.type)  (*count pointers*)
     END ;
     obj = obj.next
   END ;
