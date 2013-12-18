@@ -108,34 +108,47 @@ def CheckRegs():
 
 
 def SaveRegs(r): #(* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
+  global RH
   rs = r; rd = 0;
-  while True: rs -= 1; Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
+  while True:
+    rs -= 1
+    Put1(Sub, SP, SP, 4)
+    Put2(Str, rs, SP, 0)
+    if rs = 0:
+      break
   rs = r; rd = 0;
-  while rs < RH: Put0(Mov, rd, 0, rs); rs += 1; rd += 1 END ;
+  while rs < RH:
+    Put0(Mov, rd, 0, rs)
+    rs += 1
+    rd += 1
   RH = rd
-END SaveRegs;
 
-def RestoreRegs(r: LONGINT; VAR x: Item); (*R[0 .. r-1] to be restored*)
-  VAR rd: LONGINT;  (*r > 0*)
-BEGIN Put0(Mov, r, 0, 0); rd = 0;
-  while True: Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); rd += 1 UNTIL rd = r
-END RestoreRegs;
 
-def SetCC(VAR x: Item; n):
-BEGIN x.mode = Cond; x.a = 0; x.b = 0; x.r = n
-END SetCC;
+def RestoreRegs(r, x): # (*R[0 .. r-1] to be restored*)
+  assert r > 0
+  Put0(Mov, r, 0, 0)
+  rd = 0
+  while True:
+    Put2(Ldr, rd, SP, 0)
+    Put1(Add, SP, SP, 4)
+    rd += 1
+    if rd == r:
+      break
+
+def SetCC(x, n):
+  x.mode = Cond; x.a = 0; x.b = 0; x.r = n
 
 def Trap(cond, num):
-BEGIN Put3(BLR, cond, ORS.Pos()*0x100 + num*0x10 + MT)
-END Trap;
+  Put3(BLR, cond, ORS.Pos()*0x100 + num*0x10 + MT)
 
-(*handling of forward reference, fixups of branch addresses and constant tables*)
+# (*handling of forward reference, fixups of branch addresses and constant tables*)
 
-def negated(cond: LONGINT): LONGINT;
-BEGIN
-  if cond < 8: cond = cond+8 else: cond = cond-8 END ;
+def negated(cond):
+  if cond < 8:
+    cond = cond+8
+  else:
+    cond = cond-8
   RETURN cond
-END negated;
 
 def invalSB;
 BEGIN curSB = 1
