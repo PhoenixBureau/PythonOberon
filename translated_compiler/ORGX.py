@@ -8,7 +8,7 @@ IMPORT SYSTEM, Files, ORS, ORB;
 
 import Files, ORSX as ORS, ORBX as ORB
 
-WordSize* == 4;
+WordSize = 4;
 StkOrg0 = -64; VarOrg0 = 0; # (*for RISC-0 only*)
 MT = 12; SB = 13; SP = 14; LNK = 15; #  (*dedicated registers*)
 maxCode = 8000; maxStrx = 2400; maxTD = 120; C24 = 0x1000000;
@@ -43,7 +43,7 @@ class Item:
 
 
 pc, varsize = 0,0 #  (*program counter, data index*)
-tdx, strx = 0,0: LONGINT;
+tdx, strx = 0,0
 entry = 0 # (*main entry point*)
 RH = 0 # (*available registers R[0] ... R[H-1]*)
 curSB = 0 # (*current static base in SB*)
@@ -114,7 +114,7 @@ def SaveRegs(r): #(* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
     rs -= 1
     Put1(Sub, SP, SP, 4)
     Put2(Str, rs, SP, 0)
-    if rs = 0:
+    if rs == 0:
       break
   rs = r; rd = 0;
   while rs < RH:
@@ -190,9 +190,9 @@ def merged(L0, L1):
 # (* loading of operands and addresses into registers *)
 
 def GetSB(base):
+  global fixorgD, curSB
   if (version != 0) and ((base != curSB) or (base != 0)):
     Put2(Ldr, SB, -base, pc-fixorgD)
-    global fixorgD, curSB
     fixorgD = pc-1
     curSB = base
 
@@ -202,7 +202,7 @@ def NilCheck():
     Trap(EQ, 4)
 
 
-def load(x);
+def load(x):
   if x.type.size == 1:
     op = Ldr+1
   else:
@@ -327,7 +327,7 @@ def MakeRealItem(x, val):
   x.mode = ORB.Const; x.type = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
 
 
-def MakeStringItem*(x, len_): # (*copies string from ORS-buffer to ORG-string array*)
+def MakeStringItem(x, len_): # (*copies string from ORS-buffer to ORG-string array*)
   x.mode = ORB.Const
   x.type = ORB.strType
   x.a = strx
@@ -346,7 +346,7 @@ def MakeStringItem*(x, len_): # (*copies string from ORS-buffer to ORG-string ar
     ORS.Mark("too many strings")
 
 
-def MakeItem*(x, y, curlev):
+def MakeItem(x, y, curlev):
   x.mode = y.class_
   x.type = y.type
   x.a = y.val
@@ -483,7 +483,7 @@ def FindPtrFlds(typ, off, dcw):
     fld = typ.dsc;
     while fld != None:
       dcw = FindPtrFlds(fld.type, fld.val + off, dcw)
-      fld = fld.next END
+      fld = fld.next
   elif typ.form == ORB.Array:
     s = typ.base.size;
     for i in range(typ.len_):
@@ -527,7 +527,7 @@ def BuildTD(T, dc):
   return dc
 
 
-def TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN):
+def TypeTest(x, T, varpar, isguard):
   global RH
   # (*fetch tag into RH*)
   if varpar:
@@ -572,14 +572,14 @@ def And2(x, y):
   x.a = merged(y.a, x.a); x.b = y.b; x.r = y.r
 
 
-def Or1(VAR x):#   (* x = x or *)
+def Or1(x):#   (* x = x or *)
   if x.mode != Cond:
     loadCond(x)
   Put3(BC, x.r, x.b)
   x.b = pc-1; x.a = FixLink(x.a); x.a = 0
 
 
-def Or2(x, y);
+def Or2(x, y):
   if y.mode != Cond:
     loadCond(y)
   x.a = y.a; x.b = merged(y.b, x.b); x.r = y.r
@@ -752,80 +752,118 @@ def RealOp(op, x, y): # (* x = x op y *)
 
 # (* Code generation for set operators *)
 
-def Singleton*(VAR x: Item);  (* x = {x} *)
-BEGIN
-  if x.mode == ORB.Const: x.a = LSL(1, x.a)
-  else: load(x); Put1(Mov, RH, 0, 1); Put0(Lsl, x.r, RH,  x.r)
-  END
-END Singleton;
-
-def Set*(VAR x, y: Item);   (* x = {x .. y} *)
-BEGIN
-  if (x.mode == ORB.Const) and ( y.mode == ORB.Const):
-    if x.a <= y.a: x.a = LSL(2, y.a) - LSL(1, x.a) else: x.a = 0 END
+def Singleton(x): # (* x = {x} *)
+  if x.mode == ORB.Const:
+    x.a = LSL(1, x.a)
   else:
-    if (x.mode == ORB.Const) and (x.a < 0x10): x.a = LSL(-1, x.a)
-    else: load(x); Put1(Mov, RH, 0, -1); Put0(Lsl, x.r, RH, x.r)
-    END ;
-    if (y.mode == ORB.Const) and (y.a < 0x10): Put1(Mov, RH, 0, LSL(-2, y.a)); y.mode = Reg; y.r = RH; RH += 1
-    else: load(y); Put1(Mov, RH, 0, -2); Put0(Lsl, y.r, RH, y.r)
-    END ;
+    load(x)
+    Put1(Mov, RH, 0, 1)
+    Put0(Lsl, x.r, RH,  x.r)
+
+
+def Set(x, y): #   (* x = {x .. y} *)
+  if (x.mode == ORB.Const) and ( y.mode == ORB.Const):
+    if x.a <= y.a:
+      x.a = LSL(2, y.a) - LSL(1, x.a)
+    else:
+      x.a = 0
+  else:
+    if (x.mode == ORB.Const) and (x.a < 0x10):
+      x.a = LSL(-1, x.a)
+    else:
+      load(x)
+      Put1(Mov, RH, 0, -1)
+      Put0(Lsl, x.r, RH, x.r)
+
+    if (y.mode == ORB.Const) and (y.a < 0x10):
+      Put1(Mov, RH, 0, LSL(-2, y.a))
+      y.mode = Reg; y.r = RH; RH += 1
+    else:
+      load(y)
+      Put1(Mov, RH, 0, -2)
+      Put0(Lsl, y.r, RH, y.r)
+
     if x.mode == ORB.Const:
-      if x.a != 0: Put1(Xor, y.r, y.r, -1); Put1a(And, RH-1, y.r, x.a) END ;
-      x.mode = Reg; x.r = RH-1
-    else: RH -= 1; Put0(Ann, RH-1, x.r, y.r)
-    END
-  END
-END Set;
+      if x.a != 0:
+        Put1(Xor, y.r, y.r, -1)
+        Put1a(And, RH-1, y.r, x.a)
+      x.mode = Reg
+      x.r = RH-1
+    else:
+      RH -= 1
+      Put0(Ann, RH-1, x.r, y.r)
 
-def In*(VAR x, y: Item);  (* x = x IN y *)
-BEGIN load(y);
-  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) % 0x20); RH -= 1
-  else: load(x); Put1(Add, x.r, x.r, 1); Put0(Ror, y.r, y.r, x.r); RH -= 2
-  END ;
+
+def In(x, y): #  (* x = x IN y *)
+  load(y)
+  if x.mode == ORB.Const:
+    Put1(Ror, y.r, y.r, (x.a + 1) % 0x20)
+    RH -= 1
+  else:
+    load(x)
+    Put1(Add, x.r, x.r, 1)
+    Put0(Ror, y.r, y.r, x.r)
+    RH -= 2
   SetCC(x, MI)
-END In;
 
-def SetOp*(op: LONGINT; VAR x, y: Item);   (* x = x op y *)
-  VAR xset, yset: SET; (*x.type.form == Set*)
-BEGIN
+
+def SetOp(op, x, y): # (* x = x op y *)
   if (x.mode == ORB.Const) and (y.mode == ORB.Const):
-    xset = SYSTEM.VAL(SET, x.a); yset = SYSTEM.VAL(SET, y.a);
-    if op == ORS.plus: xset = xset + yset
-    elif op == ORS.minus: xset = xset - yset
-    elif op == ORS.times: xset = xset * yset
-    elif op == ORS.rdiv: xset = xset / yset
-    END ;
-    x.a = SYSTEM.VAL(LONGINT, xset)
+    xset = set(x.a)
+    yset = set(y.a)
+    if op == ORS.plus:
+      xset = xset + yset
+    elif op == ORS.minus:
+      xset = xset - yset
+    elif op == ORS.times:
+      xset = xset & yset # FIXME I'm guessing; look it up
+    elif op == ORS.rdiv:
+      xset = xset ^ yset
+
+    x.a = SYSTEM.VAL(LONGINT, xset) # FIXME explode!
+
   elif y.mode == ORB.Const:
     load(x);
-    if op == ORS.plus: Put1a(Ior, x.r, x.r, y.a)
-    elif op == ORS.minus: Put1a(Ann, x.r, x.r, y.a)
-    elif op == ORS.times: Put1a(And, x.r, x.r, y.a)
-    elif op == ORS.rdiv: Put1a(Xor, x.r, x.r, y.a)
-    END ;
-  else: load(x); load(y);
-    if op == ORS.plus: Put0(Ior, RH-2, x.r, y.r)
-    elif op == ORS.minus: Put0(Ann, RH-2, x.r, y.r)
-    elif op == ORS.times: Put0(And, RH-2, x.r, y.r)
-    elif op == ORS.rdiv: Put0(Xor, RH-2, x.r, y.r)
-    END ;
-    RH -= 1; x.r = RH-1
-  END 
-END SetOp;
+    if op == ORS.plus:
+      Put1a(Ior, x.r, x.r, y.a)
+    elif op == ORS.minus:
+      Put1a(Ann, x.r, x.r, y.a)
+    elif op == ORS.times:
+      Put1a(And, x.r, x.r, y.a)
+    elif op == ORS.rdiv:
+      Put1a(Xor, x.r, x.r, y.a)
 
-(* Code generation for relations *)
+  else:
+    load(x)
+    load(y)
+    if op == ORS.plus:
+      Put0(Ior, RH-2, x.r, y.r)
+    elif op == ORS.minus:
+      Put0(Ann, RH-2, x.r, y.r)
+    elif op == ORS.times:
+      Put0(And, RH-2, x.r, y.r)
+    elif op == ORS.rdiv:
+      Put0(Xor, RH-2, x.r, y.r)
 
-def IntRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
-BEGIN
-  if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
-    load(x);
-    if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] / 0x40000000 != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
     RH -= 1
-  else: load(x); load(y); Put0(Cmp, x.r, x.r, y.r); RH -= 2
-  END ;
+    x.r = RH-1
+
+
+# (* Code generation for relations *)
+
+def IntRelation(op, x, y): # (* x = x < y *)
+  if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
+    load(x)
+    if (y.a != 0) or (op not in [ORS.eql, ORS.neq]) or (code[pc-1] / 0x40000000 != -2):
+      Put1a(Cmp, x.r, x.r, y.a)
+    RH -= 1
+  else:
+    load(x)
+    load(y)
+    Put0(Cmp, x.r, x.r, y.r)
+    RH -= 2
   SetCC(x, relmap[op - ORS.eql])
-END IntRelation;
+
 
 def SetRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN load(x);
@@ -1360,7 +1398,3 @@ BEGIN  (*exit code*)
   Files.WriteInt(R, fixorgP); Files.WriteInt(R, fixorgD); Files.WriteInt(R, fixorgT); Files.WriteInt(R, entry);
   Files.Write(R, "O"); Files.Register(F)
 END Close;
-
-BEGIN
-END ORG.
-'''
