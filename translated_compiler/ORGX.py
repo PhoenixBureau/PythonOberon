@@ -490,71 +490,102 @@ def FindPtrFlds(typ, off, dcw):
       dcw = FindPtrFlds(typ.base, i*s + off, dcw)
 
 
-def BuildTD*(T: ORB.Type; VAR dc):
-  VAR dcw, k, s: LONGINT;  (*dcw == word address*)
-BEGIN dcw = dc / 4; s = T.size; (*convert size for heap allocation*)
-  if s <= 24: s = 32 elif s <= 56: s = 64 elif s <= 120: s = 128
-  else: s = (s+263) / 256 * 256
-  END ;
-  data[dcw] = s; dcw += 1;
-  k = T.nofpar;   (*extension level!*)
-  if k > 3: ORS.Mark("ext level too large")
-  else: dcw = Q(T, dcw);
-    while k < 3: data[dcw] = -1; dcw += 1; k += 1 END
-  END ;
-  dcw = FindPtrFlds(T, 0, dcw); data[dcw] = -1; dcw += 1; tdx = dcw; dc = dcw*4;
-  if tdx >= maxTD: ORS.Mark("too many record types"); tdx = 0 END
-END BuildTD;
+def BuildTD(T, dc):
+  # (*dcw == word address*)
+  dcw = dc / 4
+  s = T.size # (*convert size for heap allocation*)
+  if s <= 24:
+    s = 32
+  elif s <= 56:
+    s = 64
+  elif s <= 120:
+    s = 128
+  else:
+    s = (s+263) / 256 * 256
 
-def TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN);
-BEGIN (*fetch tag into RH*)
-  if varpar: Put2(Ldr, RH, SP, x.a+4)
-  else: load(x); NilCheck(); Put2(Ldr, RH, x.r, -8)
-  END ;
+  data[dcw] = s
+  dcw += 1;
+  k = T.nofpar #  (*extension level!*)
+  if k > 3:
+    ORS.Mark("ext level too large")
+  else:
+    dcw = Q(T, dcw);
+    while k < 3:
+      data[dcw] = -1
+      dcw += 1
+      k += 1
+
+  dcw = FindPtrFlds(T, 0, dcw)
+  data[dcw] = -1
+  dcw += 1
+  tdx = dcw
+  dc = dcw*4
+  if tdx >= maxTD:
+    ORS.Mark("too many record types");
+    tdx = 0
+
+  return dc
+
+
+def TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN):
+  global RH
+  # (*fetch tag into RH*)
+  if varpar:
+    Put2(Ldr, RH, SP, x.a+4)
+  else:
+    load(x)
+    NilCheck()
+    Put2(Ldr, RH, x.r, -8)
+
   Put2(Ldr, RH, RH, T.nofpar*4); incR();
-  loadTypTagAdr(T);  (*tag of T*)
-  Put0(Cmp, RH, RH-1, RH-2); RH -= 2;
+  loadTypTagAdr(T) # (*tag of T*)
+  Put0(Cmp, RH, RH-1, RH-2)
+  RH -= 2;
   if isguard:
-    if check: Trap(NE, 2) END
-  else: SetCC(x, EQ);
-    if ~varpar: RH -= 1 END
-  END
-END TypeTest;
+    if check:
+      Trap(NE, 2)
+  else:
+    SetCC(x, EQ)
+    if ~varpar:
+      RH -= 1
+
 
 (* Code generation for Boolean operators *)
 
-def Not*(VAR x: Item);   (* x = ~x *)
-  VAR t: LONGINT;
-BEGIN
-  if x.mode != Cond: loadCond(x) END ;
-  x.r = negated(x.r); t = x.a; x.a = x.b; x.b = t
-END Not;
+def Not(x): # (* x = ~x *)
+  if x.mode != Cond:
+    loadCond(x)
+  x.r = negated(x.r);
+  t = x.a; x.a = x.b; x.b = t
 
-def And1*(VAR x: Item);   (* x = x and *)
-BEGIN
-  if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, negated(x.r), x.a); x.a = pc-1; x.b = FixLink(x.b); x.b = 0
-END And1;
 
-def And2*(VAR x, y: Item);
-BEGIN
-  if y.mode != Cond: loadCond(y) END ;
+def And1(x): # (* x = x and *)
+  if x.mode != Cond:
+    loadCond(x)
+  Put3(BC, negated(x.r), x.a)
+  x.a = pc-1; x.b = FixLink(x.b); x.b = 0
+
+
+def And2(x, y):
+  if y.mode != Cond:
+    loadCond(y)
   x.a = merged(y.a, x.a); x.b = y.b; x.r = y.r
-END And2;
 
-def Or1*(VAR x: Item);   (* x = x or *)
-BEGIN
-  if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, x.r, x.b);  x.b = pc-1; x.a = FixLink(x.a); x.a = 0
-END Or1;
 
-def Or2*(VAR x, y: Item);
-BEGIN
-  if y.mode != Cond: loadCond(y) END ;
+def Or1(VAR x):#   (* x = x or *)
+  if x.mode != Cond:
+    loadCond(x)
+  Put3(BC, x.r, x.b)
+  x.b = pc-1; x.a = FixLink(x.a); x.a = 0
+
+
+def Or2(x, y);
+  if y.mode != Cond:
+    loadCond(y)
   x.a = y.a; x.b = merged(y.b, x.b); x.r = y.r
-END Or2;
 
-(* Code generation for arithmetic operators *)
+
+# (* Code generation for arithmetic operators *)
 
 def Neg*(VAR x: Item);   (* x = -x *)
 BEGIN
