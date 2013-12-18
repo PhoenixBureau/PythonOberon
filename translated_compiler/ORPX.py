@@ -1,18 +1,20 @@
-!=!=MODULE ORP; (*N. Wirth 1.7.97 / 5.11.2013  Oberon compiler for RISC in Oberon-07*)
-!=!=  IMPORT Texts, Oberon, ORS, ORB, ORG;
-!=!=  (*Author: Niklaus Wirth, 2011.
-!=!=    Parser of Oberon-RISC compiler. Uses Scanner ORS to obtain symbols (tokens),
-!=!=    ORB for definition of data structures and for handling import and export, and
-!=!=    ORG to produce binary code. ORP performs type_ checking and data allocation.
-!=!=    Parser is target-independent, except for part of the handling of allocations.*)
-!=!=
+##!=!=MODULE ORP; (*N. Wirth 1.7.97 / 5.11.2013  Oberon compiler for RISC in Oberon-07*)
+##!=!=  IMPORT Texts, Oberon, ORS, ORB, ORG;
+##!=!=  (*Author: Niklaus Wirth, 2011.
+##!=!=    Parser of Oberon-RISC compiler. Uses Scanner ORS to obtain symbols (tokens),
+##!=!=    ORB for definition of data structures and for handling import and export, and
+##!=!=    ORG to produce binary code. ORP performs type_ checking and data allocation.
+##!=!=    Parser is target-independent, except for part of the handling of allocations.*)
+##!=!=
 
 TYPE PtrBase == POINTER TO PtrBaseDesc;
   PtrBaseDesc == RECORD  (*list of names of pointer base types*)
     name: ORS.Ident; type_: ORB.Type; next: PtrBase
   END ;
 
-VAR sym: INTEGER;   (*last symbol read*)
+VAR
+
+sym = 0 #  (*last symbol read*)
   dc: LONGINT;    (*data counter*)
   level, exno, version: INTEGER;
   newSF: BOOLEAN;  (*option flag*)
@@ -24,98 +26,125 @@ VAR sym: INTEGER;   (*last symbol read*)
   dummy: ORB.Object;
   W: Texts.Writer;
 
-def Check(s: INTEGER; msg: ARRAY OF CHAR);
-BEGIN
-  if sym == s: ORS.Get(sym) else: ORS.Mark(msg) END
-END Check;
 
-def qualident(VAR obj: ORB.Object);
-BEGIN obj = ORB.thisObj(); ORS.Get(sym);
-  if obj == None: ORS.Mark("undef"); obj = dummy END ;
+def Check(s, msg):
+  if sym == s:
+    ORS.Get(sym)
+  else:
+    ORS.Mark(msg)
+
+
+def qualident(obj):
+  obj = ORB.thisObj()
+  ORS.Get(sym);
+  if obj == None:
+    ORS.Mark("undef")
+    obj = dummy
   if (sym == ORS.period) and (obj.class_ == ORB.Mod):
-    ORS.Get(sym);
-    if sym == ORS.ident: obj = ORB.thisimport(obj); ORS.Get(sym);
-      if obj == None: ORS.Mark("undef"); obj = dummy END
-    else: ORS.Mark("identifier expected"); obj = dummy
-    END
-  END
-END qualident;
+    ORS.Get(sym)
+    if sym == ORS.ident:
+      obj = ORB.thisimport(obj)
+      ORS.Get(sym)
+      if obj == None:
+        ORS.Mark("undef")
+        obj = dummy
+    else:
+      ORS.Mark("identifier expected")
+      obj = dummy
 
-def CheckBool(x);
-BEGIN
-  if x.type_.form != ORB.Bool: ORS.Mark("not Boolean"); x.type_ = ORB.boolType END
-END CheckBool;
+
+def CheckBool(x):
+  if x.type_.form != ORB.Bool:
+    ORS.Mark("not Boolean")
+    x.type_ = ORB.boolType
+
 
 def CheckInt(x);
-BEGIN
-  if x.type_.form != ORB.Int: ORS.Mark("not Integer"); x.type_ = ORB.intType END
-END CheckInt;
+  if x.type_.form != ORB.Int:
+    ORS.Mark("not Integer")
+    x.type_ = ORB.intType
+
 
 def CheckReal(x);
-BEGIN
-  if x.type_.form != ORB.Real: ORS.Mark("not Real"); x.type_ = ORB.realType END
-END CheckReal;
+  if x.type_.form != ORB.Real:
+    ORS.Mark("not Real")
+    x.type_ = ORB.realType
+
 
 def CheckSet(x);
-BEGIN
-  if x.type_.form != ORB.Set: ORS.Mark("not Set"); x.type_ = ORB.setType END 
-END CheckSet;
+  if x.type_.form != ORB.Set:
+    ORS.Mark("not Set")
+    x.type_ = ORB.setType
 
-def CheckSetVal(x);
-BEGIN
-  if x.type_.form != ORB.Int: ORS.Mark("not Int"); x.type_ = ORB.setType
+
+def CheckSetVal(x):
+  if x.type_.form != ORB.Int:
+    ORS.Mark("not Int")
+    x.type_ = ORB.setType
   elif x.mode == ORB.Const:
-    if (x.a < 0) or (x.a >= 32): ORS.Mark("invalid set") END
-  END 
-END CheckSetVal;
+    if (x.a < 0) or (x.a >= 32):
+      ORS.Mark("invalid set")
 
-def CheckConst(x);
-BEGIN
-  if x.mode != ORB.Const: ORS.Mark("not a constant"); x.mode = ORB.Const END
-END CheckConst;
 
-def CheckReadOnly(x);
-BEGIN
-  if x.rdo: ORS.Mark("read-only") END
-END CheckReadOnly;
+def CheckConst(x):
+  if x.mode != ORB.Const:
+    ORS.Mark("not a constant")
+    x.mode = ORB.Const
+
+
+def CheckReadOnly(x):
+  if x.rdo:
+    ORS.Mark("read-only")
+
 
 def CheckExport(VAR expo: BOOLEAN);
-BEGIN
   if sym == ORS.times:
-    expo = TRUE; ORS.Get(sym);
-    if level != 0: ORS.Mark("remove asterisk") END
-  else: expo = FALSE
-  END
-END CheckExport;
+    expo = True
+    ORS.Get(sym);
+    if level != 0:
+      ORS.Mark("remove asterisk")
+  else:
+    expo = False
 
-def IsExtension(t0, t1: ORB.Type): BOOLEAN;
-BEGIN (*t1 is an extension of t0*)
+
+def IsExtension(t0, t1: ORB.Type):
+  # (*t1 is an extension of t0*)
   return (t0 == t1) or (t1 != None) and IsExtension(t0, t1.base)
-END IsExtension;
 
-(* expressions *)
+
+# (* expressions *)
 
 def TypeTest(VAR x: ORG.Item; T: ORB.Type; guard: BOOLEAN);
-  VAR xt: ORB.Type;
-BEGIN xt = x.type_;
-  while (xt != T) and (xt != None): xt = xt.base END ;
-  if xt != T: xt = x.type_;
+  xt = x.type_
+  while (xt != T) and (xt != None):
+    xt = xt.base
+  if xt != T:
+    xt = x.type_
     if (xt.form == ORB.Pointer) and (T.form == ORB.Pointer):
-      if IsExtension(xt.base, T.base): ORG.TypeTest(x, T.base, FALSE, guard); x.type_ = T
-      else: ORS.Mark("not an extension")
-      END
-    elif (xt.form == ORB.Record) and (T.form == ORB.Record) and (x.mode == ORB.Par):
-      if IsExtension(xt, T):  ORG.TypeTest(x, T, TRUE, guard); x.type_ = T
-      else: ORS.Mark("not an extension")
-      END
-    else: ORS.Mark("incompatible types")
-    END
-  elif ~guard: ORG.MakeConstItem(x, ORB.boolType, 1)
-  END ;
-  if ~guard: x.type_ = ORB.boolType END
-END TypeTest;
+      if IsExtension(xt.base, T.base):
+        ORG.TypeTest(x, T.base, False, guard)
+        x.type_ = T
+      else:
+        ORS.Mark("not an extension")
 
-def selector(x);
+    elif (xt.form == ORB.Record) and (T.form == ORB.Record) and (x.mode == ORB.Par):
+      if IsExtension(xt, T):
+        ORG.TypeTest(x, T, True, guard)
+        x.type_ = T
+      else:
+        ORS.Mark("not an extension")
+
+    else:
+      ORS.Mark("incompatible types")
+
+  elif not guard:
+    ORG.MakeConstItem(x, ORB.boolType, 1)
+
+  if not guard:
+    x.type_ = ORB.boolType
+
+
+def selector(x):
   VAR y: ORG.Item; obj: ORB.Object;
 BEGIN
   while (sym == ORS.lbrak) or (sym == ORS.period) or (sym == ORS.arrow)
@@ -149,7 +178,7 @@ BEGIN
       ORS.Get(sym);
       if sym == ORS.ident:
         qualident(obj);
-        if obj.class_ == ORB.Typ: TypeTest(x, obj.type_, TRUE)
+        if obj.class_ == ORB.Typ: TypeTest(x, obj.type_, True)
         else: ORS.Mark("guard type_ expected")
         END
       else: ORS.Mark("not an identifier")
@@ -163,17 +192,17 @@ def CompTypes(t0, t1: ORB.Type; varpar: BOOLEAN): BOOLEAN;
 
   def EqualSignatures(t0, t1: ORB.Type): BOOLEAN;
     VAR p0, p1: ORB.Object; com: BOOLEAN;
-  BEGIN com = TRUE;
+  BEGIN com = True;
     if (t0.base == t1.base) and (t0.nofpar == t1.nofpar):
       p0 = t0.dsc; p1 = t1.dsc;
       while p0 != None:
-        if (p0.class_ == p1.class_) and CompTypes(p0.type_, p1.type_, TRUE) and (ORD(p0.rdo) == ORD(p1.rdo)):
+        if (p0.class_ == p1.class_) and CompTypes(p0.type_, p1.type_, True) and (ORD(p0.rdo) == ORD(p1.rdo)):
           if p0.type_.form >= ORB.Array: com = CompTypes(p0.type_, p1.type_, (p0.class_ == ORB.Par)) END ;
           p0 = p0.next; p1 = p1.next
-        else: p0 = None; com = FALSE
+        else: p0 = None; com = False
         END
       END
-    else: com = FALSE
+    else: com = False
     END ;
     return com
   END EqualSignatures;
@@ -216,7 +245,7 @@ BEGIN expression(x);
   END
 END Parameter;
 
-def ParamList(x);
+def ParamList(x):
   VAR n: INTEGER; par: ORB.Object;
 BEGIN par = x.type_.dsc; n = 0;
   if sym != ORS.rparen:
@@ -278,7 +307,7 @@ BEGIN Check(ORS.lparen, "no (");
   END
 END StandFunc;
 
-def element(x);
+def element(x):
   VAR y: ORG.Item;
 BEGIN expression(x); CheckSetVal(x);
   if sym == ORS.upto: ORS.Get(sym); expression(y); CheckSetVal(y); ORG.Set(x, y)
@@ -287,7 +316,7 @@ BEGIN expression(x); CheckSetVal(x);
   x.type_ = ORB.setType
 END element;
 
-def set(x);
+def set(x):
   VAR y: ORG.Item;
 BEGIN
   if sym >= ORS.if:
@@ -303,7 +332,7 @@ BEGIN
   END
 END set; 
 
-def factor(x);
+def factor(x):
   VAR obj: ORB.Object; rx: LONGINT;
 BEGIN (*sync*)
   if (sym < ORS.char) or (sym > ORS.ident): ORS.Mark("expression expected");
@@ -335,7 +364,7 @@ BEGIN (*sync*)
   END
 END factor;
 
-def term(x);
+def term(x):
   VAR y: ORG.Item; op, f: INTEGER;
 BEGIN factor(x); f = x.type_.form;
   while (sym >= ORS.times) and (sym <= ORS.and):
@@ -358,7 +387,7 @@ BEGIN factor(x); f = x.type_.form;
   END
 END term;
 
-def SimpleExpression(x);
+def SimpleExpression(x):
   VAR y: ORG.Item; op: INTEGER;
 BEGIN
   if sym == ORS.minus: ORS.Get(sym); term(x);
@@ -376,12 +405,12 @@ BEGIN
   END
 END SimpleExpression;
 
-def expression0(x);
+def expression0(x):
   VAR y: ORG.Item; obj: ORB.Object; rel, xf, yf: INTEGER;
 BEGIN SimpleExpression(x);
   if (sym >= ORS.eql) and (sym <= ORS.geq):
     rel = sym; ORS.Get(sym); SimpleExpression(y); xf = x.type_.form; yf = y.type_.form;
-    if CompTypes(x.type_, y.type_, FALSE) or
+    if CompTypes(x.type_, y.type_, False) or
         (xf == ORB.Pointer) and (yf == ORB.Pointer) and IsExtension(y.type_.base, x.type_.base):
       if (xf IN {ORB.Char, ORB.Int}): ORG.IntRelation(rel, x, y)
       elif xf == ORB.Real: ORG.RealRelation(rel, x, y)
@@ -410,7 +439,7 @@ BEGIN SimpleExpression(x);
     END ;
     x.type_ = ORB.boolType
   elif sym == ORS.is:
-    ORS.Get(sym); qualident(obj); TypeTest(x, obj.type_, FALSE) ;
+    ORS.Get(sym); qualident(obj); TypeTest(x, obj.type_, False) ;
     x.type_ = ORB.boolType
   END
 END expression0;
@@ -466,7 +495,7 @@ def StatSequence;
     if sym == ORS.ident:
       qualident(typobj); ORG.MakeItem(x, obj, level);
       if typobj.class_ != ORB.Typ: ORS.Mark("not a type_") END ;
-      TypeTest(x, typobj.type_, FALSE); obj.type_ = typobj.type_;
+      TypeTest(x, typobj.type_, False); obj.type_ = typobj.type_;
       ORG.CFJump(x); Check(ORS.colon, ": expected"); StatSequence
     else: ORG.CFJump(x); ORS.Mark("type_ id_ expected")
     END
@@ -484,7 +513,7 @@ BEGIN (* StatSequence *)
       else: selector(x);
         if sym == ORS.becomes: (*assignment*)
           ORS.Get(sym); CheckReadOnly(x); expression(y);
-          if CompTypes(x.type_, y.type_, FALSE) or (x.type_.form == ORB.Int) and (y.type_.form == ORB.Int):
+          if CompTypes(x.type_, y.type_, False) or (x.type_.form == ORB.Int) and (y.type_.form == ORB.Int):
             if (x.type_.form <= ORB.Pointer) or (x.type_.form == ORB.Proc): ORG.Store(x, y)
             elif y.type_.size != 0: ORG.StoreStruct(x, y)
             END
@@ -539,13 +568,13 @@ BEGIN (* StatSequence *)
         qualident(obj); ORG.MakeItem(x, obj, level); CheckInt(x); CheckReadOnly(x);
         if sym == ORS.becomes:
           ORS.Get(sym); expression(y); CheckInt(y); ORG.For0(x, y); L0 = ORG.Here();
-          Check(ORS.to, "no TO"); expression(z); CheckInt(z); obj.rdo = TRUE;
+          Check(ORS.to, "no TO"); expression(z); CheckInt(z); obj.rdo = True;
           if sym == ORS.by: ORS.Get(sym); expression(w); CheckConst(w); CheckInt(w)
           else: ORG.MakeConstItem(w, ORB.intType, 1)
           END ;
           Check(ORS.do, "no:"); ORG.For1(x, y, z, w, L1);
           StatSequence; Check(ORS.end, "no END");
-          ORG.For2(x, y, w); ORG.BJump(L0); ORG.FixLink(L1); obj.rdo = FALSE
+          ORG.For2(x, y, w); ORG.BJump(L0); ORG.FixLink(L1); obj.rdo = False
         else: ORS.Mark(":= expected")
         END
       else: ORS.Mark("identifier expected")
@@ -659,8 +688,8 @@ def FPSection(VAR adr: LONGINT; VAR nofpar: INTEGER);
     parsize: LONGINT; cl: INTEGER; rdo: BOOLEAN;
 BEGIN
   if sym == ORS.var: ORS.Get(sym); cl = ORB.Par else: cl = ORB.Var END ;
-  IdentList(cl, first); FormalType(tp, 0); rdo = FALSE;
-  if (cl == ORB.Var) and (tp.form >= ORB.Array): cl = ORB.Par; rdo = TRUE END ;
+  IdentList(cl, first); FormalType(tp, 0); rdo = False;
+  if (cl == ORB.Var) and (tp.form >= ORB.Array): cl = ORB.Par; rdo = True END ;
   if (tp.form == ORB.Array) and (tp.len_ < 0) or (tp.form == ORB.Record):
     parsize = 2*ORG.WordSize  (*open array or record, needs second word for length or type_ tag*)
   else: parsize = ORG.WordSize
@@ -827,8 +856,8 @@ def ProcedureDecl;
     x: ORG.Item;
     locblksize, parblksize, L: LONGINT;
     int_: BOOLEAN;
-BEGIN (* ProcedureDecl *) int_ = FALSE; ORS.Get(sym);
-  if sym == ORS.times: ORS.Get(sym); int_ = TRUE END ;
+BEGIN (* ProcedureDecl *) int_ = False; ORS.Get(sym);
+  if sym == ORS.times: ORS.Get(sym); int_ = True END ;
   if sym == ORS.ident:
     ORS.CopyId(procid); ORS.Get(sym);
     (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
@@ -851,7 +880,7 @@ BEGIN (* ProcedureDecl *) int_ = FALSE; ORS.Get(sym);
     if sym == ORS.return:
       ORS.Get(sym); expression(x);
       if type_.base == ORB.noType: ORS.Mark("this is not a function")
-      elif ~CompTypes(type_.base, x.type_, FALSE): ORS.Mark("wrong result type_")
+      elif ~CompTypes(type_.base, x.type_, False): ORS.Mark("wrong result type_")
       END
     elif type_.base.form != ORB.NoTyp:
       ORS.Mark("function without result"); type_.base = ORB.noType
@@ -864,7 +893,7 @@ BEGIN (* ProcedureDecl *) int_ = FALSE; ORS.Get(sym);
     else: ORS.Mark("no proc id_")
     END
   END ;
-  int_ = FALSE
+  int_ = False
 END ProcedureDecl;
 
 def Module;
@@ -928,10 +957,10 @@ BEGIN Texts.WriteString(W, "  compiling "); ORS.Get(sym);
 END Module;
 
 def Option(VAR S: Texts.Scanner);
-BEGIN newSF = FALSE;
+BEGIN newSF = False;
   if S.nextCh == "/":
     Texts.Scan(S); Texts.Scan(S);
-    if (S.class_ == Texts.Name) and (S.s[0] == "s"): newSF = TRUE END
+    if (S.class_ == Texts.Name) and (S.s[0] == "s"): newSF = True END
   END
 END Option;
 
