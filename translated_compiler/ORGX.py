@@ -180,20 +180,20 @@ BEGIN
       ELSE GetSB(x.r); Put2(op, RH, SB, x.a)
       END ;
       x.r := RH; incR
-    ELSIF x.mode = ORB.Par THEN Put2(Ldr, RH, SP, x.a); Put2(op, RH, RH, x.b); x.r := RH; incR
-    ELSIF x.mode = ORB.Const THEN
+    elif x.mode = ORB.Par THEN Put2(Ldr, RH, SP, x.a); Put2(op, RH, RH, x.b); x.r := RH; incR
+    elif x.mode = ORB.Const THEN
       IF x.type.form = ORB.Proc THEN
         IF x.r > 0 THEN ORS.Mark("not allowed")
-        ELSIF x.r = 0 THEN Put3(BL, 7, 0); Put1a(Sub, RH, LNK, pc*4 - x.a)
+        elif x.r = 0 THEN Put3(BL, 7, 0); Put1a(Sub, RH, LNK, pc*4 - x.a)
         ELSE GetSB(x.r); Put1(Add, RH, SB, x.a + 100H) (*mark as progbase-relative*)
         END
-      ELSIF (x.a <= 0FFFFH) & (x.a >= -10000H) THEN Put1(Mov, RH, 0, x.a)
+      elif (x.a <= 0FFFFH) & (x.a >= -10000H) THEN Put1(Mov, RH, 0, x.a)
       ELSE Put1(Mov+U, RH, 0, x.a DIV 10000H MOD 10000H);
         IF x.a MOD 10000H # 0 THEN Put1(Ior, RH, RH, x.a MOD 10000H) END
       END ;
       x.r := RH; incR
-    ELSIF x.mode = RegI THEN Put2(op, x.r, x.r, x.a)
-    ELSIF x.mode = Cond THEN
+    elif x.mode = RegI THEN Put2(op, x.r, x.r, x.a)
+    elif x.mode = Cond THEN
       Put3(BC, negated(x.r), 2);
       FixLink(x.b); Put1(Mov, RH, 0, 1); Put3(BC, 7, 1);
       FixLink(x.a); Put1(Mov, RH, 0, 0); x.r := RH; incR
@@ -209,10 +209,10 @@ BEGIN
     ELSE GetSB(x.r); Put1a(Add, RH, SB, x.a)
     END ;
     x.r := RH; incR
-  ELSIF x.mode = ORB.Par THEN Put2(Ldr, RH, SP, x.a);
+  elif x.mode = ORB.Par THEN Put2(Ldr, RH, SP, x.a);
     IF x.b # 0 THEN Put1a(Add, RH, RH, x.b) END ;
     x.r := RH; incR
-  ELSIF x.mode = RegI THEN
+  elif x.mode = RegI THEN
     IF x.a # 0 THEN Put1a(Add, x.r, x.r, x.a) END
   ELSE ORS.Mark("address error") 
   END ;
@@ -264,8 +264,8 @@ END MakeStringItem;
 def MakeItem*(VAR x: Item; y: ORB.Object; curlev: LONGINT);
 BEGIN x.mode := y.class; x.type := y.type; x.a := y.val; x.rdo := y.rdo;
   IF y.class = ORB.Par THEN x.b := 0
-  ELSIF y.class = ORB.Typ THEN x.a := y.type.len; x.r := -y.lev
-  ELSIF (y.class = ORB.Const) & (y.type.form = ORB.String) THEN x.b := y.lev  (*len*)
+  elif y.class = ORB.Typ THEN x.a := y.type.len; x.r := -y.lev
+  elif (y.class = ORB.Const) & (y.type.form = ORB.String) THEN x.b := y.lev  (*len*)
   ELSE x.r := y.lev
   END ;
   IF (y.lev > 0) & (y.lev # curlev) & (y.class # ORB.Const) THEN ORS.Mark("level error, not accessible") END
@@ -279,8 +279,8 @@ BEGIN;
     IF x.r >= 0 THEN x.a := x.a + y.val
     ELSE loadAdr(x); x.mode := RegI; x.a := y.val
     END
-  ELSIF x.mode = RegI THEN x.a := x.a + y.val
-  ELSIF x.mode = ORB.Par THEN x.b := x.b + y.val
+  elif x.mode = RegI THEN x.a := x.a + y.val
+  elif x.mode = ORB.Par THEN x.b := x.b + y.val
   END
 END Field;
 
@@ -290,7 +290,7 @@ BEGIN s := x.type.base.size; lim := x.type.len;
   IF (y.mode = ORB.Const) & (lim >= 0) THEN
     IF (y.a < 0) OR (y.a >= lim) THEN ORS.Mark("bad index") END ;
     IF x.mode IN {ORB.Var, RegI} THEN x.a := y.a * s + x.a
-    ELSIF x.mode = ORB.Par THEN x.b := y.a * s + x.b
+    elif x.mode = ORB.Par THEN x.b := y.a * s + x.b
     END
   ELSE load(y);
     IF check THEN  (*check array bounds*)
@@ -302,7 +302,7 @@ BEGIN s := x.type.base.size; lim := x.type.len;
       END ;
       Trap(10, 1)
     END ;
-    IF s = 4 THEN Put1(Lsl, y.r, y.r, 2) ELSIF s > 1 THEN Put1(Mul, y.r, y.r, s) END ;
+    IF s = 4 THEN Put1(Lsl, y.r, y.r, 2) elif s > 1 THEN Put1(Mul, y.r, y.r, s) END ;
     IF x.mode = ORB.Var THEN
       IF x.r > 0 THEN Put0(Add, y.r, SP, y.r)
       ELSE GetSB(x.r);
@@ -311,10 +311,10 @@ BEGIN s := x.type.base.size; lim := x.type.len;
         END
       END ;
       x.r := y.r; x.mode := RegI
-    ELSIF x.mode = ORB.Par THEN
+    elif x.mode = ORB.Par THEN
       Put2(Ldr, RH, SP, x.a);
       Put0(Add, y.r, RH, y.r); x.mode := RegI; x.r := y.r; x.a := x.b
-    ELSIF x.mode = RegI THEN Put0(Add, x.r, x.r, y.r); DEC(RH)
+    elif x.mode = RegI THEN Put0(Add, x.r, x.r, y.r); DEC(RH)
     END
   END
 END Index;
@@ -324,10 +324,10 @@ BEGIN
   IF x.mode = ORB.Var THEN
     IF x.r > 0 THEN (*local*) Put2(Ldr, RH, SP, x.a) ELSE GetSB(x.r); Put2(Ldr, RH, SB, x.a) END ;
     NilCheck; x.r := RH; incR
-  ELSIF x.mode = ORB.Par THEN
+  elif x.mode = ORB.Par THEN
     Put2(Ldr, RH, SP, x.a); Put2(Ldr, RH, RH, x.b); NilCheck; x.r := RH; incR
-  ELSIF x.mode = RegI THEN Put2(Ldr, x.r, x.r, x.a); NilCheck
-  ELSIF x.mode # Reg THEN ORS.Mark("bad mode in DeRef")
+  elif x.mode = RegI THEN Put2(Ldr, x.r, x.r, x.a); NilCheck
+  elif x.mode # Reg THEN ORS.Mark("bad mode in DeRef")
   END ;
   x.mode := RegI; x.a := 0; x.b := 0
 END DeRef;
@@ -344,10 +344,10 @@ def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN data[dcw] := off; INC(dcw)
-  ELSIF typ.form = ORB.Record THEN
+  elif typ.form = ORB.Record THEN
     fld := typ.dsc;
     while fld # NIL DO FindPtrFlds(fld.type, fld.val + off, dcw); fld := fld.next END
-  ELSIF typ.form = ORB.Array THEN
+  elif typ.form = ORB.Array THEN
     s := typ.base.size;
     FOR i := 0 TO typ.len-1 DO FindPtrFlds(typ.base, i*s + off, dcw) END
   END
@@ -356,7 +356,7 @@ END FindPtrFlds;
 def BuildTD*(T: ORB.Type; VAR dc: LONGINT);
   VAR dcw, k, s: LONGINT;  (*dcw = word address*)
 BEGIN dcw := dc DIV 4; s := T.size; (*convert size for heap allocation*)
-  IF s <= 24 THEN s := 32 ELSIF s <= 56 THEN s := 64 ELSIF s <= 120 THEN s := 128
+  IF s <= 24 THEN s := 32 elif s <= 56 THEN s := 64 elif s <= 120 THEN s := 128
   ELSE s := (s+263) DIV 256 * 256
   END ;
   data[dcw] := s; INC(dcw);
@@ -425,7 +425,7 @@ BEGIN
     IF x.mode = ORB.Const THEN x.a := -x.a
     ELSE load(x); Put1(Mov, RH, 0, 0); Put0(Sub, x.r, RH, x.r)
     END
-  ELSIF x.type.form = ORB.Real THEN
+  elif x.type.form = ORB.Real THEN
     IF x.mode = ORB.Const THEN x.a := x.a + 7FFFFFFFH + 1
     ELSE load(x); Put1(Mov, RH, 0, 0); Put0(Fsb, x.r, RH, x.r)
     END
@@ -440,13 +440,13 @@ def AddOp*(op: LONGINT; VAR x, y: Item);   (* x := x +- y *)
 BEGIN
   IF op = ORS.plus THEN
     IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN x.a := x.a + y.a
-    ELSIF y.mode = ORB.Const THEN load(x);
+    elif y.mode = ORB.Const THEN load(x);
       IF y.a # 0 THEN Put1a(Add, x.r, x.r, y.a) END
     ELSE load(x); load(y); Put0(Add, RH-2, x.r, y.r); DEC(RH); x.r := RH-1
     END
   ELSE (*op = ORS.minus*)
     IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN x.a := x.a - y.a
-    ELSIF y.mode = ORB.Const THEN load(x);
+    elif y.mode = ORB.Const THEN load(x);
       IF y.a # 0 THEN Put1a(Sub, x.r, x.r, y.a) END
     ELSE load(x); load(y); Put0(Sub, RH-2, x.r, y.r); DEC(RH); x.r := RH-1
     END
@@ -463,10 +463,10 @@ def MulOp*(VAR x, y: Item);   (* x := x * y *)
   VAR e: LONGINT;
 BEGIN
   IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN x.a := x.a * y.a
-  ELSIF (y.mode = ORB.Const) & (y.a >= 2) & (log2(y.a, e) = 1) THEN load(x); Put1(Lsl, x.r, x.r, e)
-  ELSIF y.mode = ORB.Const THEN load(x); Put1a(Mul, x.r, x.r, y.a)
-  ELSIF (x.mode = ORB.Const) & (x.a >= 2) & (log2(x.a, e) = 1) THEN load(y); Put1(Lsl, y.r, y.r, e); x.mode := Reg; x.r := y.r
-  ELSIF x.mode = ORB.Const THEN load(y); Put1a(Mul, y.r, y.r, x.a); x.mode := Reg; x.r := y.r
+  elif (y.mode = ORB.Const) & (y.a >= 2) & (log2(y.a, e) = 1) THEN load(x); Put1(Lsl, x.r, x.r, e)
+  elif y.mode = ORB.Const THEN load(x); Put1a(Mul, x.r, x.r, y.a)
+  elif (x.mode = ORB.Const) & (x.a >= 2) & (log2(x.a, e) = 1) THEN load(y); Put1(Lsl, y.r, y.r, e); x.mode := Reg; x.r := y.r
+  elif x.mode = ORB.Const THEN load(y); Put1a(Mul, y.r, y.r, x.a); x.mode := Reg; x.r := y.r
   ELSE load(x); load(y); Put0(Mul, RH-2, x.r, y.r); DEC(RH); x.r := RH-1
   END
 END MulOp;
@@ -477,8 +477,8 @@ BEGIN
   IF op = ORS.div THEN
     IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN
       IF y.a > 0 THEN x.a := x.a DIV y.a ELSE ORS.Mark("bad divisor") END
-    ELSIF (y.mode = ORB.Const) & (y.a >= 2) & (log2(y.a, e) = 1) THEN load(x); Put1(Asr, x.r, x.r, e)
-    ELSIF y.mode = ORB.Const THEN
+    elif (y.mode = ORB.Const) & (y.a >= 2) & (log2(y.a, e) = 1) THEN load(x); Put1(Asr, x.r, x.r, e)
+    elif y.mode = ORB.Const THEN
       IF y.a > 0 THEN load(x); Put1a(Div, x.r, x.r, y.a) ELSE ORS.Mark("bad divisor") END
     ELSE load(y);
       IF check THEN Trap(LE, 6) END ;
@@ -487,9 +487,9 @@ BEGIN
   ELSE (*op = ORS.mod*)
     IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN
       IF y.a > 0 THEN x.a := x.a MOD y.a ELSE ORS.Mark("bad modulus") END
-    ELSIF (y.mode = ORB.Const) & (y.a >= 2) & (log2(y.a, e) = 1) THEN load(x);
+    elif (y.mode = ORB.Const) & (y.a >= 2) & (log2(y.a, e) = 1) THEN load(x);
       IF e <= 16 THEN Put1(And, x.r, x.r, y.a-1) ELSE Put1(Lsl, x.r, x.r, 32-e); Put1(Ror, x.r, x.r, 32-e) END
-    ELSIF y.mode = ORB.Const THEN
+    elif y.mode = ORB.Const THEN
       IF y.a > 0 THEN load(x); Put1a(Div, x.r, x.r, y.a); Put0(Mov+U, x.r, 0, 0) ELSE ORS.Mark("bad modulus") END
     ELSE load(y);
       IF check THEN Trap(LE, 6) END ;
@@ -503,9 +503,9 @@ END DivOp;
 def RealOp*(op: INTEGER; VAR x, y: Item);   (* x := x op y *)
 BEGIN load(x); load(y);
   IF op = ORS.plus THEN Put0(Fad, RH-2, x.r, y.r)
-  ELSIF op = ORS.minus THEN Put0(Fsb, RH-2, x.r, y.r)
-  ELSIF op = ORS.times THEN Put0(Fml, RH-2, x.r, y.r)
-  ELSIF op = ORS.rdiv THEN Put0(Fdv, RH-2, x.r, y.r)
+  elif op = ORS.minus THEN Put0(Fsb, RH-2, x.r, y.r)
+  elif op = ORS.times THEN Put0(Fml, RH-2, x.r, y.r)
+  elif op = ORS.rdiv THEN Put0(Fdv, RH-2, x.r, y.r)
   END ;
   DEC(RH); x.r := RH-1
 END RealOp;
@@ -552,23 +552,23 @@ BEGIN
   IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN
     xset := SYSTEM.VAL(SET, x.a); yset := SYSTEM.VAL(SET, y.a);
     IF op = ORS.plus THEN xset := xset + yset
-    ELSIF op = ORS.minus THEN xset := xset - yset
-    ELSIF op = ORS.times THEN xset := xset * yset
-    ELSIF op = ORS.rdiv THEN xset := xset / yset
+    elif op = ORS.minus THEN xset := xset - yset
+    elif op = ORS.times THEN xset := xset * yset
+    elif op = ORS.rdiv THEN xset := xset / yset
     END ;
     x.a := SYSTEM.VAL(LONGINT, xset)
-  ELSIF y.mode = ORB.Const THEN
+  elif y.mode = ORB.Const THEN
     load(x);
     IF op = ORS.plus THEN Put1a(Ior, x.r, x.r, y.a)
-    ELSIF op = ORS.minus THEN Put1a(Ann, x.r, x.r, y.a)
-    ELSIF op = ORS.times THEN Put1a(And, x.r, x.r, y.a)
-    ELSIF op = ORS.rdiv THEN Put1a(Xor, x.r, x.r, y.a)
+    elif op = ORS.minus THEN Put1a(Ann, x.r, x.r, y.a)
+    elif op = ORS.times THEN Put1a(And, x.r, x.r, y.a)
+    elif op = ORS.rdiv THEN Put1a(Xor, x.r, x.r, y.a)
     END ;
   ELSE load(x); load(y);
     IF op = ORS.plus THEN Put0(Ior, RH-2, x.r, y.r)
-    ELSIF op = ORS.minus THEN Put0(Ann, RH-2, x.r, y.r)
-    ELSIF op = ORS.times THEN Put0(And, RH-2, x.r, y.r)
-    ELSIF op = ORS.rdiv THEN Put0(Xor, RH-2, x.r, y.r)
+    elif op = ORS.minus THEN Put0(Ann, RH-2, x.r, y.r)
+    elif op = ORS.times THEN Put0(And, RH-2, x.r, y.r)
+    elif op = ORS.rdiv THEN Put0(Xor, RH-2, x.r, y.r)
     END ;
     DEC(RH); x.r := RH-1
   END 
@@ -632,8 +632,8 @@ BEGIN  load(y);
     IF x.r > 0 THEN (*local*) Put2(op, y.r, SP, x.a)
     ELSE GetSB(x.r); Put2(op, y.r, SB, x.a)
     END
-  ELSIF x.mode = ORB.Par THEN Put2(Ldr, RH, SP, x.a); Put2(op, y.r, RH, x.b);
-  ELSIF x.mode = RegI THEN Put2(op, y.r, x.r, x.a); DEC(RH);
+  elif x.mode = ORB.Par THEN Put2(Ldr, RH, SP, x.a); Put2(op, y.r, RH, x.b);
+  elif x.mode = RegI THEN Put2(op, y.r, x.r, x.a); DEC(RH);
   ELSE ORS.Mark("bad mode in Store")
   END ;
   DEC(RH)
@@ -651,14 +651,14 @@ BEGIN loadAdr(x); loadAdr(y);
       Put2(Ldr, RH, SP, y.a+4); s := y.type.base.size;  (*element size*)
       pc0 := pc; Put3(BC, EQ, 0);
       IF s = 1 THEN Put1(Add, RH, RH, 3); Put1(Asr, RH, RH, 2)
-      ELSIF s # 4 THEN Put1(Mul, RH, RH, s DIV 4)
+      elif s # 4 THEN Put1(Mul, RH, RH, s DIV 4)
       END ;
       IF check THEN
         Put1(Mov, RH+1, 0, (x.type.size+3) DIV 4); Put0(Cmp, RH+1, RH, RH+1); Trap(GT, 3)
       END ;
       fix(pc0, pc + 5 - pc0)
     END
-  ELSIF x.type.form = ORB.Record THEN Put1(Mov, RH, 0, x.type.size DIV 4)
+  elif x.type.form = ORB.Record THEN Put1(Mov, RH, 0, x.type.size DIV 4)
   ELSE ORS.Mark("inadmissible assignment")
   END ;
   Put2(Ldr, RH+1, y.r, 0); Put1(Add, y.r, y.r, 4);
@@ -671,7 +671,7 @@ def CopyString*(VAR x, y: Item);  (*from x to y*)
 BEGIN loadAdr(y); len := y.type.len;
   IF len >= 0 THEN
     IF x.b > len THEN ORS.Mark("string too long") END
-  ELSIF check THEN Put2(Ldr, RH, y.r, 4);  (*array length check*)
+  elif check THEN Put2(Ldr, RH, y.r, 4);  (*array length check*)
     Put1(Cmp, RH, RH, x.b); Trap(NE, 3)
   END ;
   loadStringAdr(x);
@@ -688,7 +688,7 @@ BEGIN xmd := x.mode; loadAdr(x);
   IF (ftype.form = ORB.Array) & (ftype.len < 0) THEN (*open array*)
     IF x.type.len >= 0 THEN Put1(Mov, RH, 0, x.type.len) ELSE  Put2(Ldr, RH, SP, x.a+4) END ;
     incR
-  ELSIF ftype.form = ORB.Record THEN
+  elif ftype.form = ORB.Record THEN
     IF xmd = ORB.Par THEN Put2(Ldr, RH, SP, x.a+4); incR ELSE loadTypTagAdr(x.type) END
   END
 END VarParam;
@@ -720,7 +720,7 @@ BEGIN
   END ;
   L := pc;
   IF w.a > 0 THEN Put3(BC, GT, 0)
-  ELSIF w.a < 0 THEN Put3(BC, LT, 0)
+  elif w.a < 0 THEN Put3(BC, LT, 0)
   ELSE ORS.Mark("zero increment"); Put3(BC, MI, 0)
   END ;
   Store(x, y)
@@ -956,7 +956,7 @@ END Len;
 def Shift*(fct: LONGINT; VAR x, y: Item);
   VAR op: LONGINT;
 BEGIN load(x);
-  IF fct = 0 THEN op := Lsl ELSIF fct = 1 THEN op := Asr ELSE op := Ror END ;
+  IF fct = 0 THEN op := Lsl elif fct = 1 THEN op := Asr ELSE op := Ror END ;
   IF y.mode = ORB.Const THEN Put1(op, x.r, x.r, y.a MOD 20H)
   ELSE load(y); Put0(op, RH-2, x.r, y.r); DEC(RH); x.r := RH-1
   END
@@ -995,8 +995,8 @@ END H;
 def Adr*(VAR x: Item);
 BEGIN 
   IF x.mode IN {ORB.Var, ORB.Par, RegI} THEN loadAdr(x)
-  ELSIF (x.mode = ORB.Const) & (x.type.form = ORB.Proc) THEN load(x)
-  ELSIF (x.mode = ORB.Const) & (x.type.form = ORB.String) THEN loadStringAdr(x)
+  elif (x.mode = ORB.Const) & (x.type.form = ORB.Proc) THEN load(x)
+  elif (x.mode = ORB.Const) & (x.type.form = ORB.String) THEN loadStringAdr(x)
   ELSE ORS.Mark("not addressable")
   END
 END Adr;
@@ -1026,10 +1026,10 @@ def NofPtrs(typ: ORB.Type): LONGINT;
   VAR fld: ORB.Object; n: LONGINT;
 BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN n := 1
-  ELSIF typ.form = ORB.Record THEN
+  elif typ.form = ORB.Record THEN
     fld := typ.dsc; n := 0;
     while fld # NIL DO n := NofPtrs(fld.type) + n; fld := fld.next END
-  ELSIF typ.form = ORB.Array THEN n := NofPtrs(typ.base) * typ.len
+  elif typ.form = ORB.Array THEN n := NofPtrs(typ.base) * typ.len
   ELSE n := 0
   END ;
   RETURN n
@@ -1039,10 +1039,10 @@ def FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN Files.WriteInt(R, adr)
-  ELSIF typ.form = ORB.Record THEN
+  elif typ.form = ORB.Record THEN
     fld := typ.dsc;
     while fld # NIL DO FindPtrs(R, fld.type, fld.val + adr); fld := fld.next END
-  ELSIF typ.form = ORB.Array THEN
+  elif typ.form = ORB.Array THEN
     s := typ.base.size;
     FOR i := 0 TO typ.len-1 DO FindPtrs(R, typ.base, i*s + adr) END
   END
@@ -1060,11 +1060,11 @@ BEGIN  (*exit code*)
   obj := ORB.topScope.next; nofimps := 0; comsize := 4; nofptrs := 0;
   while obj # NIL DO
     IF (obj.class = ORB.Mod) & (obj.dsc # ORB.system) THEN INC(nofimps) (*count imports*)
-    ELSIF (obj.exno # 0) & (obj.class = ORB.Const) & (obj.type.form = ORB.Proc)
+    elif (obj.exno # 0) & (obj.class = ORB.Const) & (obj.type.form = ORB.Proc)
         & (obj.type.nofpar = 0) & (obj.type.base = ORB.noType) THEN i := 0; (*count commands*)
       while obj.name[i] # 0X DO INC(i) END ;
       i := (i+4) DIV 4 * 4; INC(comsize, i+4)
-    ELSIF obj.class = ORB.Var THEN INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
+    elif obj.class = ORB.Var THEN INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
     END ;
     obj := obj.next
   END ;
@@ -1102,9 +1102,9 @@ BEGIN  (*exit code*)
     IF obj.exno # 0 THEN
       IF (obj.class = ORB.Const) & (obj.type.form = ORB.Proc) OR (obj.class = ORB.Var) THEN
         Files.WriteInt(R, obj.val)
-      ELSIF obj.class = ORB.Typ THEN
+      elif obj.class = ORB.Typ THEN
         IF obj.type.form = ORB.Record THEN Files.WriteInt(R,  obj.type.len MOD 10000H)
-        ELSIF (obj.type.form = ORB.Pointer) & ((obj.type.base.typobj = NIL) OR (obj.type.base.typobj.exno = 0)) THEN
+        elif (obj.type.form = ORB.Pointer) & ((obj.type.base.typobj = NIL) OR (obj.type.base.typobj.exno = 0)) THEN
           Files.WriteInt(R, obj.type.base.len MOD 10000H)
         END
       END
