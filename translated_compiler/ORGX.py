@@ -150,19 +150,22 @@ def negated(cond):
     cond = cond-8
   return cond
 
-def invalSB;
-BEGIN curSB = 1
-END invalSB;
+def invalSB():
+  global curSB
+  curSB = 1
 
-def fix(at, with):
-BEGIN code[at] = code[at] / C24 * C24 + (with % C24)
-END fix;
 
-def FixLink*(L):
-  VAR L1: LONGINT;
-BEGIN invalSB;
-  while L != 0: L1 = code[L] % 0x40000; fix(L, pc-L-1); L = L1 END
-END FixLink;
+def fix(at, with_):
+  code[at] = code[at] / C24 * C24 + (with_ % C24)
+
+
+def FixLink(L):
+  invalSB();
+  while L != 0:
+    L1 = code[L] % 0x40000
+    fix(L, pc-L-1)
+    L = L1
+
 
 def FixLinkWith(L0, dst):
   VAR L1: LONGINT;
@@ -759,7 +762,7 @@ END For2;
 (* Branches, procedure calls, procedure prolog and epilog *)
 
 def Here*(): LONGINT;
-BEGIN invalSB; return pc
+BEGIN invalSB(); return pc
 END Here;
 
 def FJump*(VAR L):
@@ -820,12 +823,12 @@ BEGIN
     if r > 0: RestoreRegs(r, x) END ;
     x.mode = Reg; x.r = r; RH = r+1
   END ;
-  invalSB
+  invalSB()
 END Call;
 
 def Enter*(parblksize, locblksize: LONGINT; int: BOOLEAN);
   VAR a, r: LONGINT;
-BEGIN invalSB;
+BEGIN invalSB();
   if ~int: (*procedure prolog*)
     a = 4; r = 0;
     Put1(Sub, SP, SP, locblksize); Put2(Str, LNK, SP, 0);
@@ -891,7 +894,7 @@ BEGIN
 END Assert; 
 
 def New*(VAR x: Item);
-BEGIN loadAdr(x); loadTypTagAdr(x.type.base); Put3(BLR, 7, MT); RH = 0; invalSB
+BEGIN loadAdr(x); loadTypTagAdr(x.type.base); Put3(BLR, 7, MT); RH = 0; invalSB()
 END New;
 
 def Pack*(VAR x, y: Item);
@@ -1044,7 +1047,7 @@ END SetDataSize;
 def Header*;
 BEGIN entry = pc*4;
   if version == 0: code[0] = 0x0E7000000-1 + pc; Put1(Mov, SB, 0, 16); Put1(Mov, SP, 0, StkOrg0)  (*RISC-0*)
-  else: Put1(Sub, SP, SP, 4); Put2(Str, LNK, SP, 0); invalSB
+  else: Put1(Sub, SP, SP, 4); Put2(Str, LNK, SP, 0); invalSB()
   END
 END Header;
 
