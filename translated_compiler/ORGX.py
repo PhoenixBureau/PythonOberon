@@ -165,7 +165,7 @@ def FixLink(L):
     L1 = code[L] % 0x40000
     fix(L, pc-L-1)
     L = L1
-
+  return L
 
 def FixLinkWith(L0, dst):
   VAR L1: LONGINT;
@@ -224,8 +224,8 @@ BEGIN
     elif x.mode == RegI: Put2(op, x.r, x.r, x.a)
     elif x.mode == Cond:
       Put3(BC, negated(x.r), 2);
-      FixLink(x.b); Put1(Mov, RH, 0, 1); Put3(BC, 7, 1);
-      FixLink(x.a); Put1(Mov, RH, 0, 0); x.r = RH; incR()
+      x.b = FixLink(x.b); Put1(Mov, RH, 0, 1); Put3(BC, 7, 1);
+      x.a = FixLink(x.a); Put1(Mov, RH, 0, 0); x.r = RH; incR()
     END ;
     x.mode = Reg
   END
@@ -425,7 +425,7 @@ END Not;
 def And1*(VAR x: Item);   (* x = x and *)
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, negated(x.r), x.a); x.a = pc-1; FixLink(x.b); x.b = 0
+  Put3(BC, negated(x.r), x.a); x.a = pc-1; x.b = FixLink(x.b); x.b = 0
 END And1;
 
 def And2*(VAR x, y: Item);
@@ -437,7 +437,7 @@ END And2;
 def Or1*(VAR x: Item);   (* x = x or *)
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, x.r, x.b);  x.b = pc-1; FixLink(x.a); x.a = 0
+  Put3(BC, x.r, x.b);  x.b = pc-1; x.a = FixLink(x.a); x.a = 0
 END Or1;
 
 def Or2*(VAR x, y: Item);
@@ -772,7 +772,7 @@ END FJump;
 def CFJump*(VAR x: Item);
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, negated(x.r), x.a); FixLink(x.b); x.a = pc-1
+  Put3(BC, negated(x.r), x.a); x.b = FixLink(x.b); x.a = pc-1
 END CFJump;
 
 def BJump*(L):
@@ -782,11 +782,11 @@ END BJump;
 def CBJump*(VAR x: Item; L):
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, negated(x.r), L-pc-1); FixLink(x.b); FixLinkWith(x.a, L)
+  Put3(BC, negated(x.r), L-pc-1); x.b = FixLink(x.b); FixLinkWith(x.a, L)
 END CBJump;
 
 def Fixup*(VAR x: Item);
-BEGIN FixLink(x.a)
+BEGIN x.a = FixLink(x.a)
 END Fixup;
 
 def PrepCall*(VAR x: Item; VAR r):
@@ -888,9 +888,9 @@ def Assert*(VAR x: Item);
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
   if x.a == 0: cond = negated(x.r)
-  else: Put3(BC, x.r, x.b); FixLink(x.a); x.b = pc-1; cond = 7
+  else: Put3(BC, x.r, x.b); x.a = FixLink(x.a); x.b = pc-1; cond = 7
   END ;
-  Trap(cond, 7); FixLink(x.b)
+  Trap(cond, 7); x.b = FixLink(x.b)
 END Assert; 
 
 def New*(VAR x: Item);
