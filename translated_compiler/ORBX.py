@@ -123,7 +123,7 @@ def CloseScope():
 
 #  (*------------------------------- Import ---------------------------------*)
 
-def MakeFileName(FName, name, ext):
+def MakeFileName(name, ext):
   return name + ext
 
 
@@ -262,10 +262,10 @@ def Import(modid, modid1):
     thismod.dsc = system
     thismod.rdo = True
   else:
-    MakeFileName(fname, modid1, ".smb")
-    F = Files.Old(fname)
-    if F != None:
-      Files.Set(R, F, 0)
+    fname = MakeFileName(modid1, ".smb")
+    R = Files.Old(fname)
+    if R != None:
+#      Files.Set(R, F, 0)
       Files.ReadInt(R) # discard.
       key = Files.ReadInt(R)
       modname = Files.ReadString(R);
@@ -309,125 +309,191 @@ def Import(modid, modid1):
 
 #  (*-------------------------------- Export ---------------------------------*)
 
+def Write(R, x):
+  Files.WriteByte(R, x) # (* -128 <= x < 128 *)
+
+
+def OutType(R, t):
+
+  def OutPar(R, par, n):
+    if n > 0:
+      OutPar(R, par.next, n-1)
+      cl = par.class_
+      Write(R, cl)
+      if par.rdo:
+        Write(R, 1)
+      else:
+        Write(R, 0)
+      OutType(R, par.type)
+
+  def FindHiddenPointers(R, typ, offset):
+    if (typ.form == Pointer) or (typ.form == NilTyp):
+      Write(R, Fld)
+      Write(R, 0)
+      Files.WriteNum(R, offset)
+    elif typ.form == Record:
+      fld = typ.dsc
+      while fld != None:
+        FindHiddenPointers(R, fld.type, fld.val + offset)
+        fld = fld.next
+    elif typ.form == Array:
+      i = 0
+      n = typ.len
+      while i < n:
+        FindHiddenPointers(R, typ.base, typ.base.size * i + offset)
+        i += 1
+
+  if t.ref > 0: # (*type was already output*)
+    Write(R, -t.ref)
+  else:
+    obj = t.typobj
+    if obj != None:
+      Write(R, Ref)
+      t.ref = Ref
+      Ref += 1
+    else: # (*anonymous*)
+      Write(R, 0)
+
+    Write(R, t.form);
+    if t.form == Pointer:
+      if t.base.ref > 0:
+        Write(R, -t.base.ref)
+      elif (t.base.typobj == None) or not t.base.typobj.expo: # (*base not exported*)
+        Write(R, -1)
+      else:
+        OutType(R, t.base)
+
+    elif t.form == Array:
+      OutType(R, t.base)
+      Files.WriteNum(R, t.len)
+      Files.WriteNum(R, t.size)
+
+    elif t.form == Record:
+      if t.base != None:
+        OutType(R, t.base)
+      else:
+        OutType(R, noType)
+
+      if obj != None:
+        Files.WriteNum(R, obj.exno)
+      else:
+        Write(R, 0)
+      Files.WriteNum(R, t.nofpar)
+      Files.WriteNum(R, t.size)
+      fld = t.dsc
+      while fld != None: # (*fields*)
+        if fld.expo:
+          Write(R, Fld)
+          Files.WriteString(R, fld.name)
+          OutType(R, fld.type)
+          Files.WriteNum(R, fld.val)
+        else:
+          FindHiddenPointers(R, fld.type, fld.val)
+
+        fld = fld.next
+
+      Write(R, 0) # indentation!?
+
+    elif t.form == Proc:
+      OutType(R, t.base)
+      OutPar(R, t.dsc, t.nofpar)
+      Write(R, 0)
+
+    if (t.mno > 0) and (obj != None): # (*re-export, output name*)
+      mod = topScope.next
+      while (mod != None) and (mod.lev != t.mno):
+        mod = mod.next
+      if mod != None:
+        Files.WriteString(R, mod.name)
+        Files.WriteInt(R, mod.val)
+        Files.WriteString(R, obj.name)
+      else :
+        ORS.Mark("re-export not found")
+        Write(R, 0)
+    else:
+      Write(R, 0)
+
+def Export(modid, newSF, key):
+
+  Ref = Record + 1
+  filename = MakeFileName(modid, ".smb")
+  R = Files.New(filename)
+#  Files.Set(R, F, 0)
+  Files.WriteInt(R, 0) #(*placeholder*)
+  Files.WriteInt(R, 0) #(*placeholder for key to be inserted at the end*)
+  Files.WriteString(R, modid)
+  Write(R, versionkey)
+
+  obj = topScope.next
+  while obj != None:
+    if obj.expo:
+      Write(R, obj.class_)
+      Files.WriteString(R, obj.name)
+      OutType(R, obj.type)
+      if obj.class_ == Typ:
+        if obj.type.form == Record:
+          obj0 = topScope.next # (*check whether this is base of previously declared pointer types*)
+          while obj0 != obj:
+            if (obj0.type.form == Pointer) and (obj0.type.base == obj.type) and (obj0.type.ref > 0):
+              Write(R, obj0.type.ref)
+            obj0 = obj0.next
+
+        Write(R, 0)
+
+      elif obj.class_ == Const:
+        if obj.type.form == Proc:
+          Files.WriteNum(R, obj.exno)
+        elif obj.type.form == Real:
+          Files.WriteInt(R, obj.val)
+        else:
+          Files.WriteNum(R, obj.val)
+
+      elif obj.class_ == Var:
+        Files.WriteNum(R, obj.exno)
+        if obj.type.form == String:
+          Files.WriteNum(R, obj.val / 0x10000)
+          obj.val = obj.val % 0x10000
+
+    obj = obj.next
+
+##  while True:
+##    Write(R, 0)
+##    if Files.Length(F) % 4 == 0:
+##      break
+
+  for Ref in range(Record+1, maxTypTab): # Double check range! FIXME
+    typtab[Ref] = None
+
+##  Files.Set(R, F, 0)
+##  sum = 0; # (* compute key (checksum) *)
+##  while not R.eof:
+##    Files.ReadInt(R, x)
+##    sum = sum + x
+##
+##  F1 = Files.Old(filename)  # (*sum is new key*)
+##  if F1 != None:
+##    Files.Set(R1, F1, 4)
+##    Files.ReadInt(R1, oldkey)
+##  else:
+##    oldkey = sum+1
+##
+##  if sum != oldkey:
+##    if newSF:
+##      key = sum
+##      Files.Set(R, F, 4)
+##      Files.WriteInt(R, sum)
+##      Files.Register(F) # (*insert checksum*)
+##    else:
+##      ORS.Mark("new symbol file inhibited")
+##
+##  else:
+##    newSF = False
+##    key = sum
+
+  return modid, newSF, key
+
+
 '''
-  def Write(VAR R: Files.Rider; x: INTEGER);
-  BEGIN Files.WriteByte(R, x)  (* -128 <= x < 128 *)
-  END Write;
-
-  def OutType(VAR R: Files.Rider; t: Type);
-    VAR obj, mod, fld: Object;
-
-    def OutPar(VAR R: Files.Rider; par: Object; n: INTEGER);
-      VAR cl: INTEGER;
-    BEGIN
-      if n > 0:
-        OutPar(R, par.next, n-1); cl = par.class;
-        Write(R, cl);
-        if par.rdo: Write(R, 1) else Write(R, 0) END ;
-        OutType(R, par.type)
-      END
-    END OutPar;
-
-    def FindHiddenPointers(VAR R: Files.Rider; typ: Type; offset: LONGINT);
-      VAR fld: Object; i, n: LONGINT;
-    BEGIN
-      if (typ.form == Pointer) OR (typ.form == NilTyp) THEN Write(R, Fld); Write(R, 0); Files.WriteNum(R, offset)
-      elif typ.form = Record: fld = typ.dsc;
-        while fld != None: FindHiddenPointers(R, fld.type, fld.val + offset); fld = fld.next END
-      elif typ.form == Array: i = 0; n = typ.len;
-        while i < n: FindHiddenPointers(R, typ.base, typ.base.size * i + offset); INC(i) END
-      END
-    END FindHiddenPointers;
-
-  BEGIN
-    if t.ref > 0: (*type was already output*) Write(R, -t.ref)
-    else obj = t.typobj;
-      if obj != None: Write(R, Ref); t.ref = Ref; INC(Ref) else (*anonymous*) Write(R, 0) END ;
-      Write(R, t.form);
-      if t.form == Pointer:
-        if t.base.ref > 0: Write(R, -t.base.ref)
-        elif (t.base.typobj == None) OR ~t.base.typobj.expo: (*base not exported*) Write(R, -1)
-        else OutType(R, t.base)
-        END
-      elif t.form == Array: OutType(R, t.base); Files.WriteNum(R, t.len); Files.WriteNum(R, t.size)
-      elif t.form == Record:
-        if t.base != None: OutType(R, t.base) else OutType(R, noType) END ;
-        if obj != None: Files.WriteNum(R, obj.exno) else Write(R, 0) END ;
-        Files.WriteNum(R, t.nofpar); Files.WriteNum(R, t.size);
-        fld = t.dsc;
-        while fld != None:  (*fields*)
-          if fld.expo:
-            Write(R, Fld); Files.WriteString(R, fld.name); OutType(R, fld.type); Files.WriteNum(R, fld.val)
-          else FindHiddenPointers(R, fld.type, fld.val)
-          END ;
-          fld = fld.next
-        END ;
-         Write(R, 0)
-      elif t.form == Proc: OutType(R, t.base); OutPar(R, t.dsc, t.nofpar); Write(R, 0)
-      END ;
-      if (t.mno > 0) and (obj != None) THEN  (*re-export, output name*)
-        mod = topScope.next;
-        while (mod != None) and (mod.lev != t.mno) DO mod = mod.next END ;
-        if mod != None: Files.WriteString(R, mod.name); Files.WriteInt(R, mod.val); Files.WriteString(R, obj.name)
-        else ORS.Mark("re-export not found"); Write(R, 0)
-        END
-      else Write(R, 0)
-      END
-    END
-  END OutType;
-
-  def Export*(VAR modid: ORS.Ident; VAR newSF: BOOLEAN; VAR key: LONGINT);
-    VAR x, sum, oldkey: LONGINT;
-      obj, obj0: Object;
-      filename: ORS.Ident;
-      F, F1: Files.File; R, R1: Files.Rider;
-  BEGIN Ref = Record + 1; MakeFileName(filename, modid, ".smb");
-    F = Files.New(filename); Files.Set(R, F, 0);
-    Files.WriteInt(R, 0); (*placeholder*)
-    Files.WriteInt(R, 0); (*placeholder for key to be inserted at the end*)
-    Files.WriteString(R, modid); Write(R, versionkey);
-    obj = topScope.next;
-    while obj != None:
-      if obj.expo:
-        Write(R, obj.class); Files.WriteString(R, obj.name);
-        OutType(R, obj.type);
-        if obj.class == Typ:
-          if obj.type.form == Record:
-            obj0 = topScope.next;  (*check whether this is base of previously declared pointer types*)
-            while obj0 != obj:
-              if (obj0.type.form == Pointer) and (obj0.type.base == obj.type) and (obj0.type.ref > 0) THEN Write(R, obj0.type.ref) END ;
-              obj0 = obj0.next
-            END
-          END ;
-          Write(R, 0)
-        elif obj.class == Const:
-          if obj.type.form == Proc: Files.WriteNum(R, obj.exno)
-          elif obj.type.form == Real: Files.WriteInt(R, obj.val)
-          else Files.WriteNum(R, obj.val)
-          END
-        elif obj.class == Var:
-          Files.WriteNum(R, obj.exno);
-          if obj.type.form == String:
-            Files.WriteNum(R, obj.val DIV 10000H); obj.val = obj.val MOD 10000H
-          END
-        END
-      END ;
-      obj = obj.next
-    END ;
-    REPEAT Write(R, 0) UNTIL Files.Length(F) MOD 4 == 0;
-    FOR Ref = Record+1 TO maxTypTab-1: typtab[Ref] = None END ;
-    Files.Set(R, F, 0); sum = 0;  (* compute key (checksum) *)
-    while ~R.eof: Files.ReadInt(R, x); sum = sum + x END ;
-    F1 = Files.Old(filename); (*sum is new key*)
-    if F1 != None: Files.Set(R1, F1, 4); Files.ReadInt(R1, oldkey) else oldkey = sum+1 END ;
-    if sum != oldkey:
-      if newSF:
-        key = sum; Files.Set(R, F, 4); Files.WriteInt(R, sum); Files.Register(F)  (*insert checksum*)
-      else ORS.Mark("new symbol file inhibited")
-      END
-    else newSF = False; key = sum
-    END
-  END Export;
 
   def Init*;
   BEGIN topScope = universe; nofmod = 1
