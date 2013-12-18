@@ -56,7 +56,7 @@ relmap[0] = 1; relmap[1] = 9; relmap[2] = 5; relmap[3] = 6; relmap[4] = 14; relm
 
 code = {} # : ARRAY maxCode OF LONGINT;
 data = {} # : ARRAY maxTD OF LONGINT;  (*type descriptors*)
-str = {} # : ARRAY maxStrx OF 0xCAR;
+str_ = {} # : ARRAY maxStrx OF 0xCAR;
 
 #(*instruction assemblers according to formats*)
 
@@ -306,7 +306,7 @@ def loadCond(x):
 
 def loadTypTagAdr(T):
   x = Item()
-  x.mode = ORB.Var; x.a = T.len; x.r = -T.mno
+  x.mode = ORB.Var; x.a = T.len_; x.r = -T.mno
   loadAdr(x)
 
 
@@ -327,21 +327,30 @@ def MakeRealItem(x, val):
   x.mode = ORB.Const; x.type = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
 
 
-def MakeStringItem*(VAR x: Item; len): # (*copies string from ORS-buffer to ORG-string array*)
-  VAR i: LONGINT;
-BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
-  if strx + len + 4 < maxStrx:
-    while len > 0: str[strx] = ORS.str[i]; strx += 1; i += 1; len -= 1 END ;
-    while strx % 4 != 0: str[strx] = 0X; strx += 1 END
-  else: ORS.Mark("too many strings")
-  END
-END MakeStringItem;
+def MakeStringItem*(x, len_): # (*copies string from ORS-buffer to ORG-string array*)
+  x.mode = ORB.Const
+  x.type = ORB.strType
+  x.a = strx
+  x.b = len_
+  i = 0
+  if strx + len_ + 4 < maxStrx:
+    while len_ > 0:
+      str_[strx] = ORS.str_[i]
+      strx += 1
+      i += 1
+      len_ -= 1
+    while strx % 4 != 0:
+      str_[strx] = 0x0
+      strx += 1
+  else:
+    ORS.Mark("too many strings")
+
 
 def MakeItem*(VAR x: Item; y: ORB.Object; curlev):
 BEGIN x.mode = y.class_; x.type = y.type; x.a = y.val; x.rdo = y.rdo;
   if y.class_ == ORB.Par: x.b = 0
-  elif y.class_ == ORB.Typ: x.a = y.type.len; x.r = -y.lev
-  elif (y.class_ == ORB.Const) and (y.type.form == ORB.String): x.b = y.lev  (*len*)
+  elif y.class_ == ORB.Typ: x.a = y.type.len_; x.r = -y.lev
+  elif (y.class_ == ORB.Const) and (y.type.form == ORB.String): x.b = y.lev  (*len_*)
   else: x.r = y.lev
   END ;
   if (y.lev > 0) and (y.lev != curlev) and (y.class_ != ORB.Const): ORS.Mark("level error, not accessible") END
@@ -362,7 +371,7 @@ END Field;
 
 def Index*(VAR x, y: Item);   (* x = x[y] *)
   VAR s, lim: LONGINT;
-BEGIN s = x.type.base.size; lim = x.type.len;
+BEGIN s = x.type.base.size; lim = x.type.len_;
   if (y.mode == ORB.Const) and (lim >= 0):
     if (y.a < 0) or (y.a >= lim): ORS.Mark("bad index") END ;
     if x.mode IN {ORB.Var, RegI}: x.a = y.a * s + x.a
@@ -411,7 +420,7 @@ END DeRef;
 def Q(T: ORB.Type; VAR dcw):
 BEGIN (*one entry of type descriptor extension table*)
   if T.base != NIL:
-    Q(T.base, dcw); data[dcw] = (T.mno*0x1000 + T.len) * 0x1000 + dcw - fixorgT;
+    Q(T.base, dcw); data[dcw] = (T.mno*0x1000 + T.len_) * 0x1000 + dcw - fixorgT;
     fixorgT = dcw; dcw += 1
   END
 END Q;
@@ -425,7 +434,7 @@ BEGIN
     while fld != NIL: FindPtrFlds(fld.type, fld.val + off, dcw); fld = fld.next END
   elif typ.form == ORB.Array:
     s = typ.base.size;
-    FOR i = 0 TO typ.len-1: FindPtrFlds(typ.base, i*s + off, dcw) END
+    FOR i = 0 TO typ.len_-1: FindPtrFlds(typ.base, i*s + off, dcw) END
   END
 END FindPtrFlds;
 
@@ -697,7 +706,7 @@ END StringRelation;
 (* Code generation of Assignments *)
 
 def StrToChar*(VAR x: Item);
-BEGIN x.type = ORB.charType; strx -= 4; x.a = ORD(str[x.a])
+BEGIN x.type = ORB.charType; strx -= 4; x.a = ORD(str_[x.a])
 END StrToChar;
 
 def Store*(VAR x, y: Item); (* x = y *)
@@ -718,9 +727,9 @@ END Store;
 def StoreStruct*(VAR x, y: Item); (* x = y *)
   VAR s, pc0: LONGINT;
 BEGIN loadAdr(x); loadAdr(y);
-  if (x.type.form == ORB.Array) and (x.type.len > 0):
-    if y.type.len >= 0: 
-      if x.type.len >= y.type.len: Put1(Mov, RH, 0, (y.type.size+3) / 4)
+  if (x.type.form == ORB.Array) and (x.type.len_ > 0):
+    if y.type.len_ >= 0: 
+      if x.type.len_ >= y.type.len_: Put1(Mov, RH, 0, (y.type.size+3) / 4)
       else: ORS.Mark("source array too long")
       END
     else: (*y is open array*)
@@ -743,10 +752,10 @@ BEGIN loadAdr(x); loadAdr(y);
 END StoreStruct;
 
 def CopyString*(VAR x, y: Item);  (*from x to y*)
-  VAR len: LONGINT;
-BEGIN loadAdr(y); len = y.type.len;
-  if len >= 0:
-    if x.b > len: ORS.Mark("string too long") END
+  VAR len_: LONGINT;
+BEGIN loadAdr(y); len_ = y.type.len_;
+  if len_ >= 0:
+    if x.b > len_: ORS.Mark("string too long") END
   elif check: Put2(Ldr, RH, y.r, 4);  (*array length check*)
     Put1(Cmp, RH, RH, x.b); Trap(NE, 3)
   END ;
@@ -761,8 +770,8 @@ END CopyString;
 def VarParam*(VAR x: Item; ftype: ORB.Type);
   VAR xmd: INTEGER;
 BEGIN xmd = x.mode; loadAdr(x);
-  if (ftype.form == ORB.Array) and (ftype.len < 0): (*open array*)
-    if x.type.len >= 0: Put1(Mov, RH, 0, x.type.len) else:  Put2(Ldr, RH, SP, x.a+4) END ;
+  if (ftype.form == ORB.Array) and (ftype.len_ < 0): (*open array*)
+    if x.type.len_ >= 0: Put1(Mov, RH, 0, x.type.len_) else:  Put2(Ldr, RH, SP, x.a+4) END ;
     incR()
   elif ftype.form == ORB.Record:
     if xmd == ORB.Par: Put2(Ldr, RH, SP, x.a+4); incR() else: loadTypTagAdr(x.type) END
@@ -775,12 +784,12 @@ END ValueParam;
 
 def OpenArrayParam*(VAR x: Item);
 BEGIN loadAdr(x);
-  if x.type.len >= 0: Put1a(Mov, RH, 0, x.type.len) else: Put2(Ldr, RH, SP, x.a+4) END ;
+  if x.type.len_ >= 0: Put1a(Mov, RH, 0, x.type.len_) else: Put2(Ldr, RH, SP, x.a+4) END ;
   incR()
 END OpenArrayParam;
 
 def StringParam*(VAR x: Item);
-BEGIN loadStringAdr(x); Put1(Mov, RH, 0, x.b); incR()  (*len*)
+BEGIN loadStringAdr(x); Put1(Mov, RH, 0, x.b); incR()  (*len_*)
 END StringParam;
 
 (*For Statements*)
@@ -1024,7 +1033,7 @@ END Ord;
 
 def Len*(VAR x: Item);
 BEGIN
-  if x.type.len >= 0: x.mode = ORB.Const; x.a = x.type.len
+  if x.type.len_ >= 0: x.mode = ORB.Const; x.a = x.type.len_
   else: (*open array*) Put2(Ldr, RH, SP, x.a + 4); x.mode = Reg; x.r = RH; incR()
   END 
 END Len;
@@ -1105,7 +1114,7 @@ BEGIN
   elif typ.form == ORB.Record:
     fld = typ.dsc; n = 0;
     while fld != NIL: n = NofPtrs(fld.type) + n; fld = fld.next END
-  elif typ.form == ORB.Array: n = NofPtrs(typ.base) * typ.len
+  elif typ.form == ORB.Array: n = NofPtrs(typ.base) * typ.len_
   else: n = 0
   END ;
   return n
@@ -1120,7 +1129,7 @@ BEGIN
     while fld != NIL: FindPtrs(R, fld.type, fld.val + adr); fld = fld.next END
   elif typ.form == ORB.Array:
     s = typ.base.size;
-    FOR i = 0 TO typ.len-1: FindPtrs(R, typ.base, i*s + adr) END
+    FOR i = 0 TO typ.len_-1: FindPtrs(R, typ.base, i*s + adr) END
   END
 END FindPtrs;
 
@@ -1160,8 +1169,8 @@ BEGIN  (*exit code*)
   while i < tdx: Files.WriteInt(R, data[i]); i += 1 END ; (*type descriptors*)
   Files.WriteInt(R, varsize - tdx*4);  (*data*)
   Files.WriteInt(R, strx);
-  FOR i = 0 TO strx-1: Files.Write(R, str[i]) END ;  (*strings*)
-  Files.WriteInt(R, pc);  (*code len*)
+  FOR i = 0 TO strx-1: Files.Write(R, str_[i]) END ;  (*strings*)
+  Files.WriteInt(R, pc);  (*code len_*)
   FOR i = 0 TO pc-1: Files.WriteInt(R, code[i]) END ;  (*program*)
   obj = ORB.topScope.next;
   while obj != NIL:  (*commands*)
@@ -1179,9 +1188,9 @@ BEGIN  (*exit code*)
       if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
-        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len % 0x10000)
+        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len_ % 0x10000)
         elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) or (obj.type.base.typobj.exno == 0)):
-          Files.WriteInt(R, obj.type.base.len % 0x10000)
+          Files.WriteInt(R, obj.type.base.len_ % 0x10000)
         END
       END
     END ;
