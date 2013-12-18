@@ -66,7 +66,7 @@ END Put1;
 def Put1a(op, a, b, im: LONGINT);
 BEGIN (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
   if (im >= -0x10000) and (im <= 0x0FFFF): Put1(op, a, b, im)
-  else: Put1(Mov+U, RH, 0, im DIV 0x10000);
+  else: Put1(Mov+U, RH, 0, im / 0x10000);
     if im % 0x10000 != 0: Put1(Ior, RH, RH, im % 0x10000) END ;
     Put0(op, a, b, RH)
   END
@@ -129,7 +129,7 @@ BEGIN curSB = 1
 END invalSB;
 
 def fix(at, with: LONGINT);
-BEGIN code[at] = code[at] DIV C24 * C24 + (with % C24)
+BEGIN code[at] = code[at] / C24 * C24 + (with % C24)
 END fix;
 
 def FixLink*(L: LONGINT);
@@ -143,7 +143,7 @@ def FixLinkWith(L0, dst: LONGINT);
 BEGIN
   while L0 != 0:
     L1 = code[L0] % C24;
-    code[L0] = code[L0] DIV C24 * C24 + ((dst - L0 - 1) % C24); L0 = L1
+    code[L0] = code[L0] / C24 * C24 + ((dst - L0 - 1) % C24); L0 = L1
   END
 END FixLinkWith;
 
@@ -188,7 +188,7 @@ BEGIN
         else: GetSB(x.r); Put1(Add, RH, SB, x.a + 0x100) (*mark as progbase-relative*)
         END
       elif (x.a <= 0x0FFFF) and (x.a >= -0x10000): Put1(Mov, RH, 0, x.a)
-      else: Put1(Mov+U, RH, 0, x.a DIV 0x10000 % 0x10000);
+      else: Put1(Mov+U, RH, 0, x.a / 0x10000 % 0x10000);
         if x.a % 0x10000 != 0: Put1(Ior, RH, RH, x.a % 0x10000) END
       END ;
       x.r = RH; incR
@@ -224,7 +224,7 @@ BEGIN
   if x.type.form == ORB.Bool:
     if x.mode == ORB.Const: x.r = 15 - x.a*8
     else: load(x);
-      if code[pc-1] DIV 0x40000000 != -2: Put1(Cmp, x.r, x.r, 0) END ;
+      if code[pc-1] / 0x40000000 != -2: Put1(Cmp, x.r, x.r, 0) END ;
       x.r = NE; RH -= 1
     END ;
     x.mode = Cond; x.a = 0; x.b = 0
@@ -355,9 +355,9 @@ END FindPtrFlds;
 
 def BuildTD*(T: ORB.Type; VAR dc: LONGINT);
   VAR dcw, k, s: LONGINT;  (*dcw == word address*)
-BEGIN dcw = dc DIV 4; s = T.size; (*convert size for heap allocation*)
+BEGIN dcw = dc / 4; s = T.size; (*convert size for heap allocation*)
   if s <= 24: s = 32 elif s <= 56: s = 64 elif s <= 120: s = 128
-  else: s = (s+263) DIV 256 * 256
+  else: s = (s+263) / 256 * 256
   END ;
   data[dcw] = s; dcw += 1;
   k = T.nofpar;   (*extension level!*)
@@ -455,7 +455,7 @@ END AddOp;
 
 def log2(m: LONGINT; VAR e: LONGINT): LONGINT;
 BEGIN e = 0;
-  while ~ODD(m): m = m DIV 2; e += 1 END ;
+  while ~ODD(m): m = m / 2; e += 1 END ;
   RETURN m
 END log2;
 
@@ -476,7 +476,7 @@ def DivOp*(op: LONGINT; VAR x, y: Item);   (* x = x op y *)
 BEGIN
   if op == ORS.div:
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
-      if y.a > 0: x.a = x.a DIV y.a else: ORS.Mark("bad divisor") END
+      if y.a > 0: x.a = x.a / y.a else: ORS.Mark("bad divisor") END
     elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1): load(x); Put1(Asr, x.r, x.r, e)
     elif y.mode == ORB.Const:
       if y.a > 0: load(x); Put1a(Div, x.r, x.r, y.a) else: ORS.Mark("bad divisor") END
@@ -580,7 +580,7 @@ def IntRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN
   if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
     load(x);
-    if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] DIV 0x40000000 != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
+    if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] / 0x40000000 != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
     RH -= 1
   else: load(x); load(y); Put0(Cmp, x.r, x.r, y.r); RH -= 2
   END ;
@@ -644,21 +644,21 @@ def StoreStruct*(VAR x, y: Item); (* x = y *)
 BEGIN loadAdr(x); loadAdr(y);
   if (x.type.form == ORB.Array) and (x.type.len > 0):
     if y.type.len >= 0: 
-      if x.type.len >= y.type.len: Put1(Mov, RH, 0, (y.type.size+3) DIV 4)
+      if x.type.len >= y.type.len: Put1(Mov, RH, 0, (y.type.size+3) / 4)
       else: ORS.Mark("source array too long")
       END
     else: (*y is open array*)
       Put2(Ldr, RH, SP, y.a+4); s = y.type.base.size;  (*element size*)
       pc0 = pc; Put3(BC, EQ, 0);
       if s == 1: Put1(Add, RH, RH, 3); Put1(Asr, RH, RH, 2)
-      elif s != 4: Put1(Mul, RH, RH, s DIV 4)
+      elif s != 4: Put1(Mul, RH, RH, s / 4)
       END ;
       if check:
-        Put1(Mov, RH+1, 0, (x.type.size+3) DIV 4); Put0(Cmp, RH+1, RH, RH+1); Trap(GT, 3)
+        Put1(Mov, RH+1, 0, (x.type.size+3) / 4); Put0(Cmp, RH+1, RH, RH+1); Trap(GT, 3)
       END ;
       fix(pc0, pc + 5 - pc0)
     END
-  elif x.type.form == ORB.Record: Put1(Mov, RH, 0, x.type.size DIV 4)
+  elif x.type.form == ORB.Record: Put1(Mov, RH, 0, x.type.size / 4)
   else: ORS.Mark("inadmissible assignment")
   END ;
   Put2(Ldr, RH+1, y.r, 0); Put1(Add, y.r, y.r, 4);
@@ -778,7 +778,7 @@ BEGIN
   if r > 0: SaveRegs(r) END ;
   if x.type.form == ORB.Proc:
     if x.mode == ORB.Const:
-      if x.r >= 0: Put3(BL, 7, (x.a DIV 4)-pc-1)
+      if x.r >= 0: Put3(BL, 7, (x.a / 4)-pc-1)
       else: (*imported*)
         if pc - fixorgP < 0x1000:
           Put3(BL, 7, ((-x.r) * 0x100 + x.a) * 0x1000 + pc-fixorgP); fixorgP = pc-1
@@ -1063,7 +1063,7 @@ BEGIN  (*exit code*)
     elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
         and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType): i = 0; (*count commands*)
       while obj.name[i] != 0X: i += 1 END ;
-      i = (i+4) DIV 4 * 4; comsize += i+4
+      i = (i+4) / 4 * 4; comsize += i+4
     elif obj.class_ == ORB.Var: nofptrs += NofPtrs(obj.type)  (*count pointers*)
     END ;
     obj = obj.next
