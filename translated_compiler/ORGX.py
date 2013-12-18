@@ -319,15 +319,15 @@ def loadStringAdr(x):
 
 # (* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
 
-def MakeConstItem*(VAR x: Item; typ: ORB.Type; val):
-BEGIN x.mode = ORB.Const; x.type = typ; x.a = val
-END MakeConstItem;
+def MakeConstItem(x, typ, val):
+  x.mode = ORB.Const; x.type = typ; x.a = val
 
-def MakeRealItem*(VAR x: Item; val: REAL);
-BEGIN x.mode = ORB.Const; x.type = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
-END MakeRealItem;
 
-def MakeStringItem*(VAR x: Item; len): (*copies string from ORS-buffer to ORG-string array*)
+def MakeRealItem(x, val):
+  x.mode = ORB.Const; x.type = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
+
+
+def MakeStringItem*(VAR x: Item; len): # (*copies string from ORS-buffer to ORG-string array*)
   VAR i: LONGINT;
 BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   if strx + len + 4 < maxStrx:
