@@ -161,7 +161,7 @@ END merged;
 
 def GetSB(base: LONGINT);
 BEGIN
-  if (version != 0) and ((base != curSB) OR (base != 0)):
+  if (version != 0) and ((base != curSB) or (base != 0)):
     Put2(Ldr, SB, -base, pc-fixorgD); fixorgD = pc-1; curSB = base
   END
 END GetSB;
@@ -288,7 +288,7 @@ def Index*(VAR x, y: Item);   (* x = x[y] *)
   VAR s, lim: LONGINT;
 BEGIN s = x.type.base.size; lim = x.type.len;
   if (y.mode == ORB.Const) and (lim >= 0):
-    if (y.a < 0) OR (y.a >= lim): ORS.Mark("bad index") END ;
+    if (y.a < 0) or (y.a >= lim): ORS.Mark("bad index") END ;
     if x.mode IN {ORB.Var, RegI}: x.a = y.a * s + x.a
     elif x.mode == ORB.Par: x.b = y.a * s + x.b
     END
@@ -343,7 +343,7 @@ END Q;
 def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
-  if (typ.form == ORB.Pointer) OR (typ.form == ORB.NilTyp): data[dcw] = off; INC(dcw)
+  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): data[dcw] = off; INC(dcw)
   elif typ.form == ORB.Record:
     fld = typ.dsc;
     while fld != NIL DO FindPtrFlds(fld.type, fld.val + off, dcw); fld = fld.next END
@@ -405,7 +405,7 @@ BEGIN
   x.a = merged(y.a, x.a); x.b = y.b; x.r = y.r
 END And2;
 
-def Or1*(VAR x: Item);   (* x = x OR *)
+def Or1*(VAR x: Item);   (* x = x or *)
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
   Put3(BC, x.r, x.b);  x.b = pc-1; FixLink(x.a); x.a = 0
@@ -580,7 +580,7 @@ def IntRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN
   if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
     load(x);
-    if (y.a != 0) OR ~(op IN {ORS.eql, ORS.neq}) OR (code[pc-1] DIV 40000000H != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
+    if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] DIV 40000000H != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
     DEC(RH)
   else load(x); load(y); Put0(Cmp, x.r, x.r, y.r); DEC(RH, 2)
   END ;
@@ -589,7 +589,7 @@ END IntRelation;
 
 def SetRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN load(x);
-  if (op == ORS.eql) OR (op == ORS.neq):
+  if (op == ORS.eql) or (op == ORS.neq):
     if y.mode == ORB.Const: Put1a(Cmp, x.r, x.r, y.a); DEC(RH)
     else load(y); Put0(Cmp, x.r, x.r, y.r); DEC(RH, 2)
     END ;
@@ -1025,7 +1025,7 @@ END Header;
 def NofPtrs(typ: ORB.Type): LONGINT;
   VAR fld: ORB.Object; n: LONGINT;
 BEGIN
-  if (typ.form == ORB.Pointer) OR (typ.form == ORB.NilTyp): n = 1
+  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): n = 1
   elif typ.form == ORB.Record:
     fld = typ.dsc; n = 0;
     while fld != NIL DO n = NofPtrs(fld.type) + n; fld = fld.next END
@@ -1038,7 +1038,7 @@ END NofPtrs;
 def FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
-  if (typ.form == ORB.Pointer) OR (typ.form == ORB.NilTyp): Files.WriteInt(R, adr)
+  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): Files.WriteInt(R, adr)
   elif typ.form == ORB.Record:
     fld = typ.dsc;
     while fld != NIL DO FindPtrs(R, fld.type, fld.val + adr); fld = fld.next END
@@ -1100,11 +1100,11 @@ BEGIN  (*exit code*)
   obj = ORB.topScope.next;
   while obj != NIL DO  (*entries*)
     if obj.exno != 0:
-      if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) OR (obj.class_ == ORB.Var):
+      if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
         if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len MOD 10000H)
-        elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) OR (obj.type.base.typobj.exno == 0)):
+        elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) or (obj.type.base.typobj.exno == 0)):
           Files.WriteInt(R, obj.type.base.len MOD 10000H)
         END
       END
