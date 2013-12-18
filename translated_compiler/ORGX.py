@@ -467,7 +467,7 @@ def DeRef(x):
 def Q(T, dcw):
   global fixorgT
   # (*one entry of type descriptor extension table*)
-  if T.base != NIL:
+  if T.base != None:
     dcw = Q(T.base, dcw)
     data[dcw] = (T.mno*0x1000 + T.len_) * 0x1000 + dcw - fixorgT
     fixorgT = dcw
@@ -481,7 +481,7 @@ def FindPtrFlds(typ, off, dcw):
     dcw += 1
   elif typ.form == ORB.Record:
     fld = typ.dsc;
-    while fld != NIL:
+    while fld != None:
       dcw = FindPtrFlds(fld.type, fld.val + off, dcw)
       fld = fld.next END
   elif typ.form == ORB.Array:
@@ -1165,7 +1165,7 @@ BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): n = 1
   elif typ.form == ORB.Record:
     fld = typ.dsc; n = 0;
-    while fld != NIL: n = NofPtrs(fld.type) + n; fld = fld.next END
+    while fld != None: n = NofPtrs(fld.type) + n; fld = fld.next END
   elif typ.form == ORB.Array: n = NofPtrs(typ.base) * typ.len_
   else: n = 0
   END ;
@@ -1178,7 +1178,7 @@ BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): Files.WriteInt(R, adr)
   elif typ.form == ORB.Record:
     fld = typ.dsc;
-    while fld != NIL: FindPtrs(R, fld.type, fld.val + adr); fld = fld.next END
+    while fld != None: FindPtrs(R, fld.type, fld.val + adr); fld = fld.next END
   elif typ.form == ORB.Array:
     s = typ.base.size;
     FOR i = 0 TO typ.len_-1: FindPtrs(R, typ.base, i*s + adr) END
@@ -1195,7 +1195,7 @@ BEGIN  (*exit code*)
   else: Put2(Ldr, LNK, SP, 0); Put1(Add, SP, SP, 4); Put3(BR, 7, LNK)
   END ;
   obj = ORB.topScope.next; nofimps = 0; comsize = 4; nofptrs = 0;
-  while obj != NIL:
+  while obj != None:
     if (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system): nofimps += 1 (*count imports*)
     elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
         and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType): i = 0; (*count commands*)
@@ -1211,7 +1211,7 @@ BEGIN  (*exit code*)
   F = Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); Files.WriteByte(R, version);
   Files.WriteInt(R, size);
   obj = ORB.topScope.next;
-  while (obj != NIL) and (obj.class_ == ORB.Mod):  (*imports*)
+  while (obj != None) and (obj.class_ == ORB.Mod):  (*imports*)
     if obj.dsc != ORB.system: Files.WriteString(R, obj(ORB.Module).orgname); Files.WriteInt(R, obj.val) END ;
     obj = obj.next
   END ;
@@ -1225,7 +1225,7 @@ BEGIN  (*exit code*)
   Files.WriteInt(R, pc);  (*code len_*)
   FOR i = 0 TO pc-1: Files.WriteInt(R, code[i]) END ;  (*program*)
   obj = ORB.topScope.next;
-  while obj != NIL:  (*commands*)
+  while obj != None:  (*commands*)
     if (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) and
         (obj.type.nofpar == 0) and (obj.type.base == ORB.noType):
       Files.WriteString(R, obj.name); Files.WriteInt(R, obj.val)
@@ -1235,13 +1235,13 @@ BEGIN  (*exit code*)
   Files.Write(R, 0X);
   Files.WriteInt(R, nofent); Files.WriteInt(R, entry);
   obj = ORB.topScope.next;
-  while obj != NIL:  (*entries*)
+  while obj != None:  (*entries*)
     if obj.exno != 0:
       if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
         if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len_ % 0x10000)
-        elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) or (obj.type.base.typobj.exno == 0)):
+        elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == None) or (obj.type.base.typobj.exno == 0)):
           Files.WriteInt(R, obj.type.base.len_ % 0x10000)
         END
       END
@@ -1249,7 +1249,7 @@ BEGIN  (*exit code*)
     obj = obj.next
   END ;
   obj = ORB.topScope.next;
-  while obj != NIL:  (*pointer variables*)
+  while obj != None:  (*pointer variables*)
     if obj.class_ == ORB.Var: FindPtrs(R, obj.type, obj.val) END ;
     obj = obj.next
   END ;
