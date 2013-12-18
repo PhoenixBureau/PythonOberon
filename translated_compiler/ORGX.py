@@ -98,7 +98,7 @@ def SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved d
 BEGIN rs = r; rd = 0;
   REPEAT DEC(rs); Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
   rs = r; rd = 0;
-  while rs < RH DO Put0(Mov, rd, 0, rs); INC(rs); INC(rd) END ;
+  while rs < RH: Put0(Mov, rd, 0, rs); INC(rs); INC(rd) END ;
   RH = rd
 END SaveRegs;
 
@@ -135,13 +135,13 @@ END fix;
 def FixLink*(L: LONGINT);
   VAR L1: LONGINT;
 BEGIN invalSB;
-  while L != 0 DO L1 = code[L] MOD 40000H; fix(L, pc-L-1); L = L1 END
+  while L != 0: L1 = code[L] MOD 40000H; fix(L, pc-L-1); L = L1 END
 END FixLink;
 
 def FixLinkWith(L0, dst: LONGINT);
   VAR L1: LONGINT;
 BEGIN
-  while L0 != 0 DO
+  while L0 != 0:
     L1 = code[L0] MOD C24;
     code[L0] = code[L0] DIV C24 * C24 + ((dst - L0 - 1) MOD C24); L0 = L1
   END
@@ -255,8 +255,8 @@ def MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer 
   VAR i: LONGINT;
 BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   if strx + len + 4 < maxStrx:
-    while len > 0 DO str[strx] = ORS.str[i]; INC(strx); INC(i); DEC(len) END ;
-    while strx MOD 4 != 0 DO str[strx] = 0X; INC(strx) END
+    while len > 0: str[strx] = ORS.str[i]; INC(strx); INC(i); DEC(len) END ;
+    while strx MOD 4 != 0: str[strx] = 0X; INC(strx) END
   else: ORS.Mark("too many strings")
   END
 END MakeStringItem;
@@ -346,10 +346,10 @@ BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): data[dcw] = off; INC(dcw)
   elif typ.form == ORB.Record:
     fld = typ.dsc;
-    while fld != NIL DO FindPtrFlds(fld.type, fld.val + off, dcw); fld = fld.next END
+    while fld != NIL: FindPtrFlds(fld.type, fld.val + off, dcw); fld = fld.next END
   elif typ.form == ORB.Array:
     s = typ.base.size;
-    FOR i = 0 TO typ.len-1 DO FindPtrFlds(typ.base, i*s + off, dcw) END
+    FOR i = 0 TO typ.len-1: FindPtrFlds(typ.base, i*s + off, dcw) END
   END
 END FindPtrFlds;
 
@@ -363,7 +363,7 @@ BEGIN dcw = dc DIV 4; s = T.size; (*convert size for heap allocation*)
   k = T.nofpar;   (*extension level!*)
   if k > 3: ORS.Mark("ext level too large")
   else: Q(T, dcw);
-    while k < 3 DO data[dcw] = -1; INC(dcw); INC(k) END
+    while k < 3: data[dcw] = -1; INC(dcw); INC(k) END
   END ;
   FindPtrFlds(T, 0, dcw); data[dcw] = -1; INC(dcw); tdx = dcw; dc = dcw*4;
   if tdx >= maxTD: ORS.Mark("too many record types"); tdx = 0 END
@@ -455,7 +455,7 @@ END AddOp;
 
 def log2(m: LONGINT; VAR e: LONGINT): LONGINT;
 BEGIN e = 0;
-  while ~ODD(m) DO m = m DIV 2; INC(e) END ;
+  while ~ODD(m): m = m DIV 2; INC(e) END ;
   RETURN m
 END log2;
 
@@ -803,7 +803,7 @@ BEGIN invalSB;
   if ~int: (*procedure prolog*)
     a = 4; r = 0;
     Put1(Sub, SP, SP, locblksize); Put2(Str, LNK, SP, 0);
-    while a < parblksize DO Put2(Str, r, SP, a); INC(r); INC(a, 4) END
+    while a < parblksize: Put2(Str, r, SP, a); INC(r); INC(a, 4) END
   else: (*interrupt procedure*)
     Put1(Sub, SP, SP, 8); Put2(Str, 0, SP, 0); Put2(Str, 1, SP, 4)
     (*R0 and R1 saved, but NOT LNK*)
@@ -1028,7 +1028,7 @@ BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): n = 1
   elif typ.form == ORB.Record:
     fld = typ.dsc; n = 0;
-    while fld != NIL DO n = NofPtrs(fld.type) + n; fld = fld.next END
+    while fld != NIL: n = NofPtrs(fld.type) + n; fld = fld.next END
   elif typ.form == ORB.Array: n = NofPtrs(typ.base) * typ.len
   else: n = 0
   END ;
@@ -1041,10 +1041,10 @@ BEGIN
   if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): Files.WriteInt(R, adr)
   elif typ.form == ORB.Record:
     fld = typ.dsc;
-    while fld != NIL DO FindPtrs(R, fld.type, fld.val + adr); fld = fld.next END
+    while fld != NIL: FindPtrs(R, fld.type, fld.val + adr); fld = fld.next END
   elif typ.form == ORB.Array:
     s = typ.base.size;
-    FOR i = 0 TO typ.len-1 DO FindPtrs(R, typ.base, i*s + adr) END
+    FOR i = 0 TO typ.len-1: FindPtrs(R, typ.base, i*s + adr) END
   END
 END FindPtrs;
 
@@ -1058,11 +1058,11 @@ BEGIN  (*exit code*)
   else: Put2(Ldr, LNK, SP, 0); Put1(Add, SP, SP, 4); Put3(BR, 7, LNK)
   END ;
   obj = ORB.topScope.next; nofimps = 0; comsize = 4; nofptrs = 0;
-  while obj != NIL DO
+  while obj != NIL:
     if (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system): INC(nofimps) (*count imports*)
     elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
         and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType): i = 0; (*count commands*)
-      while obj.name[i] != 0X DO INC(i) END ;
+      while obj.name[i] != 0X: INC(i) END ;
       i = (i+4) DIV 4 * 4; INC(comsize, i+4)
     elif obj.class_ == ORB.Var: INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
     END ;
@@ -1074,21 +1074,21 @@ BEGIN  (*exit code*)
   F = Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); Files.WriteByte(R, version);
   Files.WriteInt(R, size);
   obj = ORB.topScope.next;
-  while (obj != NIL) and (obj.class_ == ORB.Mod) DO  (*imports*)
+  while (obj != NIL) and (obj.class_ == ORB.Mod):  (*imports*)
     if obj.dsc != ORB.system: Files.WriteString(R, obj(ORB.Module).orgname); Files.WriteInt(R, obj.val) END ;
     obj = obj.next
   END ;
   Files.Write(R, 0X);
   Files.WriteInt(R, tdx*4);
   i = 0;
-  while i < tdx DO Files.WriteInt(R, data[i]); INC(i) END ; (*type descriptors*)
+  while i < tdx: Files.WriteInt(R, data[i]); INC(i) END ; (*type descriptors*)
   Files.WriteInt(R, varsize - tdx*4);  (*data*)
   Files.WriteInt(R, strx);
-  FOR i = 0 TO strx-1 DO Files.Write(R, str[i]) END ;  (*strings*)
+  FOR i = 0 TO strx-1: Files.Write(R, str[i]) END ;  (*strings*)
   Files.WriteInt(R, pc);  (*code len*)
-  FOR i = 0 TO pc-1 DO Files.WriteInt(R, code[i]) END ;  (*program*)
+  FOR i = 0 TO pc-1: Files.WriteInt(R, code[i]) END ;  (*program*)
   obj = ORB.topScope.next;
-  while obj != NIL DO  (*commands*)
+  while obj != NIL:  (*commands*)
     if (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) and
         (obj.type.nofpar == 0) and (obj.type.base == ORB.noType):
       Files.WriteString(R, obj.name); Files.WriteInt(R, obj.val)
@@ -1098,7 +1098,7 @@ BEGIN  (*exit code*)
   Files.Write(R, 0X);
   Files.WriteInt(R, nofent); Files.WriteInt(R, entry);
   obj = ORB.topScope.next;
-  while obj != NIL DO  (*entries*)
+  while obj != NIL:  (*entries*)
     if obj.exno != 0:
       if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
@@ -1112,7 +1112,7 @@ BEGIN  (*exit code*)
     obj = obj.next
   END ;
   obj = ORB.topScope.next;
-  while obj != NIL DO  (*pointer variables*)
+  while obj != NIL:  (*pointer variables*)
     if obj.class_ == ORB.Var: FindPtrs(R, obj.type, obj.val) END ;
     obj = obj.next
   END ;
