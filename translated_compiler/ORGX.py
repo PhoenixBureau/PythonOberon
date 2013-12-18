@@ -92,21 +92,23 @@ def Put3(op, cond, off):
   global pc
   code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
 
-def incR();
+def incR():
   if RH < MT:
     RH += 1
   else:
     ORS.Mark("register stack overflow")
 
-def CheckRegs*;
-BEGIN
-  if RH != 0: ORS.Mark("Reg Stack"); RH = 0 END ;
-  if pc >= maxCode - 40: ORS.Mark("Program too long"); END
-END CheckRegs;
+def CheckRegs():
+  global RH
+  if RH != 0:
+    ORS.Mark("Reg Stack")
+    RH = 0
+  if pc >= maxCode - 40:
+    ORS.Mark("Program too long")
 
-def SaveRegs(r): (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
-  VAR rs, rd: LONGINT;  (*r > 0*)
-BEGIN rs = r; rd = 0;
+
+def SaveRegs(r): #(* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
+  rs = r; rd = 0;
   REPEAT rs -= 1; Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
   rs = r; rd = 0;
   while rs < RH: Put0(Mov, rd, 0, rs); rs += 1; rd += 1 END ;
