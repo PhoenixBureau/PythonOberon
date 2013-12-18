@@ -260,46 +260,64 @@ def load(x);
     x.mode = Reg
 
 
-def loadAdr(VAR x: Item);
-BEGIN
+def loadAdr(x):
   if x.mode == ORB.Var:
-    if x.r > 0: (*local*) Put1a(Add, RH, SP, x.a)
-    else: GetSB(x.r); Put1a(Add, RH, SB, x.a)
-    END ;
+    if x.r > 0: # (*local*)
+      Put1a(Add, RH, SP, x.a)
+    else:
+      GetSB(x.r)
+      Put1a(Add, RH, SB, x.a)
     x.r = RH; incR()
-  elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a);
-    if x.b != 0: Put1a(Add, RH, RH, x.b) END ;
+
+  elif x.mode == ORB.Par:
+    Put2(Ldr, RH, SP, x.a);
+    if x.b != 0:
+      Put1a(Add, RH, RH, x.b)
     x.r = RH; incR()
+
   elif x.mode == RegI:
-    if x.a != 0: Put1a(Add, x.r, x.r, x.a) END
-  else: ORS.Mark("address error") 
-  END ;
+    if x.a != 0:
+      Put1a(Add, x.r, x.r, x.a)
+
+  else:
+    ORS.Mark("address error") 
+
   x.mode = Reg
-END loadAdr;
 
-def loadCond(VAR x: Item);
-BEGIN
+
+def loadCond(x):
+  global RH
   if x.type.form == ORB.Bool:
-    if x.mode == ORB.Const: x.r = 15 - x.a*8
-    else: load(x);
-      if code[pc-1] / 0x40000000 != -2: Put1(Cmp, x.r, x.r, 0) END ;
-      x.r = NE; RH -= 1
-    END ;
-    x.mode = Cond; x.a = 0; x.b = 0
-  else: ORS.Mark("not Boolean?")
-  END
-END loadCond;
+    if x.mode == ORB.Const:
+      x.r = 15 - x.a*8
+    else:
+      load(x)
+      if code[pc-1] / 0x40000000 != -2:
+        Put1(Cmp, x.r, x.r, 0)
+      x.r = NE
+      RH -= 1
 
-def loadTypTagAdr(T: ORB.Type);
-  VAR x: Item;
-BEGIN x.mode = ORB.Var; x.a = T.len; x.r = -T.mno; loadAdr(x)
-END loadTypTagAdr;
+    x.mode = Cond
+    x.a = 0
+    x.b = 0
+  else:
+    ORS.Mark("not Boolean?")
 
-def loadStringAdr(VAR x: Item);
-BEGIN GetSB(0); Put1a(Add, RH, SB, varsize+x.a); x.mode = Reg; x.r = RH; incR()
-END loadStringAdr;
 
-(* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
+def loadTypTagAdr(T):
+  x = Item()
+  x.mode = ORB.Var; x.a = T.len; x.r = -T.mno
+  loadAdr(x)
+
+
+def loadStringAdr(x):
+  GetSB(0)
+  Put1a(Add, RH, SB, varsize+x.a)
+  x.mode = Reg
+  x.r = RH; incR()
+
+
+# (* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
 
 def MakeConstItem*(VAR x: Item; typ: ORB.Type; val):
 BEGIN x.mode = ORB.Const; x.type = typ; x.a = val
