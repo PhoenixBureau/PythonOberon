@@ -550,7 +550,7 @@ def TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN):
       RH -= 1
 
 
-(* Code generation for Boolean operators *)
+# (* Code generation for Boolean operators *)
 
 def Not(x): # (* x = ~x *)
   if x.mode != Cond:
@@ -587,98 +587,170 @@ def Or2(x, y);
 
 # (* Code generation for arithmetic operators *)
 
-def Neg*(VAR x: Item);   (* x = -x *)
-BEGIN
+def Neg(x): # (* x = -x *)
   if x.type.form == ORB.Int:
-    if x.mode == ORB.Const: x.a = -x.a
-    else: load(x); Put1(Mov, RH, 0, 0); Put0(Sub, x.r, RH, x.r)
-    END
+    if x.mode == ORB.Const:
+      x.a = -x.a
+    else:
+      load(x)
+      Put1(Mov, RH, 0, 0)
+      Put0(Sub, x.r, RH, x.r)
+
   elif x.type.form == ORB.Real:
-    if x.mode == ORB.Const: x.a = x.a + 0x7FFFFFFF + 1
-    else: load(x); Put1(Mov, RH, 0, 0); Put0(Fsb, x.r, RH, x.r)
-    END
-  else: (*form == Set*)
-    if x.mode == ORB.Const: x.a = -x.a-1 
-    else: load(x); Put1(Xor, x.r, x.r, -1)
-    END
-  END
-END Neg;
+    if x.mode == ORB.Const:
+      x.a = x.a + 0x7FFFFFFF + 1
+    else:
+      load(x)
+      Put1(Mov, RH, 0, 0)
+      Put0(Fsb, x.r, RH, x.r)
 
-def AddOp*(op: LONGINT; VAR x, y: Item);   (* x = x +- y *)
-BEGIN
+  else: # (*form == Set*)
+    if x.mode == ORB.Const:
+      x.a = -x.a-1 
+    else:
+      load(x)
+      Put1(Xor, x.r, x.r, -1)
+
+
+def AddOp(op, x, y): # (* x = x +- y *)
   if op == ORS.plus:
-    if (x.mode == ORB.Const) and (y.mode == ORB.Const): x.a = x.a + y.a
-    elif y.mode == ORB.Const: load(x);
-      if y.a != 0: Put1a(Add, x.r, x.r, y.a) END
-    else: load(x); load(y); Put0(Add, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
-    END
-  else: (*op == ORS.minus*)
-    if (x.mode == ORB.Const) and (y.mode == ORB.Const): x.a = x.a - y.a
-    elif y.mode == ORB.Const: load(x);
-      if y.a != 0: Put1a(Sub, x.r, x.r, y.a) END
-    else: load(x); load(y); Put0(Sub, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
-    END
-  END
-END AddOp;
+    if (x.mode == ORB.Const) and (y.mode == ORB.Const):
+      x.a = x.a + y.a
+    elif y.mode == ORB.Const:
+      load(x);
+      if y.a != 0:
+        Put1a(Add, x.r, x.r, y.a)
+    else:
+      load(x)
+      load(y)
+      Put0(Add, RH-2, x.r, y.r)
+      RH -= 1
+      x.r = RH-1
 
-def log2(m: LONGINT; VAR e: LONGINT): LONGINT;
-BEGIN e = 0;
-  while ~ODD(m): m = m / 2; e += 1 END ;
+  else: # (*op == ORS.minus*)
+    if (x.mode == ORB.Const) and (y.mode == ORB.Const):
+      x.a = x.a - y.a
+    elif y.mode == ORB.Const:
+      load(x);
+      if y.a != 0:
+        Put1a(Sub, x.r, x.r, y.a)
+    else:
+      load(x)
+      load(y)
+      Put0(Sub, RH-2, x.r, y.r)
+      RH -= 1
+      x.r = RH-1
+
+
+def log2(m, e): # FIXME e is VAR
+  e = 0
+  while not ODD(m):
+    m = m / 2
+    e += 1
   return m
-END log2;
 
-def MulOp*(VAR x, y: Item);   (* x = x * y *)
-  VAR e: LONGINT;
-BEGIN
-  if (x.mode == ORB.Const) and (y.mode == ORB.Const): x.a = x.a * y.a
-  elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1): load(x); Put1(Lsl, x.r, x.r, e)
-  elif y.mode == ORB.Const: load(x); Put1a(Mul, x.r, x.r, y.a)
-  elif (x.mode == ORB.Const) and (x.a >= 2) and (log2(x.a, e) == 1): load(y); Put1(Lsl, y.r, y.r, e); x.mode = Reg; x.r = y.r
-  elif x.mode == ORB.Const: load(y); Put1a(Mul, y.r, y.r, x.a); x.mode = Reg; x.r = y.r
-  else: load(x); load(y); Put0(Mul, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
-  END
-END MulOp;
 
-def DivOp*(op: LONGINT; VAR x, y: Item);   (* x = x op y *)
-  VAR e: LONGINT;
-BEGIN
+def MulOp(x, y): # (* x = x * y *)
+  if (x.mode == ORB.Const) and (y.mode == ORB.Const):
+    x.a = x.a * y.a
+  elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
+    load(x)
+    Put1(Lsl, x.r, x.r, e)
+  elif y.mode == ORB.Const:
+    load(x)
+    Put1a(Mul, x.r, x.r, y.a)
+  elif (x.mode == ORB.Const) and (x.a >= 2) and (log2(x.a, e) == 1):
+    load(y)
+    Put1(Lsl, y.r, y.r, e)
+    x.mode = Reg
+    x.r = y.r
+  elif x.mode == ORB.Const:
+    load(y)
+    Put1a(Mul, y.r, y.r, x.a)
+    x.mode = Reg
+    x.r = y.r
+  else:
+    load(x)
+    load(y)
+    Put0(Mul, RH-2, x.r, y.r)
+    RH -= 1
+    x.r = RH-1
+
+
+def DivOp(op, x, y): # (* x = x op y *)
   if op == ORS.div:
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
-      if y.a > 0: x.a = x.a / y.a else: ORS.Mark("bad divisor") END
-    elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1): load(x); Put1(Asr, x.r, x.r, e)
+      if y.a > 0:
+        x.a = x.a / y.a
+      else:
+        ORS.Mark("bad divisor")
+    elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
+      load(x)
+      Put1(Asr, x.r, x.r, e)
     elif y.mode == ORB.Const:
-      if y.a > 0: load(x); Put1a(Div, x.r, x.r, y.a) else: ORS.Mark("bad divisor") END
-    else: load(y);
-      if check: Trap(LE, 6) END ;
-      load(x); Put0(Div, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
-    END
-  else: (*op == ORS.mod*)
+      if y.a > 0:
+        load(x)
+        Put1a(Div, x.r, x.r, y.a)
+      else:
+        ORS.Mark("bad divisor")
+    else:
+      load(y);
+      if check:
+        Trap(LE, 6)
+      load(x)
+      Put0(Div, RH-2, x.r, y.r)
+      RH -= 1
+      x.r = RH-1
+
+  else: # (*op == ORS.mod*)
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
-      if y.a > 0: x.a = x.a % y.a else: ORS.Mark("bad modulus") END
-    elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1): load(x);
-      if e <= 16: Put1(And, x.r, x.r, y.a-1) else: Put1(Lsl, x.r, x.r, 32-e); Put1(Ror, x.r, x.r, 32-e) END
+      if y.a > 0:
+        x.a = x.a % y.a
+      else:
+        ORS.Mark("bad modulus")
+    elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
+      load(x);
+      if e <= 16:
+        Put1(And, x.r, x.r, y.a-1)
+      else:
+        Put1(Lsl, x.r, x.r, 32-e)
+        Put1(Ror, x.r, x.r, 32-e)
     elif y.mode == ORB.Const:
-      if y.a > 0: load(x); Put1a(Div, x.r, x.r, y.a); Put0(Mov+U, x.r, 0, 0) else: ORS.Mark("bad modulus") END
-    else: load(y);
-      if check: Trap(LE, 6) END ;
-      load(x); Put0(Div, RH-2, x.r, y.r); Put0(Mov+U, RH-2, 0, 0); RH -= 1; x.r = RH-1
-    END
-  END
-END DivOp;
+      if y.a > 0:
+        load(x)
+        Put1a(Div, x.r, x.r, y.a)
+        Put0(Mov+U, x.r, 0, 0)
+      else:
+        ORS.Mark("bad modulus")
+    else:
+      load(y);
+      if check:
+        Trap(LE, 6)
+      load(x)
+      Put0(Div, RH-2, x.r, y.r)
+      Put0(Mov+U, RH-2, 0, 0)
+      RH -= 1
+      x.r = RH-1
 
-(* Code generation for REAL operators *)
 
-def RealOp*(op: INTEGER; VAR x, y: Item);   (* x = x op y *)
-BEGIN load(x); load(y);
-  if op == ORS.plus: Put0(Fad, RH-2, x.r, y.r)
-  elif op == ORS.minus: Put0(Fsb, RH-2, x.r, y.r)
-  elif op == ORS.times: Put0(Fml, RH-2, x.r, y.r)
-  elif op == ORS.rdiv: Put0(Fdv, RH-2, x.r, y.r)
-  END ;
+# (* Code generation for REAL operators *)
+
+def RealOp(op, x, y): # (* x = x op y *)
+  load(x)
+  load(y);
+  if op == ORS.plus:
+    Put0(Fad, RH-2, x.r, y.r)
+  elif op == ORS.minus:
+    Put0(Fsb, RH-2, x.r, y.r)
+  elif op == ORS.times:
+    Put0(Fml, RH-2, x.r, y.r)
+  elif op == ORS.rdiv:
+    Put0(Fdv, RH-2, x.r, y.r)
+
   RH -= 1; x.r = RH-1
-END RealOp;
 
-(* Code generation for set operators *)
+
+# (* Code generation for set operators *)
 
 def Singleton*(VAR x: Item);  (* x = {x} *)
 BEGIN
