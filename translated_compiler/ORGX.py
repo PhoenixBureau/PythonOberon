@@ -61,39 +61,42 @@ str = {} # : ARRAY maxStrx OF 0xCAR;
 #(*instruction assemblers according to formats*)
 
 def Put0(op, a, b, c):
-BEGIN (*emit format-0 instruction*)
+  # (*emit format-0 instruction*)
+  global pc
   code[pc] = ((a*0x10 + b) * 0x10 + op) * 0x10000 + c; pc += 1
-END Put0;
 
 def Put1(op, a, b, im):
-BEGIN (*emit format-1 instruction,  -0x10000 <= im < 0x10000*)
-  if im < 0: op += 0x1000 END ;  (*set v-bit*)
+  # (*emit format-1 instruction,  -0x10000 <= im < 0x10000*)
+  global pc
+  if im < 0:
+    op += 0x1000 # (*set v-bit*)
   code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im % 0x10000); pc += 1
-END Put1;
 
 def Put1a(op, a, b, im):
-BEGIN (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
-  if (im >= -0x10000) and (im <= 0x0FFFF): Put1(op, a, b, im)
-  else: Put1(Mov+U, RH, 0, im / 0x10000);
-    if im % 0x10000 != 0: Put1(Ior, RH, RH, im % 0x10000) END ;
+  # (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
+  if (im >= -0x10000) and (im <= 0x0FFFF):
+    Put1(op, a, b, im)
+  else:
+    Put1(Mov+U, RH, 0, im / 0x10000);
+    if im % 0x10000 != 0:
+      Put1(Ior, RH, RH, im % 0x10000)
     Put0(op, a, b, RH)
-  END
-END Put1a;
 
 def Put2(op, a, b, off):
-BEGIN (*emit load/store instruction*)
+  # (*emit load/store instruction*)
+  global pc
   code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off % 0x100000); pc += 1
-END Put2;
 
 def Put3(op, cond, off):
-BEGIN (*emit bran0xc instruction*)
+  # (*emit bran0xc instruction*)
+  global pc
   code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
-END Put3;
 
-def incR;
-BEGIN
-  if RH < MT: RH += 1 else: ORS.Mark("register stack overflow") END
-END incR;
+def incR();
+  if RH < MT:
+    RH += 1
+  else:
+    ORS.Mark("register stack overflow")
 
 def CheckRegs*;
 BEGIN
@@ -187,8 +190,8 @@ BEGIN
       if x.r > 0: (*local*) Put2(op, RH, SP, x.a)
       else: GetSB(x.r); Put2(op, RH, SB, x.a)
       END ;
-      x.r = RH; incR
-    elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a); Put2(op, RH, RH, x.b); x.r = RH; incR
+      x.r = RH; incR()
+    elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a); Put2(op, RH, RH, x.b); x.r = RH; incR()
     elif x.mode == ORB.Const:
       if x.type.form == ORB.Proc:
         if x.r > 0: ORS.Mark("not allowed")
@@ -199,12 +202,12 @@ BEGIN
       else: Put1(Mov+U, RH, 0, x.a / 0x10000 % 0x10000);
         if x.a % 0x10000 != 0: Put1(Ior, RH, RH, x.a % 0x10000) END
       END ;
-      x.r = RH; incR
+      x.r = RH; incR()
     elif x.mode == RegI: Put2(op, x.r, x.r, x.a)
     elif x.mode == Cond:
       Put3(BC, negated(x.r), 2);
       FixLink(x.b); Put1(Mov, RH, 0, 1); Put3(BC, 7, 1);
-      FixLink(x.a); Put1(Mov, RH, 0, 0); x.r = RH; incR
+      FixLink(x.a); Put1(Mov, RH, 0, 0); x.r = RH; incR()
     END ;
     x.mode = Reg
   END
@@ -216,10 +219,10 @@ BEGIN
     if x.r > 0: (*local*) Put1a(Add, RH, SP, x.a)
     else: GetSB(x.r); Put1a(Add, RH, SB, x.a)
     END ;
-    x.r = RH; incR
+    x.r = RH; incR()
   elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a);
     if x.b != 0: Put1a(Add, RH, RH, x.b) END ;
-    x.r = RH; incR
+    x.r = RH; incR()
   elif x.mode == RegI:
     if x.a != 0: Put1a(Add, x.r, x.r, x.a) END
   else: ORS.Mark("address error") 
@@ -246,7 +249,7 @@ BEGIN x.mode = ORB.Var; x.a = T.len; x.r = -T.mno; loadAdr(x)
 END loadTypTagAdr;
 
 def loadStringAdr(VAR x: Item);
-BEGIN GetSB(0); Put1a(Add, RH, SB, varsize+x.a); x.mode = Reg; x.r = RH; incR
+BEGIN GetSB(0); Put1a(Add, RH, SB, varsize+x.a); x.mode = Reg; x.r = RH; incR()
 END loadStringAdr;
 
 (* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
@@ -331,9 +334,9 @@ def DeRef*(VAR x: Item);
 BEGIN
   if x.mode == ORB.Var:
     if x.r > 0: (*local*) Put2(Ldr, RH, SP, x.a) else: GetSB(x.r); Put2(Ldr, RH, SB, x.a) END ;
-    NilCheck; x.r = RH; incR
+    NilCheck; x.r = RH; incR()
   elif x.mode == ORB.Par:
-    Put2(Ldr, RH, SP, x.a); Put2(Ldr, RH, RH, x.b); NilCheck; x.r = RH; incR
+    Put2(Ldr, RH, SP, x.a); Put2(Ldr, RH, RH, x.b); NilCheck; x.r = RH; incR()
   elif x.mode == RegI: Put2(Ldr, x.r, x.r, x.a); NilCheck
   elif x.mode != Reg: ORS.Mark("bad mode in DeRef")
   END ;
@@ -382,7 +385,7 @@ BEGIN (*fetch tag into RH*)
   if varpar: Put2(Ldr, RH, SP, x.a+4)
   else: load(x); NilCheck; Put2(Ldr, RH, x.r, -8)
   END ;
-  Put2(Ldr, RH, RH, T.nofpar*4); incR;
+  Put2(Ldr, RH, RH, T.nofpar*4); incR();
   loadTypTagAdr(T);  (*tag of T*)
   Put0(Cmp, RH, RH-1, RH-2); RH -= 2;
   if isguard:
@@ -695,9 +698,9 @@ def VarParam*(VAR x: Item; ftype: ORB.Type);
 BEGIN xmd = x.mode; loadAdr(x);
   if (ftype.form == ORB.Array) and (ftype.len < 0): (*open array*)
     if x.type.len >= 0: Put1(Mov, RH, 0, x.type.len) else:  Put2(Ldr, RH, SP, x.a+4) END ;
-    incR
+    incR()
   elif ftype.form == ORB.Record:
-    if xmd == ORB.Par: Put2(Ldr, RH, SP, x.a+4); incR else: loadTypTagAdr(x.type) END
+    if xmd == ORB.Par: Put2(Ldr, RH, SP, x.a+4); incR() else: loadTypTagAdr(x.type) END
   END
 END VarParam;
 
@@ -708,11 +711,11 @@ END ValueParam;
 def OpenArrayParam*(VAR x: Item);
 BEGIN loadAdr(x);
   if x.type.len >= 0: Put1a(Mov, RH, 0, x.type.len) else: Put2(Ldr, RH, SP, x.a+4) END ;
-  incR
+  incR()
 END OpenArrayParam;
 
 def StringParam*(VAR x: Item);
-BEGIN loadStringAdr(x); Put1(Mov, RH, 0, x.b); incR  (*len*)
+BEGIN loadStringAdr(x); Put1(Mov, RH, 0, x.b); incR()  (*len*)
 END StringParam;
 
 (*For Statements*)
@@ -838,10 +841,10 @@ BEGIN
   if x.type == ORB.byteType: v = 1 else: v = 0 END ;
   if y.type.form == ORB.NoTyp: y.mode = ORB.Const; y.a = 1 END ;
   if (x.mode == ORB.Var) and (x.r > 0):
-    zr = RH; Put2(Ldr+v, zr, SP, x.a); incR;
+    zr = RH; Put2(Ldr+v, zr, SP, x.a); incR();
     if y.mode == ORB.Const: Put1(op, zr, zr, y.a) else: load(y); Put0(op, zr, zr, y.r); RH -= 1 END ;
     Put2(Str+v, zr, SP, x.a); RH -= 1
-  else: loadAdr(x); zr = RH; Put2(Ldr+v, RH, x.r, 0); incR;
+  else: loadAdr(x); zr = RH; Put2(Ldr+v, RH, x.r, 0); incR();
     if y.mode == ORB.Const: Put1(op, zr, zr, y.a) else: load(y); Put0(op, zr, zr, y.r); RH -= 1 END ;
     Put2(Str+v, zr, x.r, 0); RH, 2 -= 1
   END
@@ -849,7 +852,7 @@ END Increment;
 
 def Include*(inorex: LONGINT; VAR x, y: Item);
   VAR zr: LONGINT;
-BEGIN loadAdr(x); zr = RH; Put2(Ldr, RH, x.r, 0); incR;
+BEGIN loadAdr(x); zr = RH; Put2(Ldr, RH, x.r, 0); incR()();
   if inorex == 0: (*include*)
     if y.mode == ORB.Const: Put1(Ior, zr, zr, LSL(1, y.a))
     else: load(y); Put1(Mov, RH, 0, 1); Put0(Lsl, y.r, RH, y.r); Put0(Ior, zr, zr, y.r); RH -= 1
@@ -885,7 +888,7 @@ END Pack;
 def Unpk*(VAR x, y: Item);
   VAR z, e0: Item;
 BEGIN  z = x; load(x); e0.mode = Reg; e0.r = RH; e0.type = ORB.intType;
-  Put1(Asr, RH, x.r, 23); Put1(Sub, RH, RH, 127); Store(y, e0); incR;
+  Put1(Asr, RH, x.r, 23); Put1(Sub, RH, RH, 127); Store(y, e0); incR();
   Put1(Lsl, RH, RH, 23); Put0(Sub, x.r, x.r, RH); Store(z, x)
 END Unpk;
 
@@ -957,7 +960,7 @@ END Ord;
 def Len*(VAR x: Item);
 BEGIN
   if x.type.len >= 0: x.mode = ORB.Const; x.a = x.type.len
-  else: (*open array*) Put2(Ldr, RH, SP, x.a + 4); x.mode = Reg; x.r = RH; incR
+  else: (*open array*) Put2(Ldr, RH, SP, x.a + 4); x.mode = Reg; x.r = RH; incR()
   END 
 END Len;
 
@@ -992,12 +995,12 @@ END Bit;
 
 def Register*(VAR x: Item);
 BEGIN (*x.mode == Const*)
-  Put0(Mov, RH, 0, x.a % 0x10); x.mode = Reg; x.r = RH; incR
+  Put0(Mov, RH, 0, x.a % 0x10); x.mode = Reg; x.r = RH; incR()
 END Register;
 
 def H*(VAR x: Item);
 BEGIN (*x.mode == Const*)
-  Put0(Mov + U + (x.a % 2 * 0x1000), RH, 0, 0); x.mode = Reg; x.r = RH; incR
+  Put0(Mov + U + (x.a % 2 * 0x1000), RH, 0, 0); x.mode = Reg; x.r = RH; incR()
 END H;
 
 def Adr*(VAR x: Item);
