@@ -262,13 +262,13 @@ BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
 END MakeStringItem;
 
 def MakeItem*(VAR x: Item; y: ORB.Object; curlev: LONGINT);
-BEGIN x.mode = y.class; x.type = y.type; x.a = y.val; x.rdo = y.rdo;
-  IF y.class == ORB.Par THEN x.b = 0
-  elif y.class == ORB.Typ THEN x.a = y.type.len; x.r = -y.lev
-  elif (y.class == ORB.Const) and (y.type.form == ORB.String) THEN x.b = y.lev  (*len*)
+BEGIN x.mode = y.class_; x.type = y.type; x.a = y.val; x.rdo = y.rdo;
+  IF y.class_ == ORB.Par THEN x.b = 0
+  elif y.class_ == ORB.Typ THEN x.a = y.type.len; x.r = -y.lev
+  elif (y.class_ == ORB.Const) and (y.type.form == ORB.String) THEN x.b = y.lev  (*len*)
   ELSE x.r = y.lev
   END ;
-  IF (y.lev > 0) and (y.lev != curlev) and (y.class != ORB.Const) THEN ORS.Mark("level error, not accessible") END
+  IF (y.lev > 0) and (y.lev != curlev) and (y.class_ != ORB.Const) THEN ORS.Mark("level error, not accessible") END
 END MakeItem;
 
 (* Code generation for Selectors, Variables, Constants *)
@@ -1059,12 +1059,12 @@ BEGIN  (*exit code*)
   END ;
   obj = ORB.topScope.next; nofimps = 0; comsize = 4; nofptrs = 0;
   while obj != NIL DO
-    IF (obj.class == ORB.Mod) and (obj.dsc != ORB.system) THEN INC(nofimps) (*count imports*)
-    elif (obj.exno != 0) and (obj.class == ORB.Const) and (obj.type.form == ORB.Proc)
+    IF (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system) THEN INC(nofimps) (*count imports*)
+    elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
         and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType) THEN i = 0; (*count commands*)
       while obj.name[i] != 0X DO INC(i) END ;
       i = (i+4) DIV 4 * 4; INC(comsize, i+4)
-    elif obj.class == ORB.Var THEN INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
+    elif obj.class_ == ORB.Var THEN INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
     END ;
     obj = obj.next
   END ;
@@ -1074,7 +1074,7 @@ BEGIN  (*exit code*)
   F = Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); Files.WriteByte(R, version);
   Files.WriteInt(R, size);
   obj = ORB.topScope.next;
-  while (obj != NIL) and (obj.class == ORB.Mod) DO  (*imports*)
+  while (obj != NIL) and (obj.class_ == ORB.Mod) DO  (*imports*)
     IF obj.dsc != ORB.system THEN Files.WriteString(R, obj(ORB.Module).orgname); Files.WriteInt(R, obj.val) END ;
     obj = obj.next
   END ;
@@ -1089,7 +1089,7 @@ BEGIN  (*exit code*)
   FOR i = 0 TO pc-1 DO Files.WriteInt(R, code[i]) END ;  (*program*)
   obj = ORB.topScope.next;
   while obj != NIL DO  (*commands*)
-    IF (obj.exno != 0) and (obj.class == ORB.Const) and (obj.type.form == ORB.Proc) and
+    IF (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) and
         (obj.type.nofpar == 0) and (obj.type.base == ORB.noType) THEN
       Files.WriteString(R, obj.name); Files.WriteInt(R, obj.val)
     END ;
@@ -1100,9 +1100,9 @@ BEGIN  (*exit code*)
   obj = ORB.topScope.next;
   while obj != NIL DO  (*entries*)
     IF obj.exno != 0 THEN
-      IF (obj.class == ORB.Const) and (obj.type.form == ORB.Proc) OR (obj.class == ORB.Var) THEN
+      IF (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) OR (obj.class_ == ORB.Var) THEN
         Files.WriteInt(R, obj.val)
-      elif obj.class == ORB.Typ THEN
+      elif obj.class_ == ORB.Typ THEN
         IF obj.type.form == ORB.Record THEN Files.WriteInt(R,  obj.type.len MOD 10000H)
         elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) OR (obj.type.base.typobj.exno == 0)) THEN
           Files.WriteInt(R, obj.type.base.len MOD 10000H)
@@ -1113,7 +1113,7 @@ BEGIN  (*exit code*)
   END ;
   obj = ORB.topScope.next;
   while obj != NIL DO  (*pointer variables*)
-    IF obj.class == ORB.Var THEN FindPtrs(R, obj.type, obj.val) END ;
+    IF obj.class_ == ORB.Var THEN FindPtrs(R, obj.type, obj.val) END ;
     obj = obj.next
   END ;
   Files.WriteInt(R, -1);
