@@ -81,7 +81,7 @@ XWK[18] = 'period'
 XWK[5] = 'and_'
 XWK[28] = 'lparen'
 XWK[10] = 'neq'
-#XWK[] = ''
+XWK[21] = 'int_'
 #XWK[] = ''
 #XWK[] = ''
 #XWK[] = ''
@@ -103,7 +103,7 @@ def TextsRead(r):
   try:
     _pos += 1
     c = next(_R)
-    print >> sys.stderr, c,
+##    print >> sys.stderr, c,
     return c
   except StopIteration:
     global R_eot
@@ -164,7 +164,7 @@ def String():
   global slen, ch
   i = 0
   ch = TextsRead(R)
-  while not R_eot and (ch != 0x22):
+  while not R_eot and (ch != '"'):
     if ch >= " ":
       if i < stringBufSize-1:
         str_[i] = ch
@@ -395,7 +395,7 @@ def Get():
       ch = TextsRead(R)
     if ch < "A":
       if ch < "0":
-        if ch == 0x22:
+        if ch == '"':
           String()
           sym = string
         elif ch == "#":
@@ -510,7 +510,7 @@ def Get():
 
       ch = TextsRead(R)
 
-    if sym != null:
+    if sym != null or R_eot:
       break
 
 
@@ -527,14 +527,22 @@ def _e(l):
     )
 
 def doit():
+  global str_, id_, ival, rval, slen
+
   while True:
     Get()
-    if sym == null:
+    if sym == null or R_eot:
       break
     yield XWK.get(sym, sym), _e(id_), ival, rval, slen, _e(str_)
+    str_ = [None] * stringBufSize
+    id_ = []
+    ival = 0
+    rval = 0.0
+    slen = 0
+
 
 
 if __name__ == '__main__':
   for tok in doit():
-    print
+##    print
     print tok
