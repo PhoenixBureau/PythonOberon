@@ -52,18 +52,18 @@ VAR pc*, varsize: LONGINT;   (*program counter, data index*)
 
 (*instruction assemblers according to formats*)
 
-PROCEDURE Put0(op, a, b, c: LONGINT);
+def Put0(op, a, b, c: LONGINT);
 BEGIN (*emit format-0 instruction*)
   code[pc] := ((a*10H + b) * 10H + op) * 10000H + c; INC(pc)
 END Put0;
 
-PROCEDURE Put1(op, a, b, im: LONGINT);
+def Put1(op, a, b, im: LONGINT);
 BEGIN (*emit format-1 instruction,  -10000H <= im < 10000H*)
   IF im < 0 THEN INC(op, 1000H) END ;  (*set v-bit*)
   code[pc] := (((a+40H) * 10H + b) * 10H + op) * 10000H + (im MOD 10000H); INC(pc)
 END Put1;
 
-PROCEDURE Put1a(op, a, b, im: LONGINT);
+def Put1a(op, a, b, im: LONGINT);
 BEGIN (*same as Pu1, but with range test  -10000H <= im < 10000H*)
   IF (im >= -10000H) & (im <= 0FFFFH) THEN Put1(op, a, b, im)
   ELSE Put1(Mov+U, RH, 0, im DIV 10000H);
@@ -72,28 +72,28 @@ BEGIN (*same as Pu1, but with range test  -10000H <= im < 10000H*)
   END
 END Put1a;
 
-PROCEDURE Put2(op, a, b, off: LONGINT);
+def Put2(op, a, b, off: LONGINT);
 BEGIN (*emit load/store instruction*)
   code[pc] := ((op * 10H + a) * 10H + b) * 100000H + (off MOD 100000H); INC(pc)
 END Put2;
 
-PROCEDURE Put3(op, cond, off: LONGINT);
+def Put3(op, cond, off: LONGINT);
 BEGIN (*emit branch instruction*)
   code[pc] := ((op+12) * 10H + cond) * 1000000H + (off MOD 1000000H); INC(pc)
 END Put3;
 
-PROCEDURE incR;
+def incR;
 BEGIN
   IF RH < MT THEN INC(RH) ELSE ORS.Mark("register stack overflow") END
 END incR;
 
-PROCEDURE CheckRegs*;
+def CheckRegs*;
 BEGIN
   IF RH # 0 THEN ORS.Mark("Reg Stack"); RH := 0 END ;
   IF pc >= maxCode - 40 THEN ORS.Mark("Program too long"); END
 END CheckRegs;
 
-PROCEDURE SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
+def SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved down*)
   VAR rs, rd: LONGINT;  (*r > 0*)
 BEGIN rs := r; rd := 0;
   REPEAT DEC(rs); Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
@@ -102,43 +102,43 @@ BEGIN rs := r; rd := 0;
   RH := rd
 END SaveRegs;
 
-PROCEDURE RestoreRegs(r: LONGINT; VAR x: Item); (*R[0 .. r-1] to be restored*)
+def RestoreRegs(r: LONGINT; VAR x: Item); (*R[0 .. r-1] to be restored*)
   VAR rd: LONGINT;  (*r > 0*)
 BEGIN Put0(Mov, r, 0, 0); rd := 0;
   REPEAT Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); INC(rd) UNTIL rd = r
 END RestoreRegs;
 
-PROCEDURE SetCC(VAR x: Item; n: LONGINT);
+def SetCC(VAR x: Item; n: LONGINT);
 BEGIN x.mode := Cond; x.a := 0; x.b := 0; x.r := n
 END SetCC;
 
-PROCEDURE Trap(cond, num: LONGINT);
+def Trap(cond, num: LONGINT);
 BEGIN Put3(BLR, cond, ORS.Pos()*100H + num*10H + MT)
 END Trap;
 
 (*handling of forward reference, fixups of branch addresses and constant tables*)
 
-PROCEDURE negated(cond: LONGINT): LONGINT;
+def negated(cond: LONGINT): LONGINT;
 BEGIN
   IF cond < 8 THEN cond := cond+8 ELSE cond := cond-8 END ;
   RETURN cond
 END negated;
 
-PROCEDURE invalSB;
+def invalSB;
 BEGIN curSB := 1
 END invalSB;
 
-PROCEDURE fix(at, with: LONGINT);
+def fix(at, with: LONGINT);
 BEGIN code[at] := code[at] DIV C24 * C24 + (with MOD C24)
 END fix;
 
-PROCEDURE FixLink*(L: LONGINT);
+def FixLink*(L: LONGINT);
   VAR L1: LONGINT;
 BEGIN invalSB;
   while L # 0 DO L1 := code[L] MOD 40000H; fix(L, pc-L-1); L := L1 END
 END FixLink;
 
-PROCEDURE FixLinkWith(L0, dst: LONGINT);
+def FixLinkWith(L0, dst: LONGINT);
   VAR L1: LONGINT;
 BEGIN
   while L0 # 0 DO
@@ -147,7 +147,7 @@ BEGIN
   END
 END FixLinkWith;
 
-PROCEDURE merged(L0, L1: LONGINT): LONGINT;
+def merged(L0, L1: LONGINT): LONGINT;
   VAR L2, L3: LONGINT;
 BEGIN 
   IF L0 # 0 THEN L3 := L0;
@@ -159,18 +159,18 @@ END merged;
 
 (* loading of operands and addresses into registers *)
 
-PROCEDURE GetSB(base: LONGINT);
+def GetSB(base: LONGINT);
 BEGIN
   IF (version # 0) & ((base # curSB) OR (base # 0)) THEN
     Put2(Ldr, SB, -base, pc-fixorgD); fixorgD := pc-1; curSB := base
   END
 END GetSB;
 
-PROCEDURE NilCheck;
+def NilCheck;
 BEGIN IF check THEN Trap(EQ, 4) END
 END NilCheck;
 
-PROCEDURE load(VAR x: Item);
+def load(VAR x: Item);
   VAR op: LONGINT;
 BEGIN
   IF x.type.size = 1 THEN op := Ldr+1 ELSE op := Ldr END ;
@@ -202,7 +202,7 @@ BEGIN
   END
 END load;
 
-PROCEDURE loadAdr(VAR x: Item);
+def loadAdr(VAR x: Item);
 BEGIN
   IF x.mode = ORB.Var THEN
     IF x.r > 0 THEN (*local*) Put1a(Add, RH, SP, x.a)
@@ -219,7 +219,7 @@ BEGIN
   x.mode := Reg
 END loadAdr;
 
-PROCEDURE loadCond(VAR x: Item);
+def loadCond(VAR x: Item);
 BEGIN
   IF x.type.form = ORB.Bool THEN
     IF x.mode = ORB.Const THEN x.r := 15 - x.a*8
@@ -232,26 +232,26 @@ BEGIN
   END
 END loadCond;
 
-PROCEDURE loadTypTagAdr(T: ORB.Type);
+def loadTypTagAdr(T: ORB.Type);
   VAR x: Item;
 BEGIN x.mode := ORB.Var; x.a := T.len; x.r := -T.mno; loadAdr(x)
 END loadTypTagAdr;
 
-PROCEDURE loadStringAdr(VAR x: Item);
+def loadStringAdr(VAR x: Item);
 BEGIN GetSB(0); Put1a(Add, RH, SB, varsize+x.a); x.mode := Reg; x.r := RH; incR
 END loadStringAdr;
 
 (* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
 
-PROCEDURE MakeConstItem*(VAR x: Item; typ: ORB.Type; val: LONGINT);
+def MakeConstItem*(VAR x: Item; typ: ORB.Type; val: LONGINT);
 BEGIN x.mode := ORB.Const; x.type := typ; x.a := val
 END MakeConstItem;
 
-PROCEDURE MakeRealItem*(VAR x: Item; val: REAL);
+def MakeRealItem*(VAR x: Item; val: REAL);
 BEGIN x.mode := ORB.Const; x.type := ORB.realType; x.a := SYSTEM.VAL(LONGINT, val)
 END MakeRealItem;
 
-PROCEDURE MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer to ORG-string array*)
+def MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer to ORG-string array*)
   VAR i: LONGINT;
 BEGIN x.mode := ORB.Const; x.type := ORB.strType; x.a := strx; x.b := len; i := 0;
   IF strx + len + 4 < maxStrx THEN
@@ -261,7 +261,7 @@ BEGIN x.mode := ORB.Const; x.type := ORB.strType; x.a := strx; x.b := len; i := 
   END
 END MakeStringItem;
 
-PROCEDURE MakeItem*(VAR x: Item; y: ORB.Object; curlev: LONGINT);
+def MakeItem*(VAR x: Item; y: ORB.Object; curlev: LONGINT);
 BEGIN x.mode := y.class; x.type := y.type; x.a := y.val; x.rdo := y.rdo;
   IF y.class = ORB.Par THEN x.b := 0
   ELSIF y.class = ORB.Typ THEN x.a := y.type.len; x.r := -y.lev
@@ -273,7 +273,7 @@ END MakeItem;
 
 (* Code generation for Selectors, Variables, Constants *)
 
-PROCEDURE Field*(VAR x: Item; y: ORB.Object);   (* x := x.y *)
+def Field*(VAR x: Item; y: ORB.Object);   (* x := x.y *)
 BEGIN;
   IF x.mode = ORB.Var THEN
     IF x.r >= 0 THEN x.a := x.a + y.val
@@ -284,7 +284,7 @@ BEGIN;
   END
 END Field;
 
-PROCEDURE Index*(VAR x, y: Item);   (* x := x[y] *)
+def Index*(VAR x, y: Item);   (* x := x[y] *)
   VAR s, lim: LONGINT;
 BEGIN s := x.type.base.size; lim := x.type.len;
   IF (y.mode = ORB.Const) & (lim >= 0) THEN
@@ -319,7 +319,7 @@ BEGIN s := x.type.base.size; lim := x.type.len;
   END
 END Index;
 
-PROCEDURE DeRef*(VAR x: Item);
+def DeRef*(VAR x: Item);
 BEGIN
   IF x.mode = ORB.Var THEN
     IF x.r > 0 THEN (*local*) Put2(Ldr, RH, SP, x.a) ELSE GetSB(x.r); Put2(Ldr, RH, SB, x.a) END ;
@@ -332,7 +332,7 @@ BEGIN
   x.mode := RegI; x.a := 0; x.b := 0
 END DeRef;
 
-PROCEDURE Q(T: ORB.Type; VAR dcw: LONGINT);
+def Q(T: ORB.Type; VAR dcw: LONGINT);
 BEGIN (*one entry of type descriptor extension table*)
   IF T.base # NIL THEN
     Q(T.base, dcw); data[dcw] := (T.mno*1000H + T.len) * 1000H + dcw - fixorgT;
@@ -340,7 +340,7 @@ BEGIN (*one entry of type descriptor extension table*)
   END
 END Q;
 
-PROCEDURE FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw: LONGINT);
+def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN data[dcw] := off; INC(dcw)
@@ -353,7 +353,7 @@ BEGIN
   END
 END FindPtrFlds;
 
-PROCEDURE BuildTD*(T: ORB.Type; VAR dc: LONGINT);
+def BuildTD*(T: ORB.Type; VAR dc: LONGINT);
   VAR dcw, k, s: LONGINT;  (*dcw = word address*)
 BEGIN dcw := dc DIV 4; s := T.size; (*convert size for heap allocation*)
   IF s <= 24 THEN s := 32 ELSIF s <= 56 THEN s := 64 ELSIF s <= 120 THEN s := 128
@@ -369,7 +369,7 @@ BEGIN dcw := dc DIV 4; s := T.size; (*convert size for heap allocation*)
   IF tdx >= maxTD THEN ORS.Mark("too many record types"); tdx := 0 END
 END BuildTD;
 
-PROCEDURE TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN);
+def TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN);
 BEGIN (*fetch tag into RH*)
   IF varpar THEN Put2(Ldr, RH, SP, x.a+4)
   ELSE load(x); NilCheck; Put2(Ldr, RH, x.r, -8)
@@ -386,32 +386,32 @@ END TypeTest;
 
 (* Code generation for Boolean operators *)
 
-PROCEDURE Not*(VAR x: Item);   (* x := ~x *)
+def Not*(VAR x: Item);   (* x := ~x *)
   VAR t: LONGINT;
 BEGIN
   IF x.mode # Cond THEN loadCond(x) END ;
   x.r := negated(x.r); t := x.a; x.a := x.b; x.b := t
 END Not;
 
-PROCEDURE And1*(VAR x: Item);   (* x := x & *)
+def And1*(VAR x: Item);   (* x := x & *)
 BEGIN
   IF x.mode # Cond THEN loadCond(x) END ;
   Put3(BC, negated(x.r), x.a); x.a := pc-1; FixLink(x.b); x.b := 0
 END And1;
 
-PROCEDURE And2*(VAR x, y: Item);
+def And2*(VAR x, y: Item);
 BEGIN
   IF y.mode # Cond THEN loadCond(y) END ;
   x.a := merged(y.a, x.a); x.b := y.b; x.r := y.r
 END And2;
 
-PROCEDURE Or1*(VAR x: Item);   (* x := x OR *)
+def Or1*(VAR x: Item);   (* x := x OR *)
 BEGIN
   IF x.mode # Cond THEN loadCond(x) END ;
   Put3(BC, x.r, x.b);  x.b := pc-1; FixLink(x.a); x.a := 0
 END Or1;
 
-PROCEDURE Or2*(VAR x, y: Item);
+def Or2*(VAR x, y: Item);
 BEGIN
   IF y.mode # Cond THEN loadCond(y) END ;
   x.a := y.a; x.b := merged(y.b, x.b); x.r := y.r
@@ -419,7 +419,7 @@ END Or2;
 
 (* Code generation for arithmetic operators *)
 
-PROCEDURE Neg*(VAR x: Item);   (* x := -x *)
+def Neg*(VAR x: Item);   (* x := -x *)
 BEGIN
   IF x.type.form = ORB.Int THEN
     IF x.mode = ORB.Const THEN x.a := -x.a
@@ -436,7 +436,7 @@ BEGIN
   END
 END Neg;
 
-PROCEDURE AddOp*(op: LONGINT; VAR x, y: Item);   (* x := x +- y *)
+def AddOp*(op: LONGINT; VAR x, y: Item);   (* x := x +- y *)
 BEGIN
   IF op = ORS.plus THEN
     IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN x.a := x.a + y.a
@@ -453,13 +453,13 @@ BEGIN
   END
 END AddOp;
 
-PROCEDURE log2(m: LONGINT; VAR e: LONGINT): LONGINT;
+def log2(m: LONGINT; VAR e: LONGINT): LONGINT;
 BEGIN e := 0;
   while ~ODD(m) DO m := m DIV 2; INC(e) END ;
   RETURN m
 END log2;
 
-PROCEDURE MulOp*(VAR x, y: Item);   (* x := x * y *)
+def MulOp*(VAR x, y: Item);   (* x := x * y *)
   VAR e: LONGINT;
 BEGIN
   IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN x.a := x.a * y.a
@@ -471,7 +471,7 @@ BEGIN
   END
 END MulOp;
 
-PROCEDURE DivOp*(op: LONGINT; VAR x, y: Item);   (* x := x op y *)
+def DivOp*(op: LONGINT; VAR x, y: Item);   (* x := x op y *)
   VAR e: LONGINT;
 BEGIN
   IF op = ORS.div THEN
@@ -500,7 +500,7 @@ END DivOp;
 
 (* Code generation for REAL operators *)
 
-PROCEDURE RealOp*(op: INTEGER; VAR x, y: Item);   (* x := x op y *)
+def RealOp*(op: INTEGER; VAR x, y: Item);   (* x := x op y *)
 BEGIN load(x); load(y);
   IF op = ORS.plus THEN Put0(Fad, RH-2, x.r, y.r)
   ELSIF op = ORS.minus THEN Put0(Fsb, RH-2, x.r, y.r)
@@ -512,14 +512,14 @@ END RealOp;
 
 (* Code generation for set operators *)
 
-PROCEDURE Singleton*(VAR x: Item);  (* x := {x} *)
+def Singleton*(VAR x: Item);  (* x := {x} *)
 BEGIN
   IF x.mode = ORB.Const THEN x.a := LSL(1, x.a)
   ELSE load(x); Put1(Mov, RH, 0, 1); Put0(Lsl, x.r, RH,  x.r)
   END
 END Singleton;
 
-PROCEDURE Set*(VAR x, y: Item);   (* x := {x .. y} *)
+def Set*(VAR x, y: Item);   (* x := {x .. y} *)
 BEGIN
   IF (x.mode = ORB.Const) & ( y.mode = ORB.Const) THEN
     IF x.a <= y.a THEN x.a := LSL(2, y.a) - LSL(1, x.a) ELSE x.a := 0 END
@@ -538,7 +538,7 @@ BEGIN
   END
 END Set;
 
-PROCEDURE In*(VAR x, y: Item);  (* x := x IN y *)
+def In*(VAR x, y: Item);  (* x := x IN y *)
 BEGIN load(y);
   IF x.mode = ORB.Const THEN Put1(Ror, y.r, y.r, (x.a + 1) MOD 20H); DEC(RH)
   ELSE load(x); Put1(Add, x.r, x.r, 1); Put0(Ror, y.r, y.r, x.r); DEC(RH, 2)
@@ -546,7 +546,7 @@ BEGIN load(y);
   SetCC(x, MI)
 END In;
 
-PROCEDURE SetOp*(op: LONGINT; VAR x, y: Item);   (* x := x op y *)
+def SetOp*(op: LONGINT; VAR x, y: Item);   (* x := x op y *)
   VAR xset, yset: SET; (*x.type.form = Set*)
 BEGIN
   IF (x.mode = ORB.Const) & (y.mode = ORB.Const) THEN
@@ -576,7 +576,7 @@ END SetOp;
 
 (* Code generation for relations *)
 
-PROCEDURE IntRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
+def IntRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
 BEGIN
   IF (y.mode = ORB.Const) & (y.type.form # ORB.Proc) THEN
     load(x);
@@ -587,7 +587,7 @@ BEGIN
   SetCC(x, relmap[op - ORS.eql])
 END IntRelation;
 
-PROCEDURE SetRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
+def SetRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
 BEGIN load(x);
   IF (op = ORS.eql) OR (op = ORS.neq) THEN
     IF y.mode = ORB.Const THEN Put1a(Cmp, x.r, x.r, y.a); DEC(RH)
@@ -598,7 +598,7 @@ BEGIN load(x);
   END
 END SetRelation;
 
-PROCEDURE RealRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
+def RealRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
 BEGIN load(x);
   IF (y.mode = ORB.Const) & (y.a = 0) THEN DEC(RH)
   ELSE load(y); Put0(Fsb, x.r, x.r, y.r); DEC(RH, 2)
@@ -606,7 +606,7 @@ BEGIN load(x);
   SetCC(x, relmap[op - ORS.eql])
 END RealRelation;
 
-PROCEDURE StringRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
+def StringRelation*(op: INTEGER; VAR x, y: Item);   (* x := x < y *)
   (*x, y are char arrays or strings*)
 BEGIN
   IF x.type.form = ORB.String THEN loadStringAdr(x) ELSE loadAdr(x) END ;
@@ -620,11 +620,11 @@ END StringRelation;
 
 (* Code generation of Assignments *)
 
-PROCEDURE StrToChar*(VAR x: Item);
+def StrToChar*(VAR x: Item);
 BEGIN x.type := ORB.charType; DEC(strx, 4); x.a := ORD(str[x.a])
 END StrToChar;
 
-PROCEDURE Store*(VAR x, y: Item); (* x := y *)
+def Store*(VAR x, y: Item); (* x := y *)
   VAR op: LONGINT;
 BEGIN  load(y);
   IF x.type.size = 1 THEN op := Str+1 ELSE op := Str END ;
@@ -639,7 +639,7 @@ BEGIN  load(y);
   DEC(RH)
 END Store;
 
-PROCEDURE StoreStruct*(VAR x, y: Item); (* x := y *)
+def StoreStruct*(VAR x, y: Item); (* x := y *)
   VAR s, pc0: LONGINT;
 BEGIN loadAdr(x); loadAdr(y);
   IF (x.type.form = ORB.Array) & (x.type.len > 0) THEN
@@ -666,7 +666,7 @@ BEGIN loadAdr(x); loadAdr(y);
   Put1(Sub, RH, RH, 1); Put3(BC, NE, -6); DEC(RH, 2)
 END StoreStruct;
 
-PROCEDURE CopyString*(VAR x, y: Item);  (*from x to y*)
+def CopyString*(VAR x, y: Item);  (*from x to y*)
   VAR len: LONGINT;
 BEGIN loadAdr(y); len := y.type.len;
   IF len >= 0 THEN
@@ -682,7 +682,7 @@ END CopyString;
 
 (* Code generation for parameters *)
 
-PROCEDURE VarParam*(VAR x: Item; ftype: ORB.Type);
+def VarParam*(VAR x: Item; ftype: ORB.Type);
   VAR xmd: INTEGER;
 BEGIN xmd := x.mode; loadAdr(x);
   IF (ftype.form = ORB.Array) & (ftype.len < 0) THEN (*open array*)
@@ -693,27 +693,27 @@ BEGIN xmd := x.mode; loadAdr(x);
   END
 END VarParam;
 
-PROCEDURE ValueParam*(VAR x: Item);
+def ValueParam*(VAR x: Item);
 BEGIN load(x)
 END ValueParam;
 
-PROCEDURE OpenArrayParam*(VAR x: Item);
+def OpenArrayParam*(VAR x: Item);
 BEGIN loadAdr(x);
   IF x.type.len >= 0 THEN Put1a(Mov, RH, 0, x.type.len) ELSE Put2(Ldr, RH, SP, x.a+4) END ;
   incR
 END OpenArrayParam;
 
-PROCEDURE StringParam*(VAR x: Item);
+def StringParam*(VAR x: Item);
 BEGIN loadStringAdr(x); Put1(Mov, RH, 0, x.b); incR  (*len*)
 END StringParam;
 
 (*For Statements*)
 
-PROCEDURE For0*(VAR x, y: Item);
+def For0*(VAR x, y: Item);
 BEGIN load(y)
 END For0;
 
-PROCEDURE For1*(VAR x, y, z, w: Item; VAR L: LONGINT);
+def For1*(VAR x, y, z, w: Item; VAR L: LONGINT);
 BEGIN 
   IF z.mode = ORB.Const THEN Put1a(Cmp, RH, y.r, z.a)
   ELSE load(z); Put0(Cmp, RH-1, y.r, z.r); DEC(RH)
@@ -726,41 +726,41 @@ BEGIN
   Store(x, y)
 END For1;
 
-PROCEDURE For2*(VAR x, y, w: Item);
+def For2*(VAR x, y, w: Item);
 BEGIN load(x); DEC(RH); Put1a(Add, x.r, x.r, w.a)
 END For2;
 
 (* Branches, procedure calls, procedure prolog and epilog *)
 
-PROCEDURE Here*(): LONGINT;
+def Here*(): LONGINT;
 BEGIN invalSB; RETURN pc
 END Here;
 
-PROCEDURE FJump*(VAR L: LONGINT);
+def FJump*(VAR L: LONGINT);
 BEGIN Put3(BC, 7, L); L := pc-1
 END FJump;
 
-PROCEDURE CFJump*(VAR x: Item);
+def CFJump*(VAR x: Item);
 BEGIN
   IF x.mode # Cond THEN loadCond(x) END ;
   Put3(BC, negated(x.r), x.a); FixLink(x.b); x.a := pc-1
 END CFJump;
 
-PROCEDURE BJump*(L: LONGINT);
+def BJump*(L: LONGINT);
 BEGIN Put3(BC, 7, L-pc-1)
 END BJump;
 
-PROCEDURE CBJump*(VAR x: Item; L: LONGINT);
+def CBJump*(VAR x: Item; L: LONGINT);
 BEGIN
   IF x.mode # Cond THEN loadCond(x) END ;
   Put3(BC, negated(x.r), L-pc-1); FixLink(x.b); FixLinkWith(x.a, L)
 END CBJump;
 
-PROCEDURE Fixup*(VAR x: Item);
+def Fixup*(VAR x: Item);
 BEGIN FixLink(x.a)
 END Fixup;
 
-PROCEDURE PrepCall*(VAR x: Item; VAR r: LONGINT);
+def PrepCall*(VAR x: Item; VAR r: LONGINT);
 BEGIN
   IF x.type.form = ORB.Proc THEN
     IF x.mode # ORB.Const THEN
@@ -772,7 +772,7 @@ BEGIN
   r := RH
 END PrepCall;
 
-PROCEDURE Call*(VAR x: Item; r: LONGINT);
+def Call*(VAR x: Item; r: LONGINT);
 BEGIN
   IF inhibitCalls & (x.r # 11) THEN ORS.Mark("inadmissible call") ELSE inhibitCalls := FALSE END ;
   IF r > 0 THEN SaveRegs(r) END ;
@@ -797,7 +797,7 @@ BEGIN
   invalSB
 END Call;
 
-PROCEDURE Enter*(parblksize, locblksize: LONGINT; int: BOOLEAN);
+def Enter*(parblksize, locblksize: LONGINT; int: BOOLEAN);
   VAR a, r: LONGINT;
 BEGIN invalSB;
   IF ~int THEN (*procedure prolog*)
@@ -810,7 +810,7 @@ BEGIN invalSB;
   END
 END Enter;
 
-PROCEDURE Return*(form: INTEGER; VAR x: Item; size: LONGINT; int: BOOLEAN);
+def Return*(form: INTEGER; VAR x: Item; size: LONGINT; int: BOOLEAN);
 BEGIN
   IF form # ORB.NoTyp THEN load(x) END ;
   IF ~int THEN (*procedure epilog*)
@@ -823,7 +823,7 @@ END Return;
 
 (* In-line code procedures*)
 
-PROCEDURE Increment*(upordown: LONGINT; VAR x, y: Item);
+def Increment*(upordown: LONGINT; VAR x, y: Item);
   VAR op, zr, v: LONGINT;
 BEGIN
   IF upordown = 0 THEN op := Add ELSE op := Sub END ;
@@ -839,7 +839,7 @@ BEGIN
   END
 END Increment;
 
-PROCEDURE Include*(inorex: LONGINT; VAR x, y: Item);
+def Include*(inorex: LONGINT; VAR x, y: Item);
   VAR zr: LONGINT;
 BEGIN loadAdr(x); zr := RH; Put2(Ldr, RH, x.r, 0); incR;
   IF inorex = 0 THEN (*include*)
@@ -854,7 +854,7 @@ BEGIN loadAdr(x); zr := RH; Put2(Ldr, RH, x.r, 0); incR;
   Put2(Str, zr, x.r, 0); DEC(RH, 2)
 END Include;
 
-PROCEDURE Assert*(VAR x: Item);
+def Assert*(VAR x: Item);
   VAR cond: LONGINT;
 BEGIN
   IF x.mode # Cond THEN loadCond(x) END ;
@@ -864,36 +864,36 @@ BEGIN
   Trap(cond, 7); FixLink(x.b)
 END Assert; 
 
-PROCEDURE New*(VAR x: Item);
+def New*(VAR x: Item);
 BEGIN loadAdr(x); loadTypTagAdr(x.type.base); Put3(BLR, 7, MT); RH := 0; invalSB
 END New;
 
-PROCEDURE Pack*(VAR x, y: Item);
+def Pack*(VAR x, y: Item);
   VAR z: Item;
 BEGIN z := x; load(x); load(y);
   Put1(Lsl, y.r, y.r, 23); Put0(Add, x.r, x.r, y.r); DEC(RH); Store(z, x)
 END Pack;
 
-PROCEDURE Unpk*(VAR x, y: Item);
+def Unpk*(VAR x, y: Item);
   VAR z, e0: Item;
 BEGIN  z := x; load(x); e0.mode := Reg; e0.r := RH; e0.type := ORB.intType;
   Put1(Asr, RH, x.r, 23); Put1(Sub, RH, RH, 127); Store(y, e0); incR;
   Put1(Lsl, RH, RH, 23); Put0(Sub, x.r, x.r, RH); Store(z, x)
 END Unpk;
 
-PROCEDURE Led*(VAR x: Item);
+def Led*(VAR x: Item);
 BEGIN load(x); Put1(Mov, RH, 0, -60); Put2(Str, x.r, RH, 0); DEC(RH)
 END Led;
 
-PROCEDURE Get*(VAR x, y: Item);
+def Get*(VAR x, y: Item);
 BEGIN load(x); x.type := y.type; x.mode := RegI; x.a := 0; Store(y, x)
 END Get;
 
-PROCEDURE Put*(VAR x, y: Item);
+def Put*(VAR x, y: Item);
 BEGIN load(x); x.type := y.type; x.mode := RegI; x.a := 0; Store(x, y)
 END Put;
 
-PROCEDURE Copy*(VAR x, y, z: Item);
+def Copy*(VAR x, y, z: Item);
 BEGIN load(x); load(y);
   IF z.mode = ORB.Const THEN
     IF z.a > 0 THEN load(z) ELSE ORS.Mark("bad count") END
@@ -906,11 +906,11 @@ BEGIN load(x); load(y);
   Put1(Sub, z.r, z.r, 1); Put3(BC, NE, -6); DEC(RH, 3)
 END Copy;
 
-PROCEDURE LDPSR*(VAR x: Item);
+def LDPSR*(VAR x: Item);
 BEGIN (*x.mode = Const*)  Put3(0, 15, x.a + 20H)
 END LDPSR;
 
-PROCEDURE LDREG*(VAR x, y: Item);
+def LDREG*(VAR x, y: Item);
 BEGIN
   IF y.mode = ORB.Const THEN Put1a(Mov, x.a, 0, y.a)
   ELSE load(y); Put0(Mov, x.a, 0, y.r); DEC(RH)
@@ -919,7 +919,7 @@ END LDREG;
 
 (*In-line code functions*)
 
-PROCEDURE Abs*(VAR x: Item);
+def Abs*(VAR x: Item);
 BEGIN
   IF x.mode = ORB.Const THEN x.a := ABS(x.a)
   ELSE load(x);
@@ -929,31 +929,31 @@ BEGIN
   END
 END Abs;
 
-PROCEDURE Odd*(VAR x: Item);
+def Odd*(VAR x: Item);
 BEGIN load(x); Put1(And, x.r, x.r, 1); SetCC(x, NE); DEC(RH)
 END Odd;
 
-PROCEDURE Floor*(VAR x: Item);
+def Floor*(VAR x: Item);
 BEGIN load(x); Put1(Mov+U, RH, 0, 4B00H); Put0(Fad+1000H, x.r, x.r, RH) 
 END Floor;
 
-PROCEDURE Float*(VAR x: Item);
+def Float*(VAR x: Item);
 BEGIN load(x); Put1(Mov+U, RH, 0, 4B00H);  Put0(Fad+U, x.r, x.r, RH)
 END Float;
 
-PROCEDURE Ord*(VAR x: Item);
+def Ord*(VAR x: Item);
 BEGIN
   IF x.mode IN {ORB.Var, ORB.Par, RegI} THEN load(x) END
 END Ord;
 
-PROCEDURE Len*(VAR x: Item);
+def Len*(VAR x: Item);
 BEGIN
   IF x.type.len >= 0 THEN x.mode := ORB.Const; x.a := x.type.len
   ELSE (*open array*) Put2(Ldr, RH, SP, x.a + 4); x.mode := Reg; x.r := RH; incR
   END 
 END Len;
 
-PROCEDURE Shift*(fct: LONGINT; VAR x, y: Item);
+def Shift*(fct: LONGINT; VAR x, y: Item);
   VAR op: LONGINT;
 BEGIN load(x);
   IF fct = 0 THEN op := Lsl ELSIF fct = 1 THEN op := Asr ELSE op := Ror END ;
@@ -962,19 +962,19 @@ BEGIN load(x);
   END
 END Shift;
 
-PROCEDURE ADC*(VAR x, y: Item);
+def ADC*(VAR x, y: Item);
 BEGIN load(x); load(y); Put0(Add+2000H, x.r, x.r, y.r); DEC(RH)
 END ADC;
 
-PROCEDURE SBC*(VAR x, y: Item);
+def SBC*(VAR x, y: Item);
 BEGIN load(x); load(y); Put0(Sub+2000H, x.r, x.r, y.r); DEC(RH)
 END SBC;
 
-PROCEDURE UML*(VAR x, y: Item);
+def UML*(VAR x, y: Item);
 BEGIN load(x); load(y); Put0(Mul+2000H, x.r, x.r, y.r); DEC(RH)
 END UML;
 
-PROCEDURE Bit*(VAR x, y: Item);
+def Bit*(VAR x, y: Item);
 BEGIN load(x); Put2(Ldr, x.r, x.r, 0);
   IF y.mode = ORB.Const THEN Put1(Ror, x.r, x.r, y.a+1); DEC(RH)
   ELSE load(y); Put1(Add, y.r, y.r, 1); Put0(Ror, x.r, x.r, y.r); DEC(RH, 2)
@@ -982,17 +982,17 @@ BEGIN load(x); Put2(Ldr, x.r, x.r, 0);
   SetCC(x, MI)
 END Bit;
 
-PROCEDURE Register*(VAR x: Item);
+def Register*(VAR x: Item);
 BEGIN (*x.mode = Const*)
   Put0(Mov, RH, 0, x.a MOD 10H); x.mode := Reg; x.r := RH; incR
 END Register;
 
-PROCEDURE H*(VAR x: Item);
+def H*(VAR x: Item);
 BEGIN (*x.mode = Const*)
   Put0(Mov + U + (x.a MOD 2 * 1000H), RH, 0, 0); x.mode := Reg; x.r := RH; incR
 END H;
 
-PROCEDURE Adr*(VAR x: Item);
+def Adr*(VAR x: Item);
 BEGIN 
   IF x.mode IN {ORB.Var, ORB.Par, RegI} THEN loadAdr(x)
   ELSIF (x.mode = ORB.Const) & (x.type.form = ORB.Proc) THEN load(x)
@@ -1001,28 +1001,28 @@ BEGIN
   END
 END Adr;
 
-PROCEDURE Condition*(VAR x: Item);
+def Condition*(VAR x: Item);
 BEGIN (*x.mode = Const*) SetCC(x, x.a)
 END Condition;
 
-PROCEDURE Open*(v: INTEGER);
+def Open*(v: INTEGER);
 BEGIN pc := 0; tdx := 0; strx := 0; RH := 0; fixorgP := 0; fixorgD := 0; fixorgT := 0;
   check := v # 0; version := v; inhibitCalls := FALSE;
   IF v = 0 THEN pc := 8 END
 END Open;
 
-PROCEDURE SetDataSize*(dc: LONGINT);
+def SetDataSize*(dc: LONGINT);
 BEGIN varsize := dc
 END SetDataSize;
 
-PROCEDURE Header*;
+def Header*;
 BEGIN entry := pc*4;
   IF version = 0 THEN code[0] := 0E7000000H-1 + pc; Put1(Mov, SB, 0, 16); Put1(Mov, SP, 0, StkOrg0)  (*RISC-0*)
   ELSE Put1(Sub, SP, SP, 4); Put2(Str, LNK, SP, 0); invalSB
   END
 END Header;
 
-PROCEDURE NofPtrs(typ: ORB.Type): LONGINT;
+def NofPtrs(typ: ORB.Type): LONGINT;
   VAR fld: ORB.Object; n: LONGINT;
 BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN n := 1
@@ -1035,7 +1035,7 @@ BEGIN
   RETURN n
 END NofPtrs;
 
-PROCEDURE FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr: LONGINT);
+def FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN Files.WriteInt(R, adr)
@@ -1048,7 +1048,7 @@ BEGIN
   END
 END FindPtrs;
 
-PROCEDURE Close*(VAR modid: ORS.Ident; key, nofent: LONGINT);
+def Close*(VAR modid: ORS.Ident; key, nofent: LONGINT);
   VAR obj: ORB.Object;
     i, comsize, nofimps, nofptrs, size: LONGINT;
     name: ORS.Ident;
