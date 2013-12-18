@@ -1,4 +1,4 @@
-'''
+''
 MODULE ORG; (* NW  10.10.2013  code generator in Oberon-07 for RISC*)
 IMPORT SYSTEM, Files, ORS, ORB;
 (*Code generator for Oberon compiler for RISC processor.
@@ -98,7 +98,7 @@ PROCEDURE SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be m
 BEGIN rs := r; rd := 0;
   REPEAT DEC(rs); Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
   rs := r; rd := 0;
-  WHILE rs < RH DO Put0(Mov, rd, 0, rs); INC(rs); INC(rd) END ;
+  while rs < RH DO Put0(Mov, rd, 0, rs); INC(rs); INC(rd) END ;
   RH := rd
 END SaveRegs;
 
@@ -135,13 +135,13 @@ END fix;
 PROCEDURE FixLink*(L: LONGINT);
   VAR L1: LONGINT;
 BEGIN invalSB;
-  WHILE L # 0 DO L1 := code[L] MOD 40000H; fix(L, pc-L-1); L := L1 END
+  while L # 0 DO L1 := code[L] MOD 40000H; fix(L, pc-L-1); L := L1 END
 END FixLink;
 
 PROCEDURE FixLinkWith(L0, dst: LONGINT);
   VAR L1: LONGINT;
 BEGIN
-  WHILE L0 # 0 DO
+  while L0 # 0 DO
     L1 := code[L0] MOD C24;
     code[L0] := code[L0] DIV C24 * C24 + ((dst - L0 - 1) MOD C24); L0 := L1
   END
@@ -255,8 +255,8 @@ PROCEDURE MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-b
   VAR i: LONGINT;
 BEGIN x.mode := ORB.Const; x.type := ORB.strType; x.a := strx; x.b := len; i := 0;
   IF strx + len + 4 < maxStrx THEN
-    WHILE len > 0 DO str[strx] := ORS.str[i]; INC(strx); INC(i); DEC(len) END ;
-    WHILE strx MOD 4 # 0 DO str[strx] := 0X; INC(strx) END
+    while len > 0 DO str[strx] := ORS.str[i]; INC(strx); INC(i); DEC(len) END ;
+    while strx MOD 4 # 0 DO str[strx] := 0X; INC(strx) END
   ELSE ORS.Mark("too many strings")
   END
 END MakeStringItem;
@@ -346,7 +346,7 @@ BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN data[dcw] := off; INC(dcw)
   ELSIF typ.form = ORB.Record THEN
     fld := typ.dsc;
-    WHILE fld # NIL DO FindPtrFlds(fld.type, fld.val + off, dcw); fld := fld.next END
+    while fld # NIL DO FindPtrFlds(fld.type, fld.val + off, dcw); fld := fld.next END
   ELSIF typ.form = ORB.Array THEN
     s := typ.base.size;
     FOR i := 0 TO typ.len-1 DO FindPtrFlds(typ.base, i*s + off, dcw) END
@@ -363,7 +363,7 @@ BEGIN dcw := dc DIV 4; s := T.size; (*convert size for heap allocation*)
   k := T.nofpar;   (*extension level!*)
   IF k > 3 THEN ORS.Mark("ext level too large")
   ELSE Q(T, dcw);
-    WHILE k < 3 DO data[dcw] := -1; INC(dcw); INC(k) END
+    while k < 3 DO data[dcw] := -1; INC(dcw); INC(k) END
   END ;
   FindPtrFlds(T, 0, dcw); data[dcw] := -1; INC(dcw); tdx := dcw; dc := dcw*4;
   IF tdx >= maxTD THEN ORS.Mark("too many record types"); tdx := 0 END
@@ -455,7 +455,7 @@ END AddOp;
 
 PROCEDURE log2(m: LONGINT; VAR e: LONGINT): LONGINT;
 BEGIN e := 0;
-  WHILE ~ODD(m) DO m := m DIV 2; INC(e) END ;
+  while ~ODD(m) DO m := m DIV 2; INC(e) END ;
   RETURN m
 END log2;
 
@@ -803,7 +803,7 @@ BEGIN invalSB;
   IF ~int THEN (*procedure prolog*)
     a := 4; r := 0;
     Put1(Sub, SP, SP, locblksize); Put2(Str, LNK, SP, 0);
-    WHILE a < parblksize DO Put2(Str, r, SP, a); INC(r); INC(a, 4) END
+    while a < parblksize DO Put2(Str, r, SP, a); INC(r); INC(a, 4) END
   ELSE (*interrupt procedure*)
     Put1(Sub, SP, SP, 8); Put2(Str, 0, SP, 0); Put2(Str, 1, SP, 4)
     (*R0 and R1 saved, but NOT LNK*)
@@ -1028,7 +1028,7 @@ BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN n := 1
   ELSIF typ.form = ORB.Record THEN
     fld := typ.dsc; n := 0;
-    WHILE fld # NIL DO n := NofPtrs(fld.type) + n; fld := fld.next END
+    while fld # NIL DO n := NofPtrs(fld.type) + n; fld := fld.next END
   ELSIF typ.form = ORB.Array THEN n := NofPtrs(typ.base) * typ.len
   ELSE n := 0
   END ;
@@ -1041,7 +1041,7 @@ BEGIN
   IF (typ.form = ORB.Pointer) OR (typ.form = ORB.NilTyp) THEN Files.WriteInt(R, adr)
   ELSIF typ.form = ORB.Record THEN
     fld := typ.dsc;
-    WHILE fld # NIL DO FindPtrs(R, fld.type, fld.val + adr); fld := fld.next END
+    while fld # NIL DO FindPtrs(R, fld.type, fld.val + adr); fld := fld.next END
   ELSIF typ.form = ORB.Array THEN
     s := typ.base.size;
     FOR i := 0 TO typ.len-1 DO FindPtrs(R, typ.base, i*s + adr) END
@@ -1058,11 +1058,11 @@ BEGIN  (*exit code*)
   ELSE Put2(Ldr, LNK, SP, 0); Put1(Add, SP, SP, 4); Put3(BR, 7, LNK)
   END ;
   obj := ORB.topScope.next; nofimps := 0; comsize := 4; nofptrs := 0;
-  WHILE obj # NIL DO
+  while obj # NIL DO
     IF (obj.class = ORB.Mod) & (obj.dsc # ORB.system) THEN INC(nofimps) (*count imports*)
     ELSIF (obj.exno # 0) & (obj.class = ORB.Const) & (obj.type.form = ORB.Proc)
         & (obj.type.nofpar = 0) & (obj.type.base = ORB.noType) THEN i := 0; (*count commands*)
-      WHILE obj.name[i] # 0X DO INC(i) END ;
+      while obj.name[i] # 0X DO INC(i) END ;
       i := (i+4) DIV 4 * 4; INC(comsize, i+4)
     ELSIF obj.class = ORB.Var THEN INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
     END ;
@@ -1074,21 +1074,21 @@ BEGIN  (*exit code*)
   F := Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); Files.WriteByte(R, version);
   Files.WriteInt(R, size);
   obj := ORB.topScope.next;
-  WHILE (obj # NIL) & (obj.class = ORB.Mod) DO  (*imports*)
+  while (obj # NIL) & (obj.class = ORB.Mod) DO  (*imports*)
     IF obj.dsc # ORB.system THEN Files.WriteString(R, obj(ORB.Module).orgname); Files.WriteInt(R, obj.val) END ;
     obj := obj.next
   END ;
   Files.Write(R, 0X);
   Files.WriteInt(R, tdx*4);
   i := 0;
-  WHILE i < tdx DO Files.WriteInt(R, data[i]); INC(i) END ; (*type descriptors*)
+  while i < tdx DO Files.WriteInt(R, data[i]); INC(i) END ; (*type descriptors*)
   Files.WriteInt(R, varsize - tdx*4);  (*data*)
   Files.WriteInt(R, strx);
   FOR i := 0 TO strx-1 DO Files.Write(R, str[i]) END ;  (*strings*)
   Files.WriteInt(R, pc);  (*code len*)
   FOR i := 0 TO pc-1 DO Files.WriteInt(R, code[i]) END ;  (*program*)
   obj := ORB.topScope.next;
-  WHILE obj # NIL DO  (*commands*)
+  while obj # NIL DO  (*commands*)
     IF (obj.exno # 0) & (obj.class = ORB.Const) & (obj.type.form = ORB.Proc) &
         (obj.type.nofpar = 0) & (obj.type.base = ORB.noType) THEN
       Files.WriteString(R, obj.name); Files.WriteInt(R, obj.val)
@@ -1098,7 +1098,7 @@ BEGIN  (*exit code*)
   Files.Write(R, 0X);
   Files.WriteInt(R, nofent); Files.WriteInt(R, entry);
   obj := ORB.topScope.next;
-  WHILE obj # NIL DO  (*entries*)
+  while obj # NIL DO  (*entries*)
     IF obj.exno # 0 THEN
       IF (obj.class = ORB.Const) & (obj.type.form = ORB.Proc) OR (obj.class = ORB.Var) THEN
         Files.WriteInt(R, obj.val)
@@ -1112,7 +1112,7 @@ BEGIN  (*exit code*)
     obj := obj.next
   END ;
   obj := ORB.topScope.next;
-  WHILE obj # NIL DO  (*pointer variables*)
+  while obj # NIL DO  (*pointer variables*)
     IF obj.class = ORB.Var THEN FindPtrs(R, obj.type, obj.val) END ;
     obj := obj.next
   END ;
