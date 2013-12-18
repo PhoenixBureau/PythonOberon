@@ -148,7 +148,7 @@ def negated(cond):
     cond = cond+8
   else:
     cond = cond-8
-  RETURN cond
+  return cond
 
 def invalSB;
 BEGIN curSB = 1
@@ -180,7 +180,7 @@ BEGIN
     while True: L2 = L3; L3 = code[L2] % 0x40000 UNTIL L3 == 0;
     code[L2] = code[L2] + L1; L1 = L0
   END ;
-  RETURN L1
+  return L1
 END merged;
 
 (* loading of operands and addresses into registers *)
@@ -482,7 +482,7 @@ END AddOp;
 def log2(m: LONGINT; VAR e: LONGINT): LONGINT;
 BEGIN e = 0;
   while ~ODD(m): m = m / 2; e += 1 END ;
-  RETURN m
+  return m
 END log2;
 
 def MulOp*(VAR x, y: Item);   (* x = x * y *)
@@ -759,7 +759,7 @@ END For2;
 (* Branches, procedure calls, procedure prolog and epilog *)
 
 def Here*(): LONGINT;
-BEGIN invalSB; RETURN pc
+BEGIN invalSB; return pc
 END Here;
 
 def FJump*(VAR L):
@@ -1058,7 +1058,7 @@ BEGIN
   elif typ.form == ORB.Array: n = NofPtrs(typ.base) * typ.len
   else: n = 0
   END ;
-  RETURN n
+  return n
 END NofPtrs;
 
 def FindPtrs(VAR R: Files.Rider; typ: ORB.Type; adr):
