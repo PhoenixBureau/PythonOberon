@@ -346,97 +346,149 @@ def MakeStringItem*(x, len_): # (*copies string from ORS-buffer to ORG-string ar
     ORS.Mark("too many strings")
 
 
-def MakeItem*(VAR x: Item; y: ORB.Object; curlev):
-BEGIN x.mode = y.class_; x.type = y.type; x.a = y.val; x.rdo = y.rdo;
-  if y.class_ == ORB.Par: x.b = 0
-  elif y.class_ == ORB.Typ: x.a = y.type.len_; x.r = -y.lev
-  elif (y.class_ == ORB.Const) and (y.type.form == ORB.String): x.b = y.lev  (*len_*)
-  else: x.r = y.lev
-  END ;
-  if (y.lev > 0) and (y.lev != curlev) and (y.class_ != ORB.Const): ORS.Mark("level error, not accessible") END
-END MakeItem;
+def MakeItem*(x, y, curlev):
+  x.mode = y.class_
+  x.type = y.type
+  x.a = y.val
+  x.rdo = y.rdo;
 
-(* Code generation for Selectors, Variables, Constants *)
+  if y.class_ == ORB.Par:
+    x.b = 0
+  elif y.class_ == ORB.Typ:
+    x.a = y.type.len_
+    x.r = -y.lev
+  elif (y.class_ == ORB.Const) and (y.type.form == ORB.String):
+    x.b = y.lev # (*len_*)
+  else:
+    x.r = y.lev
 
-def Field*(VAR x: Item; y: ORB.Object);   (* x = x.y *)
-BEGIN;
+  if (y.lev > 0) and (y.lev != curlev) and (y.class_ != ORB.Const):
+    ORS.Mark("level error, not accessible")
+
+
+# (* Code generation for Selectors, Variables, Constants *)
+
+def Field(x, y): # (* x = x.y *)
   if x.mode == ORB.Var:
-    if x.r >= 0: x.a = x.a + y.val
-    else: loadAdr(x); x.mode = RegI; x.a = y.val
-    END
-  elif x.mode == RegI: x.a = x.a + y.val
-  elif x.mode == ORB.Par: x.b = x.b + y.val
-  END
-END Field;
+    if x.r >= 0:
+      x.a = x.a + y.val
+    else:
+      loadAdr(x)
+      x.mode = RegI
+      x.a = y.val
+  elif x.mode == RegI:
+    x.a = x.a + y.val
+  elif x.mode == ORB.Par:
+    x.b = x.b + y.val
 
-def Index*(VAR x, y: Item);   (* x = x[y] *)
-  VAR s, lim: LONGINT;
-BEGIN s = x.type.base.size; lim = x.type.len_;
+
+def Index(x, y): # (* x = x[y] *)
+  s = x.type.base.size
+  lim = x.type.len_
   if (y.mode == ORB.Const) and (lim >= 0):
-    if (y.a < 0) or (y.a >= lim): ORS.Mark("bad index") END ;
-    if x.mode IN {ORB.Var, RegI}: x.a = y.a * s + x.a
-    elif x.mode == ORB.Par: x.b = y.a * s + x.b
-    END
-  else: load(y);
-    if check:  (*check array bounds*)
-      if lim >= 0: Put1a(Cmp, RH, y.r, lim)
-      else: (*open array*)
-        if x.mode IN {ORB.Var, ORB.Par}: Put2(Ldr, RH, SP, x.a+4); Put0(Cmp, RH, y.r, RH)
-        else: ORS.Mark("error in Index")
-        END
-      END ;
+    if (y.a < 0) or (y.a >= lim):
+      ORS.Mark("bad index")
+    if x.mode in [ORB.Var, RegI]:
+      x.a = y.a * s + x.a
+    elif x.mode == ORB.Par:
+      x.b = y.a * s + x.b
+
+  else:
+    load(y);
+    if check: # (*check array bounds*)
+      if lim >= 0:
+        Put1a(Cmp, RH, y.r, lim)
+      else: # (*open array*)
+        if x.mode in [ORB.Var, ORB.Par]:
+          Put2(Ldr, RH, SP, x.a+4)
+          Put0(Cmp, RH, y.r, RH)
+        else:
+          ORS.Mark("error in Index")
       Trap(10, 1)
-    END ;
-    if s == 4: Put1(Lsl, y.r, y.r, 2) elif s > 1: Put1(Mul, y.r, y.r, s) END ;
+
+    if s == 4:
+      Put1(Lsl, y.r, y.r, 2)
+    elif s > 1:
+      Put1(Mul, y.r, y.r, s)
+
     if x.mode == ORB.Var:
-      if x.r > 0: Put0(Add, y.r, SP, y.r)
-      else: GetSB(x.r);
-        if x.r == 0: Put0(Add, y.r, SB, y.r)
-        else: Put1a(Add, RH, SB, x.a); Put0(Add, y.r, RH, y.r); x.a = 0
-        END
-      END ;
-      x.r = y.r; x.mode = RegI
+      if x.r > 0:
+        Put0(Add, y.r, SP, y.r)
+      else:
+        GetSB(x.r);
+        if x.r == 0:
+          Put0(Add, y.r, SB, y.r)
+        else:
+          Put1a(Add, RH, SB, x.a)
+          Put0(Add, y.r, RH, y.r)
+          x.a = 0
+      x.r = y.r
+      x.mode = RegI
+
     elif x.mode == ORB.Par:
       Put2(Ldr, RH, SP, x.a);
-      Put0(Add, y.r, RH, y.r); x.mode = RegI; x.r = y.r; x.a = x.b
-    elif x.mode == RegI: Put0(Add, x.r, x.r, y.r); RH -= 1
-    END
-  END
-END Index;
+      Put0(Add, y.r, RH, y.r)
+      x.mode = RegI
+      x.r = y.r; x.a = x.b
 
-def DeRef*(VAR x: Item);
-BEGIN
+    elif x.mode == RegI:
+      Put0(Add, x.r, x.r, y.r)
+      RH -= 1
+
+
+def DeRef(x):
   if x.mode == ORB.Var:
-    if x.r > 0: (*local*) Put2(Ldr, RH, SP, x.a) else: GetSB(x.r); Put2(Ldr, RH, SB, x.a) END ;
-    NilCheck(); x.r = RH; incR()
+    if x.r > 0: # (*local*)
+      Put2(Ldr, RH, SP, x.a)
+    else:
+      GetSB(x.r)
+      Put2(Ldr, RH, SB, x.a)
+    NilCheck()
+    x.r = RH
+    incR()
+
   elif x.mode == ORB.Par:
-    Put2(Ldr, RH, SP, x.a); Put2(Ldr, RH, RH, x.b); NilCheck(); x.r = RH; incR()
-  elif x.mode == RegI: Put2(Ldr, x.r, x.r, x.a); NilCheck()
-  elif x.mode != Reg: ORS.Mark("bad mode in DeRef")
-  END ;
+    Put2(Ldr, RH, SP, x.a)
+    Put2(Ldr, RH, RH, x.b)
+    NilCheck()
+    x.r = RH
+    incR()
+
+  elif x.mode == RegI:
+    Put2(Ldr, x.r, x.r, x.a)
+    NilCheck()
+
+  elif x.mode != Reg:
+    ORS.Mark("bad mode in DeRef")
+
   x.mode = RegI; x.a = 0; x.b = 0
-END DeRef;
 
-def Q(T: ORB.Type; VAR dcw):
-BEGIN (*one entry of type descriptor extension table*)
+
+def Q(T, dcw):
+  global fixorgT
+  # (*one entry of type descriptor extension table*)
   if T.base != NIL:
-    Q(T.base, dcw); data[dcw] = (T.mno*0x1000 + T.len_) * 0x1000 + dcw - fixorgT;
-    fixorgT = dcw; dcw += 1
-  END
-END Q;
+    dcw = Q(T.base, dcw)
+    data[dcw] = (T.mno*0x1000 + T.len_) * 0x1000 + dcw - fixorgT
+    fixorgT = dcw
+    dcw += 1
+  return dcw
 
-def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw):
-  VAR fld: ORB.Object; i, s: LONGINT;
-BEGIN
-  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): data[dcw] = off; dcw += 1
+
+def FindPtrFlds(typ, off, dcw):
+  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp):
+    data[dcw] = off
+    dcw += 1
   elif typ.form == ORB.Record:
     fld = typ.dsc;
-    while fld != NIL: FindPtrFlds(fld.type, fld.val + off, dcw); fld = fld.next END
+    while fld != NIL:
+      dcw = FindPtrFlds(fld.type, fld.val + off, dcw)
+      fld = fld.next END
   elif typ.form == ORB.Array:
     s = typ.base.size;
-    FOR i = 0 TO typ.len_-1: FindPtrFlds(typ.base, i*s + off, dcw) END
-  END
-END FindPtrFlds;
+    for i in range(typ.len_):
+      dcw = FindPtrFlds(typ.base, i*s + off, dcw)
+
 
 def BuildTD*(T: ORB.Type; VAR dc):
   VAR dcw, k, s: LONGINT;  (*dcw == word address*)
@@ -447,10 +499,10 @@ BEGIN dcw = dc / 4; s = T.size; (*convert size for heap allocation*)
   data[dcw] = s; dcw += 1;
   k = T.nofpar;   (*extension level!*)
   if k > 3: ORS.Mark("ext level too large")
-  else: Q(T, dcw);
+  else: dcw = Q(T, dcw);
     while k < 3: data[dcw] = -1; dcw += 1; k += 1 END
   END ;
-  FindPtrFlds(T, 0, dcw); data[dcw] = -1; dcw += 1; tdx = dcw; dc = dcw*4;
+  dcw = FindPtrFlds(T, 0, dcw); data[dcw] = -1; dcw += 1; tdx = dcw; dc = dcw*4;
   if tdx >= maxTD: ORS.Mark("too many record types"); tdx = 0 END
 END BuildTD;
 
