@@ -94,22 +94,6 @@ slen = 0
 
 id_ = []
 
-R_eot = False
-R = open('ORSX.Mod.txt').read()
-_R = iter(R)
-_pos = 0
-def TextsRead(r):
-  global _pos
-  try:
-    _pos += 1
-    c = next(_R)
-##    print >> sys.stderr, c,
-    return c
-  except StopIteration:
-    global R_eot
-    R_eot = True
-    return ''
-
 errpos = 0
 errcnt = 0
 
@@ -118,6 +102,34 @@ ch = ''
 str_  = [None] * stringBufSize
 
 sym = null
+
+
+R_eot = False
+R = ''
+_pos = 0
+
+
+def TextsRead(r):
+  global _pos
+  try:
+    _pos += 1
+    c = r[_pos]
+##    print >> sys.stderr, c,
+    return c
+  except IndexError:
+    global R_eot
+    R_eot = True
+    return ''
+
+
+def Init(text, pos=0):
+  global errpos, errcnt, R_eot, R, _pos, ch
+  errpos = pos
+  _pos = pos-1
+  errcnt = 0
+  R_eot = False
+  R = text
+  ch = TextsRead(R)
 
 
 def CopyId(ident):
@@ -512,37 +524,3 @@ def Get():
 
     if sym != null or R_eot:
       break
-
-
-def Init(pos=0):
-  global errpos, errcnt
-  errpos = pos; errcnt = 0; ch = TextsRead(R)
-
-
-def _e(l):
-  return ''.join(
-    char
-    for char in l
-    if char and isinstance(char, basestring)
-    )
-
-def doit():
-  global str_, id_, ival, rval, slen
-
-  while True:
-    Get()
-    if sym == null or R_eot:
-      break
-    yield XWK.get(sym, sym), _e(id_), ival, rval, slen, _e(str_)
-    str_ = [None] * stringBufSize
-    id_ = []
-    ival = 0
-    rval = 0.0
-    slen = 0
-
-
-
-if __name__ == '__main__':
-  for tok in doit():
-##    print
-    print tok
