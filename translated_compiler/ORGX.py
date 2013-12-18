@@ -8,10 +8,10 @@ IMPORT SYSTEM, Files, ORS, ORB;
 CONST WordSize* == 4;
   StkOrg0 = -64; VarOrg0 = 0;  (*for RISC-0 only*)
   MT = 12; SB = 13; SP = 14; LNK = 15;   (*dedicated registers*)
-  maxCode = 8000; maxStrx = 2400; maxTD = 120; C24 = 1000000H;
+  maxCode = 8000; maxStrx = 2400; maxTD = 120; C24 = 0x1000000;
   Reg = 10; RegI = 11; Cond = 12;  (*internal item modes*)
 
-(*frequently used opcodes*)  U = 2000H;
+(*frequently used opcodes*)  U = 0x2000;
   Mov = 0; Lsl = 1; Asr = 2; Ror= 3; And = 4; Ann = 5; Ior = 6; Xor = 7;
   Add = 8; Sub = 9; Cmp = 9; Mul = 10; Div = 11;
   Fad = 12; Fsb = 13; Fml = 14; Fdv = 15;
@@ -48,38 +48,38 @@ VAR pc*, varsize: LONGINT;   (*program counter, data index*)
   relmap: ARRAY 6 OF INTEGER;  (*condition codes for relations*)
   code: ARRAY maxCode OF LONGINT;
   data: ARRAY maxTD OF LONGINT;  (*type descriptors*)
-  str: ARRAY maxStrx OF CHAR;
+  str: ARRAY maxStrx OF 0xCAR;
 
 (*instruction assemblers according to formats*)
 
 def Put0(op, a, b, c: LONGINT);
 BEGIN (*emit format-0 instruction*)
-  code[pc] = ((a*10H + b) * 10H + op) * 10000H + c; pc += 1
+  code[pc] = ((a*0x10 + b) * 0x10 + op) * 0x10000 + c; pc += 1
 END Put0;
 
 def Put1(op, a, b, im: LONGINT);
-BEGIN (*emit format-1 instruction,  -10000H <= im < 10000H*)
-  if im < 0: op += 1000H END ;  (*set v-bit*)
-  code[pc] = (((a+40H) * 10H + b) * 10H + op) * 10000H + (im MOD 10000H); pc += 1
+BEGIN (*emit format-1 instruction,  -0x10000 <= im < 0x10000*)
+  if im < 0: op += 0x1000 END ;  (*set v-bit*)
+  code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im MOD 0x10000); pc += 1
 END Put1;
 
 def Put1a(op, a, b, im: LONGINT);
-BEGIN (*same as Pu1, but with range test  -10000H <= im < 10000H*)
-  if (im >= -10000H) and (im <= 0FFFFH): Put1(op, a, b, im)
-  else: Put1(Mov+U, RH, 0, im DIV 10000H);
-    if im MOD 10000H != 0: Put1(Ior, RH, RH, im MOD 10000H) END ;
+BEGIN (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
+  if (im >= -0x10000) and (im <= 0x0FFFF): Put1(op, a, b, im)
+  else: Put1(Mov+U, RH, 0, im DIV 0x10000);
+    if im MOD 0x10000 != 0: Put1(Ior, RH, RH, im MOD 0x10000) END ;
     Put0(op, a, b, RH)
   END
 END Put1a;
 
 def Put2(op, a, b, off: LONGINT);
 BEGIN (*emit load/store instruction*)
-  code[pc] = ((op * 10H + a) * 10H + b) * 100000H + (off MOD 100000H); pc += 1
+  code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off MOD 0x100000); pc += 1
 END Put2;
 
 def Put3(op, cond, off: LONGINT);
-BEGIN (*emit branch instruction*)
-  code[pc] = ((op+12) * 10H + cond) * 1000000H + (off MOD 1000000H); pc += 1
+BEGIN (*emit bran0xc instruction*)
+  code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off MOD 0x1000000); pc += 1
 END Put3;
 
 def incR;
@@ -113,7 +113,7 @@ BEGIN x.mode = Cond; x.a = 0; x.b = 0; x.r = n
 END SetCC;
 
 def Trap(cond, num: LONGINT);
-BEGIN Put3(BLR, cond, ORS.Pos()*100H + num*10H + MT)
+BEGIN Put3(BLR, cond, ORS.Pos()*0x100 + num*0x10 + MT)
 END Trap;
 
 (*handling of forward reference, fixups of branch addresses and constant tables*)
@@ -135,7 +135,7 @@ END fix;
 def FixLink*(L: LONGINT);
   VAR L1: LONGINT;
 BEGIN invalSB;
-  while L != 0: L1 = code[L] MOD 40000H; fix(L, pc-L-1); L = L1 END
+  while L != 0: L1 = code[L] MOD 0x40000; fix(L, pc-L-1); L = L1 END
 END FixLink;
 
 def FixLinkWith(L0, dst: LONGINT);
@@ -151,7 +151,7 @@ def merged(L0, L1: LONGINT): LONGINT;
   VAR L2, L3: LONGINT;
 BEGIN 
   if L0 != 0: L3 = L0;
-    REPEAT L2 = L3; L3 = code[L2] MOD 40000H UNTIL L3 == 0;
+    REPEAT L2 = L3; L3 = code[L2] MOD 0x40000 UNTIL L3 == 0;
     code[L2] = code[L2] + L1; L1 = L0
   END ;
   RETURN L1
@@ -185,11 +185,11 @@ BEGIN
       if x.type.form == ORB.Proc:
         if x.r > 0: ORS.Mark("not allowed")
         elif x.r == 0: Put3(BL, 7, 0); Put1a(Sub, RH, LNK, pc*4 - x.a)
-        else: GetSB(x.r); Put1(Add, RH, SB, x.a + 100H) (*mark as progbase-relative*)
+        else: GetSB(x.r); Put1(Add, RH, SB, x.a + 0x100) (*mark as progbase-relative*)
         END
-      elif (x.a <= 0FFFFH) and (x.a >= -10000H): Put1(Mov, RH, 0, x.a)
-      else: Put1(Mov+U, RH, 0, x.a DIV 10000H MOD 10000H);
-        if x.a MOD 10000H != 0: Put1(Ior, RH, RH, x.a MOD 10000H) END
+      elif (x.a <= 0x0FFFF) and (x.a >= -0x10000): Put1(Mov, RH, 0, x.a)
+      else: Put1(Mov+U, RH, 0, x.a DIV 0x10000 MOD 0x10000);
+        if x.a MOD 0x10000 != 0: Put1(Ior, RH, RH, x.a MOD 0x10000) END
       END ;
       x.r = RH; incR
     elif x.mode == RegI: Put2(op, x.r, x.r, x.a)
@@ -224,7 +224,7 @@ BEGIN
   if x.type.form == ORB.Bool:
     if x.mode == ORB.Const: x.r = 15 - x.a*8
     else: load(x);
-      if code[pc-1] DIV 40000000H != -2: Put1(Cmp, x.r, x.r, 0) END ;
+      if code[pc-1] DIV 0x40000000 != -2: Put1(Cmp, x.r, x.r, 0) END ;
       x.r = NE; RH -= 1
     END ;
     x.mode = Cond; x.a = 0; x.b = 0
@@ -335,7 +335,7 @@ END DeRef;
 def Q(T: ORB.Type; VAR dcw: LONGINT);
 BEGIN (*one entry of type descriptor extension table*)
   if T.base != NIL:
-    Q(T.base, dcw); data[dcw] = (T.mno*1000H + T.len) * 1000H + dcw - fixorgT;
+    Q(T.base, dcw); data[dcw] = (T.mno*0x1000 + T.len) * 0x1000 + dcw - fixorgT;
     fixorgT = dcw; dcw += 1
   END
 END Q;
@@ -426,7 +426,7 @@ BEGIN
     else: load(x); Put1(Mov, RH, 0, 0); Put0(Sub, x.r, RH, x.r)
     END
   elif x.type.form == ORB.Real:
-    if x.mode == ORB.Const: x.a = x.a + 7FFFFFFFH + 1
+    if x.mode == ORB.Const: x.a = x.a + 0x7FFFFFFF + 1
     else: load(x); Put1(Mov, RH, 0, 0); Put0(Fsb, x.r, RH, x.r)
     END
   else: (*form == Set*)
@@ -524,10 +524,10 @@ BEGIN
   if (x.mode == ORB.Const) and ( y.mode == ORB.Const):
     if x.a <= y.a: x.a = LSL(2, y.a) - LSL(1, x.a) else: x.a = 0 END
   else:
-    if (x.mode == ORB.Const) and (x.a < 10H): x.a = LSL(-1, x.a)
+    if (x.mode == ORB.Const) and (x.a < 0x10): x.a = LSL(-1, x.a)
     else: load(x); Put1(Mov, RH, 0, -1); Put0(Lsl, x.r, RH, x.r)
     END ;
-    if (y.mode == ORB.Const) and (y.a < 10H): Put1(Mov, RH, 0, LSL(-2, y.a)); y.mode = Reg; y.r = RH; RH += 1
+    if (y.mode == ORB.Const) and (y.a < 0x10): Put1(Mov, RH, 0, LSL(-2, y.a)); y.mode = Reg; y.r = RH; RH += 1
     else: load(y); Put1(Mov, RH, 0, -2); Put0(Lsl, y.r, RH, y.r)
     END ;
     if x.mode == ORB.Const:
@@ -540,7 +540,7 @@ END Set;
 
 def In*(VAR x, y: Item);  (* x = x IN y *)
 BEGIN load(y);
-  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) MOD 20H); RH -= 1
+  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) MOD 0x20); RH -= 1
   else: load(x); Put1(Add, x.r, x.r, 1); Put0(Ror, y.r, y.r, x.r); RH -= 2
   END ;
   SetCC(x, MI)
@@ -580,7 +580,7 @@ def IntRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
 BEGIN
   if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
     load(x);
-    if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] DIV 40000000H != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
+    if (y.a != 0) or ~(op IN {ORS.eql, ORS.neq}) or (code[pc-1] DIV 0x40000000 != -2): Put1a(Cmp, x.r, x.r, y.a) END ;
     RH -= 1
   else: load(x); load(y); Put0(Cmp, x.r, x.r, y.r); RH -= 2
   END ;
@@ -764,7 +764,7 @@ def PrepCall*(VAR x: Item; VAR r: LONGINT);
 BEGIN
   if x.type.form == ORB.Proc:
     if x.mode != ORB.Const:
-      load(x); code[pc-1] = code[pc-1] + 0B000000H; x.r = 11; RH -= 1; inhibitCalls = TRUE;
+      load(x); code[pc-1] = code[pc-1] + 0x0B000000; x.r = 11; RH -= 1; inhibitCalls = TRUE;
       if check: Trap(EQ, 5) END
     END
   else: ORS.Mark("not a procedure")
@@ -780,8 +780,8 @@ BEGIN
     if x.mode == ORB.Const:
       if x.r >= 0: Put3(BL, 7, (x.a DIV 4)-pc-1)
       else: (*imported*)
-        if pc - fixorgP < 1000H:
-          Put3(BL, 7, ((-x.r) * 100H + x.a) * 1000H + pc-fixorgP); fixorgP = pc-1
+        if pc - fixorgP < 0x1000:
+          Put3(BL, 7, ((-x.r) * 0x100 + x.a) * 0x1000 + pc-fixorgP); fixorgP = pc-1
         else: ORS.Mark("fixup impossible")
         END
       END
@@ -816,7 +816,7 @@ BEGIN
   if ~int: (*procedure epilog*)
     Put2(Ldr, LNK, SP, 0); Put1(Add, SP, SP, size); Put3(BR, 7, LNK)
   else: (*interrupt*)
-    Put2(Ldr, 1, SP, 4); Put2(Ldr, 0, SP, 0); Put1(Add, SP, SP, 8); Put3(BR, 7, 10H)
+    Put2(Ldr, 1, SP, 4); Put2(Ldr, 0, SP, 0); Put1(Add, SP, SP, 8); Put3(BR, 7, 0x10)
   END ;
   RH = 0
 END Return;
@@ -907,7 +907,7 @@ BEGIN load(x); load(y);
 END Copy;
 
 def LDPSR*(VAR x: Item);
-BEGIN (*x.mode == Const*)  Put3(0, 15, x.a + 20H)
+BEGIN (*x.mode == Const*)  Put3(0, 15, x.a + 0x20)
 END LDPSR;
 
 def LDREG*(VAR x, y: Item);
@@ -934,11 +934,11 @@ BEGIN load(x); Put1(And, x.r, x.r, 1); SetCC(x, NE); RH -= 1
 END Odd;
 
 def Floor*(VAR x: Item);
-BEGIN load(x); Put1(Mov+U, RH, 0, 4B00H); Put0(Fad+1000H, x.r, x.r, RH) 
+BEGIN load(x); Put1(Mov+U, RH, 0, 0x4B00); Put0(Fad+0x1000, x.r, x.r, RH) 
 END Floor;
 
 def Float*(VAR x: Item);
-BEGIN load(x); Put1(Mov+U, RH, 0, 4B00H);  Put0(Fad+U, x.r, x.r, RH)
+BEGIN load(x); Put1(Mov+U, RH, 0, 0x4B00);  Put0(Fad+U, x.r, x.r, RH)
 END Float;
 
 def Ord*(VAR x: Item);
@@ -957,21 +957,21 @@ def Shift*(fct: LONGINT; VAR x, y: Item);
   VAR op: LONGINT;
 BEGIN load(x);
   if fct == 0: op = Lsl elif fct == 1: op = Asr else: op = Ror END ;
-  if y.mode == ORB.Const: Put1(op, x.r, x.r, y.a MOD 20H)
+  if y.mode == ORB.Const: Put1(op, x.r, x.r, y.a MOD 0x20)
   else: load(y); Put0(op, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
   END
 END Shift;
 
 def ADC*(VAR x, y: Item);
-BEGIN load(x); load(y); Put0(Add+2000H, x.r, x.r, y.r); RH -= 1
+BEGIN load(x); load(y); Put0(Add+0x2000, x.r, x.r, y.r); RH -= 1
 END ADC;
 
 def SBC*(VAR x, y: Item);
-BEGIN load(x); load(y); Put0(Sub+2000H, x.r, x.r, y.r); RH -= 1
+BEGIN load(x); load(y); Put0(Sub+0x2000, x.r, x.r, y.r); RH -= 1
 END SBC;
 
 def UML*(VAR x, y: Item);
-BEGIN load(x); load(y); Put0(Mul+2000H, x.r, x.r, y.r); RH -= 1
+BEGIN load(x); load(y); Put0(Mul+0x2000, x.r, x.r, y.r); RH -= 1
 END UML;
 
 def Bit*(VAR x, y: Item);
@@ -984,12 +984,12 @@ END Bit;
 
 def Register*(VAR x: Item);
 BEGIN (*x.mode == Const*)
-  Put0(Mov, RH, 0, x.a MOD 10H); x.mode = Reg; x.r = RH; incR
+  Put0(Mov, RH, 0, x.a MOD 0x10); x.mode = Reg; x.r = RH; incR
 END Register;
 
 def H*(VAR x: Item);
 BEGIN (*x.mode == Const*)
-  Put0(Mov + U + (x.a MOD 2 * 1000H), RH, 0, 0); x.mode = Reg; x.r = RH; incR
+  Put0(Mov + U + (x.a MOD 2 * 0x1000), RH, 0, 0); x.mode = Reg; x.r = RH; incR
 END H;
 
 def Adr*(VAR x: Item);
@@ -1017,7 +1017,7 @@ END SetDataSize;
 
 def Header*;
 BEGIN entry = pc*4;
-  if version == 0: code[0] = 0E7000000H-1 + pc; Put1(Mov, SB, 0, 16); Put1(Mov, SP, 0, StkOrg0)  (*RISC-0*)
+  if version == 0: code[0] = 0x0E7000000-1 + pc; Put1(Mov, SB, 0, 16); Put1(Mov, SP, 0, StkOrg0)  (*RISC-0*)
   else: Put1(Sub, SP, SP, 4); Put2(Str, LNK, SP, 0); invalSB
   END
 END Header;
@@ -1103,9 +1103,9 @@ BEGIN  (*exit code*)
       if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
-        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len MOD 10000H)
+        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len MOD 0x10000)
         elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) or (obj.type.base.typobj.exno == 0)):
-          Files.WriteInt(R, obj.type.base.len MOD 10000H)
+          Files.WriteInt(R, obj.type.base.len MOD 0x10000)
         END
       END
     END ;
