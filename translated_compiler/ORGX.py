@@ -60,26 +60,26 @@ END Put0;
 def Put1(op, a, b, im: LONGINT);
 BEGIN (*emit format-1 instruction,  -0x10000 <= im < 0x10000*)
   if im < 0: op += 0x1000 END ;  (*set v-bit*)
-  code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im MOD 0x10000); pc += 1
+  code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im % 0x10000); pc += 1
 END Put1;
 
 def Put1a(op, a, b, im: LONGINT);
 BEGIN (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
   if (im >= -0x10000) and (im <= 0x0FFFF): Put1(op, a, b, im)
   else: Put1(Mov+U, RH, 0, im DIV 0x10000);
-    if im MOD 0x10000 != 0: Put1(Ior, RH, RH, im MOD 0x10000) END ;
+    if im % 0x10000 != 0: Put1(Ior, RH, RH, im % 0x10000) END ;
     Put0(op, a, b, RH)
   END
 END Put1a;
 
 def Put2(op, a, b, off: LONGINT);
 BEGIN (*emit load/store instruction*)
-  code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off MOD 0x100000); pc += 1
+  code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off % 0x100000); pc += 1
 END Put2;
 
 def Put3(op, cond, off: LONGINT);
 BEGIN (*emit bran0xc instruction*)
-  code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off MOD 0x1000000); pc += 1
+  code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
 END Put3;
 
 def incR;
@@ -129,21 +129,21 @@ BEGIN curSB = 1
 END invalSB;
 
 def fix(at, with: LONGINT);
-BEGIN code[at] = code[at] DIV C24 * C24 + (with MOD C24)
+BEGIN code[at] = code[at] DIV C24 * C24 + (with % C24)
 END fix;
 
 def FixLink*(L: LONGINT);
   VAR L1: LONGINT;
 BEGIN invalSB;
-  while L != 0: L1 = code[L] MOD 0x40000; fix(L, pc-L-1); L = L1 END
+  while L != 0: L1 = code[L] % 0x40000; fix(L, pc-L-1); L = L1 END
 END FixLink;
 
 def FixLinkWith(L0, dst: LONGINT);
   VAR L1: LONGINT;
 BEGIN
   while L0 != 0:
-    L1 = code[L0] MOD C24;
-    code[L0] = code[L0] DIV C24 * C24 + ((dst - L0 - 1) MOD C24); L0 = L1
+    L1 = code[L0] % C24;
+    code[L0] = code[L0] DIV C24 * C24 + ((dst - L0 - 1) % C24); L0 = L1
   END
 END FixLinkWith;
 
@@ -151,7 +151,7 @@ def merged(L0, L1: LONGINT): LONGINT;
   VAR L2, L3: LONGINT;
 BEGIN 
   if L0 != 0: L3 = L0;
-    REPEAT L2 = L3; L3 = code[L2] MOD 0x40000 UNTIL L3 == 0;
+    REPEAT L2 = L3; L3 = code[L2] % 0x40000 UNTIL L3 == 0;
     code[L2] = code[L2] + L1; L1 = L0
   END ;
   RETURN L1
@@ -188,8 +188,8 @@ BEGIN
         else: GetSB(x.r); Put1(Add, RH, SB, x.a + 0x100) (*mark as progbase-relative*)
         END
       elif (x.a <= 0x0FFFF) and (x.a >= -0x10000): Put1(Mov, RH, 0, x.a)
-      else: Put1(Mov+U, RH, 0, x.a DIV 0x10000 MOD 0x10000);
-        if x.a MOD 0x10000 != 0: Put1(Ior, RH, RH, x.a MOD 0x10000) END
+      else: Put1(Mov+U, RH, 0, x.a DIV 0x10000 % 0x10000);
+        if x.a % 0x10000 != 0: Put1(Ior, RH, RH, x.a % 0x10000) END
       END ;
       x.r = RH; incR
     elif x.mode == RegI: Put2(op, x.r, x.r, x.a)
@@ -256,7 +256,7 @@ def MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer 
 BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   if strx + len + 4 < maxStrx:
     while len > 0: str[strx] = ORS.str[i]; strx += 1; i += 1; len -= 1 END ;
-    while strx MOD 4 != 0: str[strx] = 0X; strx += 1 END
+    while strx % 4 != 0: str[strx] = 0X; strx += 1 END
   else: ORS.Mark("too many strings")
   END
 END MakeStringItem;
@@ -486,7 +486,7 @@ BEGIN
     END
   else: (*op == ORS.mod*)
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
-      if y.a > 0: x.a = x.a MOD y.a else: ORS.Mark("bad modulus") END
+      if y.a > 0: x.a = x.a % y.a else: ORS.Mark("bad modulus") END
     elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1): load(x);
       if e <= 16: Put1(And, x.r, x.r, y.a-1) else: Put1(Lsl, x.r, x.r, 32-e); Put1(Ror, x.r, x.r, 32-e) END
     elif y.mode == ORB.Const:
@@ -540,7 +540,7 @@ END Set;
 
 def In*(VAR x, y: Item);  (* x = x IN y *)
 BEGIN load(y);
-  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) MOD 0x20); RH -= 1
+  if x.mode == ORB.Const: Put1(Ror, y.r, y.r, (x.a + 1) % 0x20); RH -= 1
   else: load(x); Put1(Add, x.r, x.r, 1); Put0(Ror, y.r, y.r, x.r); RH -= 2
   END ;
   SetCC(x, MI)
@@ -957,7 +957,7 @@ def Shift*(fct: LONGINT; VAR x, y: Item);
   VAR op: LONGINT;
 BEGIN load(x);
   if fct == 0: op = Lsl elif fct == 1: op = Asr else: op = Ror END ;
-  if y.mode == ORB.Const: Put1(op, x.r, x.r, y.a MOD 0x20)
+  if y.mode == ORB.Const: Put1(op, x.r, x.r, y.a % 0x20)
   else: load(y); Put0(op, RH-2, x.r, y.r); RH -= 1; x.r = RH-1
   END
 END Shift;
@@ -984,12 +984,12 @@ END Bit;
 
 def Register*(VAR x: Item);
 BEGIN (*x.mode == Const*)
-  Put0(Mov, RH, 0, x.a MOD 0x10); x.mode = Reg; x.r = RH; incR
+  Put0(Mov, RH, 0, x.a % 0x10); x.mode = Reg; x.r = RH; incR
 END Register;
 
 def H*(VAR x: Item);
 BEGIN (*x.mode == Const*)
-  Put0(Mov + U + (x.a MOD 2 * 0x1000), RH, 0, 0); x.mode = Reg; x.r = RH; incR
+  Put0(Mov + U + (x.a % 2 * 0x1000), RH, 0, 0); x.mode = Reg; x.r = RH; incR
 END H;
 
 def Adr*(VAR x: Item);
@@ -1103,9 +1103,9 @@ BEGIN  (*exit code*)
       if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
-        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len MOD 0x10000)
+        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len % 0x10000)
         elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == NIL) or (obj.type.base.typobj.exno == 0)):
-          Files.WriteInt(R, obj.type.base.len MOD 0x10000)
+          Files.WriteInt(R, obj.type.base.len % 0x10000)
         END
       END
     END ;
