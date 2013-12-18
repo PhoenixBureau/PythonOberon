@@ -160,7 +160,7 @@ def fix(at, with_):
 
 
 def FixLink(L):
-  invalSB();
+  invalSB()
   while L != 0:
     L1 = code[L] % 0x40000
     fix(L, pc-L-1)
@@ -168,36 +168,39 @@ def FixLink(L):
   return L
 
 def FixLinkWith(L0, dst):
-  VAR L1: LONGINT;
-BEGIN
   while L0 != 0:
     L1 = code[L0] % C24;
-    code[L0] = code[L0] / C24 * C24 + ((dst - L0 - 1) % C24); L0 = L1
-  END
-END FixLinkWith;
+    code[L0] = code[L0] / C24 * C24 + ((dst - L0 - 1) % C24)
+    L0 = L1
 
-def merged(L0, L1: LONGINT): LONGINT;
-  VAR L2, L3: LONGINT;
-BEGIN 
-  if L0 != 0: L3 = L0;
-    while True: L2 = L3; L3 = code[L2] % 0x40000 UNTIL L3 == 0;
-    code[L2] = code[L2] + L1; L1 = L0
-  END ;
+
+def merged(L0, L1):
+  if L0 != 0:
+    L3 = L0;
+    while True:
+      L2 = L3
+      L3 = code[L2] % 0x40000
+      if L3 == 0:
+        break
+    code[L2] = code[L2] + L1
+    L1 = L0
   return L1
-END merged;
 
-(* loading of operands and addresses into registers *)
+
+# (* loading of operands and addresses into registers *)
 
 def GetSB(base):
-BEGIN
   if (version != 0) and ((base != curSB) or (base != 0)):
-    Put2(Ldr, SB, -base, pc-fixorgD); fixorgD = pc-1; curSB = base
-  END
-END GetSB;
+    Put2(Ldr, SB, -base, pc-fixorgD)
+    global fixorgD, curSB
+    fixorgD = pc-1
+    curSB = base
 
-def NilCheck;
-BEGIN if check: Trap(EQ, 4) END
-END NilCheck;
+
+def NilCheck():
+  if check:
+    Trap(EQ, 4)
+
 
 def load(VAR x: Item);
   VAR op: LONGINT;
@@ -352,10 +355,10 @@ def DeRef*(VAR x: Item);
 BEGIN
   if x.mode == ORB.Var:
     if x.r > 0: (*local*) Put2(Ldr, RH, SP, x.a) else: GetSB(x.r); Put2(Ldr, RH, SB, x.a) END ;
-    NilCheck; x.r = RH; incR()
+    NilCheck(); x.r = RH; incR()
   elif x.mode == ORB.Par:
-    Put2(Ldr, RH, SP, x.a); Put2(Ldr, RH, RH, x.b); NilCheck; x.r = RH; incR()
-  elif x.mode == RegI: Put2(Ldr, x.r, x.r, x.a); NilCheck
+    Put2(Ldr, RH, SP, x.a); Put2(Ldr, RH, RH, x.b); NilCheck(); x.r = RH; incR()
+  elif x.mode == RegI: Put2(Ldr, x.r, x.r, x.a); NilCheck()
   elif x.mode != Reg: ORS.Mark("bad mode in DeRef")
   END ;
   x.mode = RegI; x.a = 0; x.b = 0
@@ -401,7 +404,7 @@ END BuildTD;
 def TypeTest*(VAR x: Item; T: ORB.Type; varpar, isguard: BOOLEAN);
 BEGIN (*fetch tag into RH*)
   if varpar: Put2(Ldr, RH, SP, x.a+4)
-  else: load(x); NilCheck; Put2(Ldr, RH, x.r, -8)
+  else: load(x); NilCheck(); Put2(Ldr, RH, x.r, -8)
   END ;
   Put2(Ldr, RH, RH, T.nofpar*4); incR();
   loadTypTagAdr(T);  (*tag of T*)
@@ -782,7 +785,7 @@ END BJump;
 def CBJump*(VAR x: Item; L):
 BEGIN
   if x.mode != Cond: loadCond(x) END ;
-  Put3(BC, negated(x.r), L-pc-1); x.b = FixLink(x.b); FixLinkWith(x.a, L)
+  Put3(BC, negated(x.r), L-pc-1); x.b = FixLink(x.b); x.a = FixLinkWith(x.a, L)
 END CBJump;
 
 def Fixup*(VAR x: Item);
