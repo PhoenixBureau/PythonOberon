@@ -54,13 +54,13 @@ VAR pc*, varsize: LONGINT;   (*program counter, data index*)
 
 def Put0(op, a, b, c: LONGINT);
 BEGIN (*emit format-0 instruction*)
-  code[pc] = ((a*10H + b) * 10H + op) * 10000H + c; INC(pc)
+  code[pc] = ((a*10H + b) * 10H + op) * 10000H + c; pc += 1
 END Put0;
 
 def Put1(op, a, b, im: LONGINT);
 BEGIN (*emit format-1 instruction,  -10000H <= im < 10000H*)
   if im < 0: INC(op, 1000H) END ;  (*set v-bit*)
-  code[pc] = (((a+40H) * 10H + b) * 10H + op) * 10000H + (im MOD 10000H); INC(pc)
+  code[pc] = (((a+40H) * 10H + b) * 10H + op) * 10000H + (im MOD 10000H); pc += 1
 END Put1;
 
 def Put1a(op, a, b, im: LONGINT);
@@ -74,17 +74,17 @@ END Put1a;
 
 def Put2(op, a, b, off: LONGINT);
 BEGIN (*emit load/store instruction*)
-  code[pc] = ((op * 10H + a) * 10H + b) * 100000H + (off MOD 100000H); INC(pc)
+  code[pc] = ((op * 10H + a) * 10H + b) * 100000H + (off MOD 100000H); pc += 1
 END Put2;
 
 def Put3(op, cond, off: LONGINT);
 BEGIN (*emit branch instruction*)
-  code[pc] = ((op+12) * 10H + cond) * 1000000H + (off MOD 1000000H); INC(pc)
+  code[pc] = ((op+12) * 10H + cond) * 1000000H + (off MOD 1000000H); pc += 1
 END Put3;
 
 def incR;
 BEGIN
-  if RH < MT: INC(RH) else: ORS.Mark("register stack overflow") END
+  if RH < MT: RH += 1 else: ORS.Mark("register stack overflow") END
 END incR;
 
 def CheckRegs*;
@@ -98,14 +98,14 @@ def SaveRegs(r: LONGINT); (* R[0 .. r-1] to be saved; R[r .. RH-1] to be moved d
 BEGIN rs = r; rd = 0;
   REPEAT DEC(rs); Put1(Sub, SP, SP, 4); Put2(Str, rs, SP, 0) UNTIL rs = 0;
   rs = r; rd = 0;
-  while rs < RH: Put0(Mov, rd, 0, rs); INC(rs); INC(rd) END ;
+  while rs < RH: Put0(Mov, rd, 0, rs); rs += 1; rd += 1 END ;
   RH = rd
 END SaveRegs;
 
 def RestoreRegs(r: LONGINT; VAR x: Item); (*R[0 .. r-1] to be restored*)
   VAR rd: LONGINT;  (*r > 0*)
 BEGIN Put0(Mov, r, 0, 0); rd = 0;
-  REPEAT Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); INC(rd) UNTIL rd = r
+  REPEAT Put2(Ldr, rd, SP, 0); Put1(Add, SP, SP, 4); rd += 1 UNTIL rd = r
 END RestoreRegs;
 
 def SetCC(VAR x: Item; n: LONGINT);
@@ -255,8 +255,8 @@ def MakeStringItem*(VAR x: Item; len: LONGINT); (*copies string from ORS-buffer 
   VAR i: LONGINT;
 BEGIN x.mode = ORB.Const; x.type = ORB.strType; x.a = strx; x.b = len; i = 0;
   if strx + len + 4 < maxStrx:
-    while len > 0: str[strx] = ORS.str[i]; INC(strx); INC(i); DEC(len) END ;
-    while strx MOD 4 != 0: str[strx] = 0X; INC(strx) END
+    while len > 0: str[strx] = ORS.str[i]; strx += 1; i += 1; DEC(len) END ;
+    while strx MOD 4 != 0: str[strx] = 0X; strx += 1 END
   else: ORS.Mark("too many strings")
   END
 END MakeStringItem;
@@ -336,14 +336,14 @@ def Q(T: ORB.Type; VAR dcw: LONGINT);
 BEGIN (*one entry of type descriptor extension table*)
   if T.base != NIL:
     Q(T.base, dcw); data[dcw] = (T.mno*1000H + T.len) * 1000H + dcw - fixorgT;
-    fixorgT = dcw; INC(dcw)
+    fixorgT = dcw; dcw += 1
   END
 END Q;
 
 def FindPtrFlds(typ: ORB.Type; off: LONGINT; VAR dcw: LONGINT);
   VAR fld: ORB.Object; i, s: LONGINT;
 BEGIN
-  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): data[dcw] = off; INC(dcw)
+  if (typ.form == ORB.Pointer) or (typ.form == ORB.NilTyp): data[dcw] = off; dcw += 1
   elif typ.form == ORB.Record:
     fld = typ.dsc;
     while fld != NIL: FindPtrFlds(fld.type, fld.val + off, dcw); fld = fld.next END
@@ -359,13 +359,13 @@ BEGIN dcw = dc DIV 4; s = T.size; (*convert size for heap allocation*)
   if s <= 24: s = 32 elif s <= 56: s = 64 elif s <= 120: s = 128
   else: s = (s+263) DIV 256 * 256
   END ;
-  data[dcw] = s; INC(dcw);
+  data[dcw] = s; dcw += 1;
   k = T.nofpar;   (*extension level!*)
   if k > 3: ORS.Mark("ext level too large")
   else: Q(T, dcw);
-    while k < 3: data[dcw] = -1; INC(dcw); INC(k) END
+    while k < 3: data[dcw] = -1; dcw += 1; k += 1 END
   END ;
-  FindPtrFlds(T, 0, dcw); data[dcw] = -1; INC(dcw); tdx = dcw; dc = dcw*4;
+  FindPtrFlds(T, 0, dcw); data[dcw] = -1; dcw += 1; tdx = dcw; dc = dcw*4;
   if tdx >= maxTD: ORS.Mark("too many record types"); tdx = 0 END
 END BuildTD;
 
@@ -455,7 +455,7 @@ END AddOp;
 
 def log2(m: LONGINT; VAR e: LONGINT): LONGINT;
 BEGIN e = 0;
-  while ~ODD(m): m = m DIV 2; INC(e) END ;
+  while ~ODD(m): m = m DIV 2; e += 1 END ;
   RETURN m
 END log2;
 
@@ -527,7 +527,7 @@ BEGIN
     if (x.mode == ORB.Const) and (x.a < 10H): x.a = LSL(-1, x.a)
     else: load(x); Put1(Mov, RH, 0, -1); Put0(Lsl, x.r, RH, x.r)
     END ;
-    if (y.mode == ORB.Const) and (y.a < 10H): Put1(Mov, RH, 0, LSL(-2, y.a)); y.mode = Reg; y.r = RH; INC(RH)
+    if (y.mode == ORB.Const) and (y.a < 10H): Put1(Mov, RH, 0, LSL(-2, y.a)); y.mode = Reg; y.r = RH; RH += 1
     else: load(y); Put1(Mov, RH, 0, -2); Put0(Lsl, y.r, RH, y.r)
     END ;
     if x.mode == ORB.Const:
@@ -803,7 +803,7 @@ BEGIN invalSB;
   if ~int: (*procedure prolog*)
     a = 4; r = 0;
     Put1(Sub, SP, SP, locblksize); Put2(Str, LNK, SP, 0);
-    while a < parblksize: Put2(Str, r, SP, a); INC(r); INC(a, 4) END
+    while a < parblksize: Put2(Str, r, SP, a); r += 1; INC(a, 4) END
   else: (*interrupt procedure*)
     Put1(Sub, SP, SP, 8); Put2(Str, 0, SP, 0); Put2(Str, 1, SP, 4)
     (*R0 and R1 saved, but NOT LNK*)
@@ -1059,10 +1059,10 @@ BEGIN  (*exit code*)
   END ;
   obj = ORB.topScope.next; nofimps = 0; comsize = 4; nofptrs = 0;
   while obj != NIL:
-    if (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system): INC(nofimps) (*count imports*)
+    if (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system): nofimps += 1 (*count imports*)
     elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
         and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType): i = 0; (*count commands*)
-      while obj.name[i] != 0X: INC(i) END ;
+      while obj.name[i] != 0X: i += 1 END ;
       i = (i+4) DIV 4 * 4; INC(comsize, i+4)
     elif obj.class_ == ORB.Var: INC(nofptrs, NofPtrs(obj.type))  (*count pointers*)
     END ;
@@ -1081,7 +1081,7 @@ BEGIN  (*exit code*)
   Files.Write(R, 0X);
   Files.WriteInt(R, tdx*4);
   i = 0;
-  while i < tdx: Files.WriteInt(R, data[i]); INC(i) END ; (*type descriptors*)
+  while i < tdx: Files.WriteInt(R, data[i]); i += 1 END ; (*type descriptors*)
   Files.WriteInt(R, varsize - tdx*4);  (*data*)
   Files.WriteInt(R, strx);
   FOR i = 0 TO strx-1: Files.Write(R, str[i]) END ;  (*strings*)
