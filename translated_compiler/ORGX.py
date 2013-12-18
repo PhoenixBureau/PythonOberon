@@ -1,56 +1,64 @@
-''
+'''
 MODULE ORG; (* NW  10.10.2013  code generator in Oberon-07 for RISC*)
 IMPORT SYSTEM, Files, ORS, ORB;
 (*Code generator for Oberon compiler for RISC processor.
    Procedural interface to Parser OSAP; result in array "code".
    Procedure Close writes code-files*)
+'''
 
-CONST WordSize* == 4;
-  StkOrg0 = -64; VarOrg0 = 0;  (*for RISC-0 only*)
-  MT = 12; SB = 13; SP = 14; LNK = 15;   (*dedicated registers*)
-  maxCode = 8000; maxStrx = 2400; maxTD = 120; C24 = 0x1000000;
-  Reg = 10; RegI = 11; Cond = 12;  (*internal item modes*)
+import Files, ORSX as ORS, ORBX as ORB
 
-(*frequently used opcodes*)  U = 0x2000;
-  Mov = 0; Lsl = 1; Asr = 2; Ror= 3; And = 4; Ann = 5; Ior = 6; Xor = 7;
-  Add = 8; Sub = 9; Cmp = 9; Mul = 10; Div = 11;
-  Fad = 12; Fsb = 13; Fml = 14; Fdv = 15;
-  Ldr = 8; Str = 10;
-  BR = 0; BLR = 1; BC = 2; BL = 3;
-  MI = 0; PL = 8; EQ = 1; NE = 9; LT = 5; GE = 13; LE = 6; GT = 14;
+WordSize* == 4;
+StkOrg0 = -64; VarOrg0 = 0; # (*for RISC-0 only*)
+MT = 12; SB = 13; SP = 14; LNK = 15; #  (*dedicated registers*)
+maxCode = 8000; maxStrx = 2400; maxTD = 120; C24 = 0x1000000;
+Reg = 10; RegI = 11; Cond = 12; # (*internal item modes*)
 
-  TYPE Item* = RECORD
-    mode*: INTEGER;
-    type*: ORB.Type;
-    a*, b*, r: LONGINT;
-    rdo*: BOOLEAN  (*read only*)
-  END ;
+#(*frequently used opcodes*)
+U = 0x2000;
+Mov = 0; Lsl = 1; Asr = 2; Ror= 3; And = 4; Ann = 5; Ior = 6; Xor = 7;
+Add = 8; Sub = 9; Cmp = 9; Mul = 10; Div = 11;
+Fad = 12; Fsb = 13; Fml = 14; Fdv = 15;
+Ldr = 8; Str = 10;
+BR = 0; BLR = 1; BC = 2; BL = 3;
+MI = 0; PL = 8; EQ = 1; NE = 9; LT = 5; GE = 13; LE = 6; GT = 14;
 
-(* Item forms and meaning of fields:
-  mode    r      a       b
-  --------------------------------
-  Const   -     value (proc adr)   (immediate value)
-  Var     base   off     -               (direct adr)
-  Par      -     off0     off1         (indirect adr)
-  Reg    regno
-  RegI   regno   off     -
-  Cond  cond   Fchain  Tchain  *)
+class Item:
+  def __init__(self,):
+    self.mode = 0
+    self.type_ = None
+    self.a, self.b, self.r = 0,0,0
+    self.rdo = False
 
-VAR pc*, varsize: LONGINT;   (*program counter, data index*)
-  tdx, strx: LONGINT;
-  entry: LONGINT;   (*main entry point*)
-  RH: LONGINT;  (*available registers R[0] ... R[H-1]*)
-  curSB: LONGINT;  (*current static base in SB*)
-  fixorgP, fixorgD, fixorgT: LONGINT;   (*origins of lists of locations to be fixed up by loader*)
-  check, inhibitCalls: BOOLEAN;  (*emit run-time checks*)
-  version: INTEGER;  (* 0 = RISC-0, 1 = RISC-5 *)
-  
-  relmap: ARRAY 6 OF INTEGER;  (*condition codes for relations*)
-  code: ARRAY maxCode OF LONGINT;
-  data: ARRAY maxTD OF LONGINT;  (*type descriptors*)
-  str: ARRAY maxStrx OF 0xCAR;
 
-(*instruction assemblers according to formats*)
+##(* Item forms and meaning of fields:
+##  mode    r      a       b
+##  --------------------------------
+##  Const   -     value (proc adr)   (immediate value)
+##  Var     base   off     -               (direct adr)
+##  Par      -     off0     off1         (indirect adr)
+##  Reg    regno
+##  RegI   regno   off     -
+##  Cond  cond   Fchain  Tchain  *)
+
+
+pc, varsize = 0,0 #  (*program counter, data index*)
+tdx, strx = 0,0: LONGINT;
+entry = 0 # (*main entry point*)
+RH = 0 # (*available registers R[0] ... R[H-1]*)
+curSB = 0 # (*current static base in SB*)
+fixorgP, fixorgD, fixorgT = 0,0,0 # (*origins of lists of locations to be fixed up by loader*)
+check, inhibitCalls = False, False # (*emit run-time checks*)
+version = 0 # (* 0 = RISC-0, 1 = RISC-5 *)
+
+relmap = {} # (*condition codes for relations*)
+relmap[0] = 1; relmap[1] = 9; relmap[2] = 5; relmap[3] = 6; relmap[4] = 14; relmap[5] = 13
+
+code = {} # : ARRAY maxCode OF LONGINT;
+data = {} # : ARRAY maxTD OF LONGINT;  (*type descriptors*)
+str = {} # : ARRAY maxStrx OF 0xCAR;
+
+#(*instruction assemblers according to formats*)
 
 def Put0(op, a, b, c: LONGINT);
 BEGIN (*emit format-0 instruction*)
@@ -1122,6 +1130,5 @@ BEGIN  (*exit code*)
 END Close;
 
 BEGIN
-relmap[0] = 1; relmap[1] = 9; relmap[2] = 5; relmap[3] = 6; relmap[4] = 14; relmap[5] = 13
 END ORG.
 '''
