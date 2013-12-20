@@ -7,24 +7,25 @@
 ##!=!=    Parser is target-independent, except for part of the handling of allocations.*)
 ##!=!=
 
-TYPE PtrBase == POINTER TO PtrBaseDesc;
-  PtrBaseDesc == RECORD  (*list of names of pointer base types*)
-    name: ORS.Ident; type_: ORB.Type; next: PtrBase
-  END ;
-
-VAR
+import ORSX as ORS, ORBX as ORB, ORGX as ORG
+##TYPE PtrBase == POINTER TO PtrBaseDesc;
+##  PtrBaseDesc == RECORD  (*list of names of pointer base types*)
+##    name: ORS.Ident; type_: ORB.Type; next: PtrBase
+##  END ;
+##
+##VAR
 
 sym = 0 #  (*last symbol read*)
-  dc: LONGINT;    (*data counter*)
-  level, exno, version: INTEGER;
-  newSF: BOOLEAN;  (*option flag*)
-  expression: def (x);  (*to avoid forward reference*)
-  Type: def (VAR type_: ORB.Type);
-  FormalType: def (VAR typ: ORB.Type; dim: INTEGER);
-  modid: ORS.Ident;
-  pbsList: PtrBase;   (*list of names of pointer base types*)
-  dummy: ORB.Object;
-  W: Texts.Writer;
+dc = 0 #: LONGINT;   # (*data counter*)
+level, exno, version = 0, 0, 0 #: INTEGER;
+newSF = False # : BOOLEAN; # (*option flag*)
+expression = None # def (x); # (*to avoid forward reference*)
+Type = None # : # def (VAR type_: ORB.Type);
+FormalType = None # : # def (VAR typ: ORB.Type; dim: INTEGER);
+modid = None # : # ORS.Ident;
+pbsList = None # : # PtrBase;  # (*list of names of pointer base types*)
+dummy = None # : ORB.Object;
+W = None # : Texts.Writer;
 
 
 def Check(s, msg):
@@ -59,19 +60,19 @@ def CheckBool(x):
     x.type_ = ORB.boolType
 
 
-def CheckInt(x);
+def CheckInt(x):
   if x.type_.form != ORB.Int:
     ORS.Mark("not Integer")
     x.type_ = ORB.intType
 
 
-def CheckReal(x);
+def CheckReal(x):
   if x.type_.form != ORB.Real:
     ORS.Mark("not Real")
     x.type_ = ORB.realType
 
 
-def CheckSet(x);
+def CheckSet(x):
   if x.type_.form != ORB.Set:
     ORS.Mark("not Set")
     x.type_ = ORB.setType
@@ -1072,321 +1073,524 @@ def RecordType(VAR type_: ORB.Type);
 
 
 def FPSection(VAR adr: LONGINT; VAR nofpar: INTEGER);
-  VAR obj, first: ORB.Object; tp: ORB.Type;
-    parsize: LONGINT; cl: INTEGER; rdo: BOOLEAN;
-BEGIN
-  if sym == ORS.var: ORS.Get(sym); cl = ORB.Par else: cl = ORB.Var END ;
-  IdentList(cl, first); FormalType(tp, 0); rdo = False;
-  if (cl == ORB.Var) and (tp.form >= ORB.Array): cl = ORB.Par; rdo = True END ;
+##  VAR obj, first: ORB.Object; tp: ORB.Type;
+##    parsize: LONGINT; cl: INTEGER; rdo: BOOLEAN;
+  if sym == ORS.var:
+    ORS.Get(sym)
+    cl = ORB.Par
+  else:
+    cl = ORB.Var
+  IdentList(cl, first)
+  FormalType(tp, 0)
+  rdo = False;
+  if (cl == ORB.Var) and (tp.form >= ORB.Array):
+    cl = ORB.Par
+    rdo = True
+
   if (tp.form == ORB.Array) and (tp.len_ < 0) or (tp.form == ORB.Record):
-    parsize = 2*ORG.WordSize  (*open array or record, needs second word for length or type_ tag*)
-  else: parsize = ORG.WordSize
-  END ;
+    parsize = 2*ORG.WordSize # (*open array or record, needs second word for length or type_ tag*)
+  else:
+    parsize = ORG.WordSize
+
   obj = first;
   while obj != None:
-    INC(nofpar); obj.class_ = cl; obj.type_ = tp; obj.rdo = rdo; obj.lev = level; obj.val = adr;
-    adr = adr + parsize; obj = obj.next
-  END ;
-  if adr >= 52: ORS.Mark("too many parameters") END
-END FPSection;
+    INC(nofpar)
+    obj.class_ = cl
+    obj.type_ = tp
+    obj.rdo = rdo
+    obj.lev = level
+    obj.val = adr
+    adr = adr + parsize
+    obj = obj.next
+
+  if adr >= 52:
+    ORS.Mark("too many parameters")
+
 
 def ProcedureType(ptype: ORB.Type; VAR parblksize: LONGINT);
-  VAR obj: ORB.Object; size: LONGINT; nofpar: INTEGER;
-BEGIN ptype.base = ORB.noType; size = parblksize; nofpar = 0; ptype.dsc = None;
+  # VAR obj: ORB.Object; size: LONGINT; nofpar: INTEGER;
+  ptype.base = ORB.noType
+  size = parblksize
+  nofpar = 0
+  ptype.dsc = None
   if sym == ORS.lparen:
-    ORS.Get(sym);
-    if sym == ORS.rparen: ORS.Get(sym)
-    else: FPSection(size, nofpar);
-      while sym == ORS.semicolon: ORS.Get(sym); FPSection(size, nofpar) END ;
+    ORS.Get(sym)
+    if sym == ORS.rparen:
+      ORS.Get(sym)
+    else:
+      FPSection(size, nofpar)
+      while sym == ORS.semicolon:
+        ORS.Get(sym)
+        FPSection(size, nofpar)
       Check(ORS.rparen, "no )")
-    END ;
-    ptype.nofpar = nofpar; parblksize = size;
-    if sym == ORS.colon:  (*function*)
-      ORS.Get(sym);
-      if sym == ORS.ident: qualident(obj);
-        if (obj.class_ == ORB.Typ) and (obj.type_.form IN {ORB.Byte .. ORB.Pointer, ORB.Proc}): ptype.base = obj.type_
-        else: ORS.Mark("illegal function type_")
-        END
-      else: ORS.Mark("type_ identifier expected")
-      END
-    END
-  END
-END ProcedureType;
+
+    ptype.nofpar = nofpar
+    parblksize = size
+    if sym == ORS.colon: # (*function*)
+      ORS.Get(sym)
+      if sym == ORS.ident:
+        qualident(obj)
+        if (obj.class_ == ORB.Typ) and (obj.type_.form in (
+          range(ORB.Byte, ORB.Pointer+1) + [ORB.Proc]
+          )
+                                        ):
+          ptype.base = obj.type_
+        else:
+          ORS.Mark("illegal function type_")
+
+      else:
+        ORS.Mark("type_ identifier expected")
+
 
 def FormalType0(VAR typ: ORB.Type; dim: INTEGER);
-  VAR obj: ORB.Object; dmy: LONGINT;
-BEGIN
-  if sym == ORS.ident:
-    qualident(obj);
-    if obj.class_ == ORB.Typ: typ = obj.type_ else: ORS.Mark("not a type_"); typ = ORB.intType END
-  elif sym == ORS.array:
-    ORS.Get(sym); Check(ORS.of, "OF ?");
-    if dim >= 1: ORS.Mark("multi-dimensional open arrays not implemented") END ;
-    NEW(typ); typ.form = ORB.Array; typ.len_ = -1; typ.size = 2*ORG.WordSize; 
-    FormalType(typ.base, dim+1)
-  elif sym == ORS.procedure:
-    ORS.Get(sym); ORB.OpenScope;
-    NEW(typ); typ.form = ORB.Proc; typ.size = ORG.WordSize; dmy = 0; ProcedureType(typ, dmy);
-    typ.dsc = ORB.topScope.next; ORB.CloseScope
-  else: ORS.Mark("identifier expected"); typ = ORB.noType
-  END
-END FormalType0;
-
-def Type0(VAR type_: ORB.Type);
-  VAR dmy: LONGINT; obj: ORB.Object; ptbase: PtrBase;
-BEGIN type_ = ORB.intType; (*sync*)
-  if (sym != ORS.ident) and (sym < ORS.array): ORS.Mark("not a type_");
-    while True: ORS.Get(sym) UNTIL (sym == ORS.ident) or (sym >= ORS.array)
-  END ;
+  # VAR obj: ORB.Object; dmy: LONGINT;
   if sym == ORS.ident:
     qualident(obj);
     if obj.class_ == ORB.Typ:
-      if (obj.type_ != None) and (obj.type_.form != ORB.NoTyp): type_ = obj.type_ END
-    else: ORS.Mark("not a type_ or undefined")
-    END
-  elif sym == ORS.array: ORS.Get(sym); ArrayType(type_)
-  elif sym == ORS.record:
-    ORS.Get(sym); RecordType(type_); Check(ORS.end, "no END")
-  elif sym == ORS.pointer:
-    ORS.Get(sym); Check(ORS.to, "no TO");
-    NEW(type_);  type_.form = ORB.Pointer; type_.size = ORG.WordSize; type_.base = ORB.intType;
-    if sym == ORS.ident:
-      obj = ORB.thisObj(); ORS.Get(sym);
-      if obj != None:
-        if (obj.class_ == ORB.Typ) and (obj.type_.form IN {ORB.Record, ORB.NoTyp}): type_.base = obj.type_
-        else: ORS.Mark("no valid base type_")
-        END
-      END ;
-      NEW(ptbase); ORS.CopyId(ptbase.name); ptbase.type_ = type_; ptbase.next = pbsList; pbsList = ptbase
-    else: Type(type_.base);
-      if type_.base.form != ORB.Record: ORS.Mark("must point to record") END
-    END
+      typ = obj.type_
+    else:
+      ORS.Mark("not a type_")
+      typ = ORB.intType
+  elif sym == ORS.array:
+    ORS.Get(sym)
+    Check(ORS.of, "OF ?");
+    if dim >= 1:
+      ORS.Mark("multi-dimensional open arrays not implemented")
+    NEW(typ)
+    typ.form = ORB.Array
+    typ.len_ = -1
+    typ.size = 2*ORG.WordSize; 
+    FormalType(typ.base, dim+1)
   elif sym == ORS.procedure:
-    ORS.Get(sym); ORB.OpenScope;
-    NEW(type_); type_.form = ORB.Proc; type_.size = ORG.WordSize; dmy = 0;
-    ProcedureType(type_, dmy); type_.dsc = ORB.topScope.next; ORB.CloseScope
-  else: ORS.Mark("illegal type_")
-  END
-END Type0;
+    ORS.Get(sym)
+    ORB.OpenScope()
+    NEW(typ)
+    typ.form = ORB.Proc
+    typ.size = ORG.WordSize
+    dmy = 0
+    ProcedureType(typ, dmy);
+    typ.dsc = ORB.topScope.next
+    ORB.CloseScope()
+  else:
+    ORS.Mark("identifier expected")
+    typ = ORB.noType
+
+
+def Type0(VAR type_: ORB.Type);
+  # VAR dmy: LONGINT; obj: ORB.Object; ptbase: PtrBase;
+  type_ = ORB.intType # (*sync*)
+  if (sym != ORS.ident) and (sym < ORS.array):
+    ORS.Mark("not a type_")
+    while True:
+      ORS.Get(sym)
+      if (sym == ORS.ident) or (sym >= ORS.array):
+        break
+
+  if sym == ORS.ident:
+    qualident(obj);
+    if obj.class_ == ORB.Typ:
+      if (obj.type_ != None) and (obj.type_.form != ORB.NoTyp):
+        type_ = obj.type_
+    else:
+      ORS.Mark("not a type_ or undefined")
+
+  elif sym == ORS.array:
+    ORS.Get(sym)
+    ArrayType(type_)
+  elif sym == ORS.record:
+    ORS.Get(sym)
+    RecordType(type_)
+    Check(ORS.end, "no END")
+  elif sym == ORS.pointer:
+    ORS.Get(sym)
+    Check(ORS.to, "no TO");
+    NEW(type_)
+    type_.form = ORB.Pointer
+    type_.size = ORG.WordSize
+    type_.base = ORB.intType;
+    if sym == ORS.ident:
+      obj = ORB.thisObj()
+      ORS.Get(sym);
+      if obj != None:
+        if (obj.class_ == ORB.Typ) and (obj.type_.form in [ORB.Record, ORB.NoTyp]):
+          type_.base = obj.type_
+        else:
+          ORS.Mark("no valid base type_")
+
+      NEW(ptbase)
+      ORS.CopyId(ptbase.name)
+      ptbase.type_ = type_
+      ptbase.next = pbsList
+      pbsList = ptbase
+    else:
+      Type(type_.base);
+      if type_.base.form != ORB.Record:
+        ORS.Mark("must point to record")
+
+  elif sym == ORS.procedure:
+    ORS.Get(sym)
+    ORB.OpenScope()
+    NEW(type_)
+    type_.form = ORB.Proc
+    type_.size = ORG.WordSize
+    dmy = 0;
+    ProcedureType(type_, dmy)
+    type_.dsc = ORB.topScope.next
+    ORB.CloseScope()
+  else:
+    ORS.Mark("illegal type_")
+
 
 def Declarations(VAR varsize: LONGINT);
-  VAR obj, first: ORB.Object;
-    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
-    expo: BOOLEAN; id_: ORS.Ident;
-BEGIN (*sync*) pbsList = None;
-  if (sym < ORS.const) and (sym != ORS.end): ORS.Mark("declaration?");
-    while True: ORS.Get(sym) UNTIL (sym >= ORS.const) or (sym == ORS.end)
-  END ;
+##  VAR obj, first: ORB.Object;
+##    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
+##    expo: BOOLEAN; id_: ORS.Ident;
+  # (*sync*)
+  pbsList = None
+  if (sym < ORS.const) and (sym != ORS.end):
+    ORS.Mark("declaration?");
+    while True:
+      ORS.Get(sym)
+      if (sym >= ORS.const) or (sym == ORS.end):
+        break
+
   if sym == ORS.const:
     ORS.Get(sym);
     while sym == ORS.ident:
-      ORS.CopyId(id_); ORS.Get(sym); CheckExport(expo);
-      if sym == ORS.eql: ORS.Get(sym) else: ORS.Mark("= ?") END;
-      expression(x);
-      if (x.type_.form == ORB.String) and (x.b == 2): ORG.StrToChar(x) END ;
-      ORB.NewObj(obj, id_, ORB.Const); obj.expo = expo;
-      if x.mode == ORB.Const: obj.val = x.a; obj.lev = x.b; obj.type_ = x.type_
-      else: ORS.Mark("expression not constant"); obj.type_ = ORB.intType
-      END;
+      ORS.CopyId(id_)
+      ORS.Get(sym)
+      CheckExport(expo);
+      if sym == ORS.eql:
+        ORS.Get(sym)
+      else:
+        ORS.Mark("= ?")
+      expression(x)
+      if (x.type_.form == ORB.String) and (x.b == 2):
+        ORG.StrToChar(x)
+      ORB.NewObj(obj, id_, ORB.Const)
+      obj.expo = expo;
+      if x.mode == ORB.Const:
+        obj.val = x.a
+        obj.lev = x.b
+        obj.type_ = x.type_
+      else:
+        ORS.Mark("expression not constant")
+        obj.type_ = ORB.intType
+
       Check(ORS.semicolon, "; missing")
-    END
-  END ;
+
   if sym == ORS.type_:
-    ORS.Get(sym);
+    ORS.Get(sym)
     while sym == ORS.ident:
-      ORS.CopyId(id_); ORS.Get(sym); CheckExport(expo);
-      if sym == ORS.eql: ORS.Get(sym) else: ORS.Mark("=?") END ;
+      ORS.CopyId(id_)
+      ORS.Get(sym)
+      CheckExport(expo);
+      if sym == ORS.eql:
+        ORS.Get(sym)
+      else:
+        ORS.Mark("=?")
       Type(tp);
-      ORB.NewObj(obj, id_, ORB.Typ); obj.type_ = tp; obj.expo = expo; obj.lev = level; tp.typobj = obj;
-      if expo and (obj.type_.form == ORB.Record): obj.exno = exno; INC(exno) else: obj.exno = 0 END ;
+      ORB.NewObj(obj, id_, ORB.Typ)
+      obj.type_ = tp
+      obj.expo = expo
+      obj.lev = level
+      tp.typobj = obj;
+      if expo and (obj.type_.form == ORB.Record):
+        obj.exno = exno
+        INC(exno)
+      else:
+        obj.exno = 0
       if tp.form == ORB.Record:
-        ptbase = pbsList;  (*check whether this is base of a pointer type_; search and fixup*)
+        ptbase = pbsList; # (*check whether this is base of a pointer type_; search and fixup*)
         while ptbase != None:
           if obj.name == ptbase.name:
-            if ptbase.type_.base == ORB.intType: ptbase.type_.base = obj.type_ else: ORS.Mark("recursive record?") END
-          END ;
+            if ptbase.type_.base == ORB.intType:
+              ptbase.type_.base = obj.type_
+            else:
+              ORS.Mark("recursive record?")
+
           ptbase = ptbase.next
-        END ;
+
         tp.len_ = dc;
-        if level == 0: ORG.BuildTD(tp, dc) END    (*type_ descriptor; len_ used as its address*)
-      END ;
+        if level == 0:
+          ORG.BuildTD(tp, dc) # (*type_ descriptor; len_ used as its address*)
+
       Check(ORS.semicolon, "; missing")
-    END
-  END ;
+
   if sym == ORS.var:
-    ORS.Get(sym);
+    ORS.Get(sym)
     while sym == ORS.ident:
-      IdentList(ORB.Var, first); Type(tp);
-      obj = first;
+      IdentList(ORB.Var, first)
+      Type(tp)
+      obj = first
       while obj != None:
-        obj.type_ = tp; obj.lev = level;
-        if tp.size > 1: varsize = (varsize + 3) DIV 4 * 4 (*align*) END ;
-        obj.val = varsize; varsize = varsize + obj.type_.size;
-        if obj.expo: obj.exno = exno; INC(exno) END ;
+        obj.type_ = tp
+        obj.lev = level;
+        if tp.size > 1:
+          varsize = (varsize + 3) / 4 * 4 # (*align*)
+        obj.val = varsize
+        varsize = varsize + obj.type_.size;
+        if obj.expo:
+          obj.exno = exno
+          INC(exno)
         obj = obj.next
-      END ;
+
       Check(ORS.semicolon, "; missing")
-    END
-  END ;
-  varsize = (varsize + 3) DIV 4 * 4;
-  ptbase = pbsList;
+
+  varsize = (varsize + 3) / 4 * 4;
+  ptbase = pbsList
   while ptbase != None:
-    if ptbase.type_.base.form == ORB.Int: ORS.Mark("undefined pointer base of") END ;
+    if ptbase.type_.base.form == ORB.Int:
+      ORS.Mark("undefined pointer base of")
     ptbase = ptbase.next
-  END ;
-  if (sym >= ORS.const) and (sym <= ORS.var): ORS.Mark("declaration in bad order") END
-END Declarations;
+
+  if (sym >= ORS.const) and (sym <= ORS.var):
+    ORS.Mark("declaration in bad order")
+
 
 def ProcedureDecl;
-  VAR proc: ORB.Object;
-    type_: ORB.Type;
-    procid: ORS.Ident;
-    x: ORG.Item;
-    locblksize, parblksize, L: LONGINT;
-    int_: BOOLEAN;
-BEGIN (* ProcedureDecl *) int_ = False; ORS.Get(sym);
-  if sym == ORS.times: ORS.Get(sym); int_ = True END ;
-  if sym == ORS.ident:
-    ORS.CopyId(procid); ORS.Get(sym);
-    (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
-    ORB.NewObj(proc, ORS.id_, ORB.Const); parblksize = 4;
-    NEW(type_); type_.form = ORB.Proc; type_.size = ORG.WordSize; proc.type_ = type_;
-    CheckExport(proc.expo);
-    if proc.expo: proc.exno = exno; INC(exno) END ;
-    ORB.OpenScope; INC(level); proc.val = -1; type_.base = ORB.noType;
-    ProcedureType(type_, parblksize);  (*formal parameter list*)
-    Check(ORS.semicolon, "no ;"); locblksize = parblksize; 
-    Declarations(locblksize);
-    proc.val = ORG.Here() * 4; proc.type_.dsc = ORB.topScope.next;
-    if sym == ORS.procedure:
-      L = 0; ORG.FJump(L);
-      while True: ProcedureDecl; Check(ORS.semicolon, "no ;") UNTIL sym != ORS.procedure;
-      ORG.FixLink(L); proc.val = ORG.Here() * 4; proc.type_.dsc = ORB.topScope.next
-    END ;
-    ORG.Enter(parblksize, locblksize, int_);
-    if sym == ORS.begin: ORS.Get(sym); StatSequence END ;
-    if sym == ORS.return:
-      ORS.Get(sym); expression(x);
-      if type_.base == ORB.noType: ORS.Mark("this is not a function")
-      elif ~CompTypes(type_.base, x.type_, False): ORS.Mark("wrong result type_")
-      END
-    elif type_.base.form != ORB.NoTyp:
-      ORS.Mark("function without result"); type_.base = ORB.noType
-    END ;
-    ORG.Return(type_.base.form, x, locblksize, int_);
-    ORB.CloseScope; DEC(level); Check(ORS.end, "no END");
-    if sym == ORS.ident:
-      if ORS.id_ != procid: ORS.Mark("no match") END ;
-      ORS.Get(sym)
-    else: ORS.Mark("no proc id_")
-    END
-  END ;
-  int_ = False
-END ProcedureDecl;
+##  VAR proc: ORB.Object;
+##    type_: ORB.Type;
+##    procid: ORS.Ident;
+##    x: ORG.Item;
+##    locblksize, parblksize, L: LONGINT;
+##    int_: BOOLEAN;
 
-def Module;
-  VAR key: LONGINT;
-    obj: ORB.Object;
-    impid, impid1: ORS.Ident;
-BEGIN Texts.WriteString(W, "  compiling "); ORS.Get(sym);
-  if sym == ORS.module:
+  int_ = False
+  ORS.Get(sym)
+  if sym == ORS.times:
+    ORS.Get(sym)
+    int_ = True
+  if sym == ORS.ident:
+    ORS.CopyId(procid)
     ORS.Get(sym);
-    if sym == ORS.times: version = 0; Texts.Write(W, "*"); ORS.Get(sym) else: version = 1 END ;
-    ORB.Init; ORB.OpenScope;
-    if sym == ORS.ident:
-      ORS.CopyId(modid); ORS.Get(sym);
-      Texts.WriteString(W, modid); Texts.Append(Oberon.Log, W.buf)
-    else: ORS.Mark("identifier expected")
-    END ;
-    Check(ORS.semicolon, "no ;"); level = 0; dc = 0; exno = 1; key = 0;
-    if sym == ORS.import:
-      ORS.Get(sym);
-      while sym == ORS.ident:
-        ORS.CopyId(impid); ORS.Get(sym);
-        if sym == ORS.becomes:
-          ORS.Get(sym);
-          if sym == ORS.ident: ORS.CopyId(impid1); ORS.Get(sym)
-          else: ORS.Mark("id_ expected")
-          END
-        else: impid1 = impid
-        END ;
-        ORB.Import(impid, impid1);
-        if sym == ORS.comma: ORS.Get(sym)
-        elif sym == ORS.ident: ORS.Mark("comma missing")
-        END
-      END ;
-      Check(ORS.semicolon, "no ;")
-    END ;
-    obj = ORB.topScope.next;
-    ORG.Open(version); Declarations(dc); ORG.SetDataSize((dc + 3) DIV 4 * 4);
-    while sym == ORS.procedure: ProcedureDecl; Check(ORS.semicolon, "no ;") END ;
-    ORG.Header;
-    if sym == ORS.begin: ORS.Get(sym); StatSequence END ;
+    # (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
+    ORB.NewObj(proc, ORS.id_, ORB.Const)
+    parblksize = 4;
+    NEW(type_)
+    type_.form = ORB.Proc
+    type_.size = ORG.WordSize
+    proc.type_ = type_;
+    CheckExport(proc.expo);
+    if proc.expo:
+      proc.exno = exno
+      INC(exno)
+    ORB.OpenScope()
+    INC(level)
+    proc.val = -1
+    type_.base = ORB.noType;
+    ProcedureType(type_, parblksize) # (*formal parameter list*)
+    Check(ORS.semicolon, "no ;")
+    locblksize = parblksize; 
+    Declarations(locblksize);
+    proc.val = ORG.Here() * 4
+    proc.type_.dsc = ORB.topScope.next
+    if sym == ORS.procedure:
+      L = 0
+      ORG.FJump(L);
+      while True:
+        ProcedureDecl()
+        Check(ORS.semicolon, "no ;")
+        if sym != ORS.procedure:
+          break
+      ORG.FixLink(L)
+      proc.val = ORG.Here() * 4
+      proc.type_.dsc = ORB.topScope.next
+
+    ORG.Enter(parblksize, locblksize, int_);
+    if sym == ORS.begin:
+      ORS.Get(sym)
+      StatSequence()
+
+    if sym == ORS.return_:
+      ORS.Get(sym)
+      expression(x);
+      if type_.base == ORB.noType:
+        ORS.Mark("this is not a function")
+      elif not CompTypes(type_.base, x.type_, False):
+        ORS.Mark("wrong result type_")
+
+    elif type_.base.form != ORB.NoTyp:
+      ORS.Mark("function without result")
+      type_.base = ORB.noType
+
+    ORG.Return(type_.base.form, x, locblksize, int_);
+    ORB.CloseScope; DEC(level)
     Check(ORS.end, "no END");
     if sym == ORS.ident:
-      if ORS.id_ != modid: ORS.Mark("no match") END ;
+      if ORS.id_ != procid:
+        ORS.Mark("no match")
       ORS.Get(sym)
-    else: ORS.Mark("identifier missing")
-    END ;
-    if sym != ORS.period: ORS.Mark("period missing") END ;
+    else:
+      ORS.Mark("no proc id_")
+
+  int_ = False
+
+
+def Module;
+##  VAR key: LONGINT;
+##    obj: ORB.Object;
+##    impid, impid1: ORS.Ident;
+  Texts.WriteString(W, "  compiling ")
+  ORS.Get(sym);
+  if sym == ORS.module:
+    ORS.Get(sym);
+    if sym == ORS.times:
+      version = 0
+      Texts.Write(W, "*")
+      ORS.Get(sym)
+    else:
+      version = 1
+    ORB.Init()
+    ORB.OpenScope()
+    if sym == ORS.ident:
+      ORS.CopyId(modid)
+      ORS.Get(sym);
+      Texts.WriteString(W, modid)
+      Texts.Append(Oberon.Log, W.buf)
+    else:
+      ORS.Mark("identifier expected")
+
+    Check(ORS.semicolon, "no ;")
+    level = 0
+    dc = 0
+    exno = 1
+    key = 0;
+    if sym == ORS.import_:
+      ORS.Get(sym)
+      while sym == ORS.ident:
+        ORS.CopyId(impid)
+        ORS.Get(sym);
+        if sym == ORS.becomes:
+          ORS.Get(sym);
+          if sym == ORS.ident:
+            ORS.CopyId(impid1)
+            ORS.Get(sym)
+          else:
+            ORS.Mark("id_ expected")
+
+        else:
+          impid1 = impid
+
+        ORB.Import(impid, impid1);
+        if sym == ORS.comma:
+          ORS.Get(sym)
+        elif sym == ORS.ident:
+          ORS.Mark("comma missing")
+
+      Check(ORS.semicolon, "no ;")
+
+    obj = ORB.topScope.next;
+    ORG.Open(version)
+    Declarations(dc)
+    ORG.SetDataSize((dc + 3) / 4 * 4);
+    while sym == ORS.procedure:
+      ProcedureDecl()
+      Check(ORS.semicolon, "no ;")
+    ORG.Header()
+    if sym == ORS.begin:
+      ORS.Get(sym)
+      StatSequence()
+    Check(ORS.end, "no END")
+    if sym == ORS.ident:
+      if ORS.id_ != modid:
+        ORS.Mark("no match")
+      ORS.Get(sym)
+    else:
+      ORS.Mark("identifier missing")
+
+    if sym != ORS.period:
+      ORS.Mark("period missing")
     if ORS.errcnt == 0:
       ORB.Export(modid, newSF, key);
-      if newSF: Texts.WriteLn(W); Texts.WriteString(W, "new symbol file ") END
-    END ;
+      if newSF:
+        Texts.WriteLn(W)
+        Texts.WriteString(W, "new symbol file ")
+
     if ORS.errcnt == 0:
-      ORG.Close(modid, key, exno); Texts.WriteLn(W); Texts.WriteString(W, "compilation done ");
-      Texts.WriteInt(W, ORG.pc, 6); Texts.WriteInt(W, dc, 6)
-    else: Texts.WriteLn(W); Texts.WriteString(W, "compilation FAILED")
-    END ;
-    Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
-    ORB.CloseScope; pbsList = None
-  else: ORS.Mark("must start with MODULE")
-  END
-END Module;
+      ORG.Close(modid, key, exno)
+      Texts.WriteLn(W)
+      Texts.WriteString(W, "compilation done ");
+      Texts.WriteInt(W, ORG.pc, 6)
+      Texts.WriteInt(W, dc, 6)
+    else:
+      Texts.WriteLn(W)
+      Texts.WriteString(W, "compilation FAILED")
+
+    Texts.WriteLn(W)
+    Texts.Append(Oberon.Log, W.buf);
+    ORB.CloseScope()
+    pbsList = None
+  else:
+    ORS.Mark("must start with MODULE")
+
 
 def Option(VAR S: Texts.Scanner);
-BEGIN newSF = False;
+  newSF = False;
   if S.nextCh == "/":
-    Texts.Scan(S); Texts.Scan(S);
-    if (S.class_ == Texts.Name) and (S.s[0] == "s"): newSF = True END
-  END
-END Option;
+    Texts.Scan(S)
+    Texts.Scan(S)
+    if (S.class_ == Texts.Name) and (S.s[0] == "s"):
+      newSF = True
+
 
 def Compile*;
-  VAR beg, end, time: LONGINT;
-    T: Texts.Text;
-    S: Texts.Scanner;
-BEGIN Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos);
-  Texts.Scan(S);
+##  VAR beg, end, time: LONGINT;
+##    T: Texts.Text;
+##    S: Texts.Scanner;
+  Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos)
+  Texts.Scan(S)
   if S.class_ == Texts.Char:
     if S.c == "@":
-      Option(S); Oberon.GetSelection(T, beg, end, time);
-      if time >= 0: ORS.Init(T, beg); Module END
-    elif S.c == "^":
-      Option(S); Oberon.GetSelection(T, beg, end, time);
+      Option(S)
+      Oberon.GetSelection(T, beg, end, time);
       if time >= 0:
-        Texts.OpenScanner(S, T, beg); Texts.Scan(S);
+        ORS.Init(T, beg);
+        Module()
+    elif S.c == "^":
+      Option(S)
+      Oberon.GetSelection(T, beg, end, time);
+      if time >= 0:
+        Texts.OpenScanner(S, T, beg)
+        Texts.Scan(S);
         if S.class_ == Texts.Name:
-          Texts.WriteString(W, S.s); NEW(T); Texts.Open(T, S.s);
-          if T.len_ > 0: ORS.Init(T, 0); Module END
-        END
-      END
-    END
+          Texts.WriteString(W, S.s)
+          NEW(T)
+          Texts.Open(T, S.s);
+          if T.len_ > 0:
+            ORS.Init(T, 0)
+            Module()
+
   else: 
     while S.class_ == Texts.Name:
-      NEW(T); Texts.Open(T, S.s);
-      if T.len_ > 0: Option(S); ORS.Init(T, 0); Module
-      else: Texts.WriteString(W, S.s); Texts.WriteString(W, " not found");
-        Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
-      END ;
-      if (T.len_ != 0) and (ORS.errcnt == 0): Texts.Scan(S) else: S.class_ = 0 END
-    END
-  END ;
-  Oberon.Collect(0)
-END Compile;
+      NEW(T)
+      Texts.Open(T, S.s);
+      if T.len_ > 0:
+        Option(S)
+        ORS.Init(T, 0)
+        Module()
+      else:
+        Texts.WriteString(W, S.s)
+        Texts.WriteString(W, " not found");
+        Texts.WriteLn(W)
+        Texts.Append(Oberon.Log, W.buf)
 
-BEGIN Texts.OpenWriter(W); Texts.WriteString(W, "OR Compiler  5.11.2013");
-  Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
-  NEW(dummy); dummy.class_ = ORB.Var; dummy.type_ = ORB.intType;
-  expression = expression0; Type = Type0; FormalType = FormalType0
-END ORP.
+      if (T.len_ != 0) and (ORS.errcnt == 0):
+        Texts.Scan(S)
+      else:
+        S.class_ = 0
+
+  Oberon.Collect(0)
+
+
+if __name__ == '__main__':
+  Texts.OpenWriter(W)
+  Texts.WriteString(W, "OR Compiler  5.11.2013");
+  Texts.WriteLn(W)
+  Texts.Append(Oberon.Log, W.buf)
+  NEW(dummy)
+  dummy.class_ = ORB.Var
+  dummy.type_ = ORB.intType
+  expression = expression0
+  Type = Type0
+  FormalType = FormalType0
