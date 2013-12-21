@@ -119,10 +119,7 @@ def ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes):
   aluRes.next = res
 
 
-def thinker(clk, IR, A, B, C0, C1, v, imm, q, R,
-            ira, irb, irc, adr, PC,
-            N, Z, C, OV, op, u, aluRes
-            ):
+def thinker():
 
   @always(clk.posedge)
   def think():
@@ -151,8 +148,7 @@ Cond = condition(ira, IR[27], N, Z, C, OV)
 sim = Simulation(
   ClkDriver(clk),
   sparseMemory(memory, codebus, outbus, adr, wr, stall, clk),
-  thinker(clk, IR, A, B, C0, C1, v, imm, q, R, ira, irb, irc, adr, PC,
-          N, Z, C, OV, op, u, aluRes),
+  thinker(),
   control_unit(clk, IR, codebus, rst, stall, PC, Cond, imm, u, C0),
   iii(clk),
   )
