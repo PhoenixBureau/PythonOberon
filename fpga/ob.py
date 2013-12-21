@@ -48,27 +48,24 @@ def ClkDriver(clk, period=10):
   return driveClk
 
 
-class condition:
-  def __init__(self, cc, ir27, N, Z, C, OV):
-    self.args = cc, ir27, N, Z, C, OV
-  def __call__(self):
-    cc, ir27, N, Z, C, OV = self.args
-    S = N ^ OV
-    return (
-      ir27 ^
-      ((cc == 0) & N |
-       (cc == 1) & Z |
-       (cc == 2) & C |
-       (cc == 3) & OV |
-       (cc == 4) & (C|Z) |
-       (cc == 5) & S |
-       (cc == 6) & (S|Z) |
-       (cc == 7)
-       )
-      )
+def condition():
+  cc = ira
+  S = N ^ OV
+  return (
+    IR[27] ^
+    ((cc == 0) & N |
+     (cc == 1) & Z |
+     (cc == 2) & C |
+     (cc == 3) & OV |
+     (cc == 4) & (C|Z) |
+     (cc == 5) & S |
+     (cc == 6) & (S|Z) |
+     (cc == 7)
+     )
+    )
 
 
-def control_unit(clk, IR, codebus, rst, stall, PC, cond, off, u, C0):
+def control_unit():
   @always(clk.posedge)
   def next_PC():
     IR.next = codebus.val
@@ -76,9 +73,9 @@ def control_unit(clk, IR, codebus, rst, stall, PC, cond, off, u, C0):
       pcmux = 0
     elif stall:
       pcmux = PC.val
-    elif IR[32:28] == 14 and cond(): # BR
+    elif IR[32:28] == 14 and condition(): # BR
         if u:
-          pcmux = PC.val - off.val # wrong
+          pcmux = PC.val - imm.val # wrong
         else:
           pcmux = C0[19:2]
     else:
@@ -143,13 +140,12 @@ def iii(clk):
       )
   return jjj
 
-Cond = condition(ira, IR[27], N, Z, C, OV)
 
 sim = Simulation(
   ClkDriver(clk),
   sparseMemory(memory, codebus, outbus, adr, wr, stall, clk),
   thinker(),
-  control_unit(clk, IR, codebus, rst, stall, PC, Cond, imm, u, C0),
+  control_unit(),
   iii(clk),
   )
 print "                      IR,                                codebus, adr, PC"
