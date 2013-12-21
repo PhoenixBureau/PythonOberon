@@ -1,43 +1,43 @@
-`timescale 1ns / 1ps  // NW 8.10.12  rev. 5.10.2013
-// RISC in "Compiler Construction"
+##`timescale 1ns / 1ps  // NW 8.10.12  rev. 5.10.2013
+##// RISC in "Compiler Construction"
 
-module RISC0(
-input clk, rst,
-input [31:0] inbus,
-output [5:0] ioadr,
-output iord, iowr,
-output [31:0] outbus);
+#module RISC0(
+#input clk, rst,
+#input [31:0] inbus,
+#output [5:0] ioadr,
+#output iord, iowr,
+#output [31:0] outbus);
 
-reg [11:0] PC;
-reg N, Z, C, OV;  // condition flags
-reg [31:0] R [0:15];  // array of 16 registers
-reg [31:0] H;  // aux register
-reg stall1;
+#reg [11:0] PC;
+#reg N, Z, C, OV;  // condition flags
+#reg [31:0] R [0:15];  // array of 16 registers
+#reg [31:0] H;  // aux register
+#reg stall1;
 
-wire [31:0] IR;
-wire [31:0] pmout;
-wire [11:0] pcmux, nxpc;
-wire cond, S;
-wire sa, sb, sc;
+#wire [31:0] IR;
+#wire [31:0] pmout;
+#wire [11:0] pcmux, nxpc;
+#wire cond, S;
+#wire sa, sb, sc;
 
-wire p, q, u, v, w;  // instruction fields
-wire [3:0] op, ira, ira0, irb, irc;
-wire [2:0] cc;
-wire [15:0] imm;
-wire [19:0] off;
+#wire p, q, u, v, w;  // instruction fields
+#wire [3:0] op, ira, ira0, irb, irc;
+#wire [2:0] cc;
+#wire [15:0] imm;
+#wire [19:0] off;
 
-wire ccwr, regwr;
-wire [13:0] dmadr;
-wire dmwr, ioenb;
-wire [31:0] dmin, dmout;
-wire [1:0] sc1, sc0;  // shift counts
+#wire ccwr, regwr;
+#wire [13:0] dmadr;
+#wire dmwr, ioenb;
+#wire [31:0] dmin, dmout;
+#wire [1:0] sc1, sc0;  // shift counts
 
-wire [31:0] A, B, C0, C1, regmux;
-wire [31:0] s1, s2, s3, t1, t2, t3;
-wire [32:0] aluRes;
-wire [31:0] quotient, remainder;
-wire [63:0] product;
-wire stall, stallL, stallM, stallD;
+#wire [31:0] A, B, C0, C1, regmux;
+#wire [31:0] s1, s2, s3, t1, t2, t3;
+#wire [32:0] aluRes;
+#wire [31:0] quotient, remainder;
+#wire [63:0] product;
+#wire stall, stallL, stallM, stallD;
 
 wire MOV, LSL, ASR, ROR, AND, ANN, IOR, XOR;  // operation signals
 wire ADD, SUB, MUL, DIV; 
@@ -65,56 +65,56 @@ Multiplier1 mulUnit (.clk(clk), .run(MUL), .stall(stallM),
 Divider divUnit (.clk(clk), .run(DIV), .stall(stallD),
    .x(B), .y(C1), .quot(quotient), .rem(remainder));
 
-assign IR = pmout;  // decoding
-assign p = IR[31];
-assign q = IR[30];
-assign u = IR[29];
-assign v = IR[28];
-assign w = IR[16];
-assign cc  = IR[26:24];
-assign ira = IR[27:24];
-assign irb = IR[23:20];
-assign op  = IR[19:16];
-assign irc = IR[3:0];
-assign imm = IR[15:0];
-assign off = IR[19:0];
+##assign IR = pmout;  // decoding
+##assign p = IR[31];
+##assign q = IR[30];
+##assign u = IR[29];
+##assign v = IR[28];
+##assign w = IR[16];
+##assign cc  = IR[26:24];
+##assign ira = IR[27:24];
+##assign irb = IR[23:20];
+##assign op  = IR[19:16];
+##assign irc = IR[3:0];
+##assign imm = IR[15:0];
+##assign off = IR[19:0];
 
-assign MOV = ~p & (op == 0);
-assign LSL = ~p & (op == 1);
-assign ASR = ~p & (op == 2);
-assign ROR = ~p & (op == 3);
-assign AND = ~p & (op == 4);
-assign ANN = ~p & (op == 5);
-assign IOR = ~p & (op == 6);
-assign XOR = ~p & (op == 7);
-assign ADD = ~p & (op == 8);
-assign SUB = ~p & (op == 9);
-assign MUL = ~p & (op == 10);
-assign DIV = ~p & (op == 11);
+##assign MOV = ~p & (op == 0);
+##assign LSL = ~p & (op == 1);
+##assign ASR = ~p & (op == 2);
+##assign ROR = ~p & (op == 3);
+##assign AND = ~p & (op == 4);
+##assign ANN = ~p & (op == 5);
+##assign IOR = ~p & (op == 6);
+##assign XOR = ~p & (op == 7);
+##assign ADD = ~p & (op == 8);
+##assign SUB = ~p & (op == 9);
+##assign MUL = ~p & (op == 10);
+##assign DIV = ~p & (op == 11);
 
-assign LDR = p & ~q & ~u;
-assign STR = p & ~q & u;
-assign BR  = p & q;
+##assign LDR = p & ~q & ~u;
+##assign STR = p & ~q & u;
+##assign BR  = p & q;
 
-assign A = R[ira0];  // register data signals
-assign B = R[irb];
-assign C0 = R[irc];
+##assign A = R[ira0];  // register data signals
+##assign B = R[irb];
+##assign C0 = R[irc];
 
-// Arithmetic-logical unit (ALU)
-assign ira0 = BR ? 15 : ira;
-assign C1 = ~q ? C0 : {{16{v}}, imm};
-assign dmadr = B[13:0] + off[13:0];
-assign dmwr = STR & ~stall;
-assign dmin = A;
+##// Arithmetic-logical unit (ALU)
+##assign ira0 = BR ? 15 : ira;
+##assign C1 = ~q ? C0 : {{16{v}}, imm};
+##assign dmadr = B[13:0] + off[13:0];
+##assign dmwr = STR & ~stall;
+##assign dmin = A;
 
-assign ioenb = (dmadr[13:6] == 8'b11111111);
-assign iowr = STR & ioenb;
-assign iord = LDR & ioenb;
-assign ioadr = dmadr[5:0];
-assign outbus = A;
+##assign ioenb = (dmadr[13:6] == 8'b11111111);
+##assign iowr = STR & ioenb;
+##assign iord = LDR & ioenb;
+##assign ioadr = dmadr[5:0];
+##assign outbus = A;
 
-assign sc0 = C1[1:0];
-assign sc1 = C1[3:2];
+##assign sc0 = C1[1:0];
+##assign sc1 = C1[3:2];
 
 // shifter for ASR and ROR
 assign s1 = (sc0 == 3) ? {(w ? B[2:0] : {3{B[31]}}), B[31:3]} :

@@ -6,37 +6,100 @@ from ram import sparseMemory
 ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 
 
-clk = Signal(0)
-rst = Signal(1)
-stall = Signal(0)
-rd = Signal(0)
-wr = Signal(0)
-ben = Signal(0)
-
+clk = ibv(1)
+rst = ibv(1)
 inbus = ibv(32)
+ioadr = ibv(6)
+iord = ibv(1)
+iowr = ibv(1)
 outbus = ibv(32)
+
+
+PC = ibv(18)
+N, Z, C, OV = (ibv(1) for _ in range(4))
+R = [ibv(32) for i in range(16)]
+H = ibv(32)
+stall1 = ibv(1)
+
+
+IR = ibv(32)
+pmout = ibv(32)
+pcmux = ibv(12)
+nxpc = ibv(12)
+cond, S, sa, sb, sc = (ibv(1) for _ in range(5))
+
+
+p, q, u, v, w = IR(31), IR(30), IR(29), IR(28), IR(16)
+op, ira, ira0, irb, irc = (IR(20, 16), IR(28, 24), ibv(4),
+                           IR(24, 20), IR(4, 0))
+cc = IR(27, 24)
+imm = IR(16, 0)
+off = IR(20, 0)
+
+ccwr, regwr = ibv(1), ibv(1)
+dmadr = ibv(14)
+dmwr, ioenb = ibv(1), ibv(1)
+dmin = ibv(32)
+dmout = ibv(32)
+sc1, sc0 = ibv(2), ibv(2) # shift counts
+
+
+(A, B, C0, C1, regmux,
+ s1, s2, s3, t1, t2, t3,
+ quotient, remainder,
+ ) = (ibv(32) for _ in range(13))
+aluRes = ibv(33)
+product = ibv(64)
+stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
+
+
+##fsum, fprod, fquot
+ben = Signal(0)
 codebus = ibv(32)
 adr = ibv(20)
-
-
 memory = defaultdict(int)
 memory[5] = ibv(32, 0b11100111000000000000000000000011)
 
 
-IR = ibv(32)
-p, q, u, v, w = IR(31), IR(30), IR(29), IR(28), IR(16)
-op, ira, irb, irc = IR(20, 16), IR(28, 24), IR(24, 20), IR(4, 0)
-imm = IR(16, 0)
+def assign():
+  MOV = ~p & (op == 0);
+  LSL = ~p & (op == 1);
+  ASR = ~p & (op == 2);
+  ROR = ~p & (op == 3);
+  AND = ~p & (op == 4);
+  ANN = ~p & (op == 5);
+  IOR = ~p & (op == 6);
+  XOR = ~p & (op == 7);
+  ADD = ~p & (op == 8);
+  SUB = ~p & (op == 9);
+  MUL = ~p & (op == 10);
+  DIV = ~p & (op == 11);
 
-PC = ibv(18)
+  LDR = p & ~q & ~u;
+  STR = p & ~q & u;
+  BR  = p & q;
 
-(A, B, C0, C1, regmux,
- s3, t3, quotinent, fsum, fprod, fquot) = (ibv(32) for _ in range(11))
+  A.next = R[ira0].val
+  B.next = R[irb].val
+  C0.next = R[irc].val
 
-aluRes = ibv(33)
-product = ibv(64)
-R = [ibv(32, 9) for i in range(16)]
-N, Z, C, OV = (Signal(0) for _ in range(4))
+  # Arithmetic-logical unit (ALU)
+  ira0.next = 15 if BR else ira
+ #C1 = ~q ? C0 : {{16{v}}, imm};
+  C1.next = concat(*([v] * 16 + [imm])) if ~q else C0.val
+
+  dmadr.next = B[13:0] + off[13:0];
+  dmwr.next = STR & ~stall;
+  dmin.next = A.val;
+
+  ioenb.next = (dmadr[13:6] == 0b11111111);
+  iowr.next = STR & ioenb;
+  iord.next = LDR & ioenb;
+  ioadr.next = dmadr[5:0];
+  outbus.next = A.val;
+
+  sc0 = C1[1:0];
+  sc1 = C1[3:2];
 
 
 
@@ -120,14 +183,11 @@ def thinker():
 
   @always(clk.posedge)
   def think():
-    A.next = R[ira].val
-    B.next = R[irb].val
-    C0.next = R[irc].val
-    C1.next = concat(*([v] * 16 + [imm])) if q else R[irc].val
-    adr.next = PC.val # for now..
-##assign C1 = q ? {{16{v}}, imm} : C0;
-    ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes)
-    R[ira].next = aluRes.next
+    assign()
+##    adr.next = PC.val # for now..
+####assign C1 = q ? {{16{v}}, imm} : C0;
+##    ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes)
+##    R[ira].next = aluRes.next
 
   return think
 
@@ -143,7 +203,7 @@ def iii(clk):
 
 sim = Simulation(
   ClkDriver(clk),
-  sparseMemory(memory, codebus, outbus, adr, wr, stall, clk),
+  sparseMemory(memory, codebus, outbus, adr, iowr, stall1, clk),
   thinker(),
   control_unit(),
   iii(clk),
