@@ -48,7 +48,7 @@ sc1, sc0 = ibv(2), ibv(2) # shift counts
  s1, s2, s3, t1, t2, t3,
  quotient, remainder,
  ) = (ibv(32) for _ in range(13))
-aluRes = ibv(33)
+#aluRes = ibv(33)
 product = ibv(64)
 stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
 
@@ -62,6 +62,7 @@ memory[5] = ibv(32, 0b11100111000000000000000000000011)
 
 
 def assign():
+  IR.next = pmout.val
   MOV = ~p & (op == 0);
   LSL = ~p & (op == 1);
   ASR = ~p & (op == 2);
@@ -101,20 +102,66 @@ def assign():
   sc0 = C1[1:0];
   sc1 = C1[3:2];
 
+ #  MOV ?
+  if MOV:
+   #  (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
+    if q:
+      if ~u:
+        res = concat(*([v] * 16 + [imm]))
+      else:
+        res = concat(imm, *([intbv(0)] * 16))
+    else:
+     #  (~u ? C0 : ... )) :
+      if ~u:
+        res = C0.val
+      else:
+     #... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
+        if ~irc[0]:
+          res = H.val
+        else:
+          res = concat(
+            N, Z, C, OV,
+            intbv(0)[20:],
+            intbv(0b01010000),
+            )
+  elif LSL:
+    res = t3.val
+  elif ASR or ROR:
+    res = t3.val
+  elif AND:
+    res = B & C1
+  elif ANN:
+    res = B & ~C1
+  elif IOR:
+    res = B | C1
+  elif XOR:
+    res = B ^ C1
+  elif ADD:
+    res = B + C1 + (u & C)
+  elif SUB:
+    res = B - C1 - (u & C)
+  elif MUL:
+    res = product[32:0]
+  elif DIV:
+    res = quotient.val
+  else:
+    res = 0
 
+  aluRes = res
 
-def ClkDriver(clk, period=10):
-  halfPeriod = delay(period / 2)
-  @always(halfPeriod)
-  def driveClk():
-    clk.next = not clk
-  return driveClk
+  if (LDR & ~ioenb):
+    regmux = dmout
+  elif (LDR & ioenb):
+    regmux = inbus
+  elif (BR & v):
+    regmux = concat(intbv(0)[18:], nxpc, intbv(0)[2:])
+    # {18'b0, nxpc, 2'b0}
+  else:
+    regmux = aluRes
 
-
-def condition():
-  cc = ira
   S = N ^ OV
-  return (
+  nxpc = PC + 1
+  cond = (
     IR[27] ^
     ((cc == 0) & N |
      (cc == 1) & Z |
@@ -126,6 +173,46 @@ def condition():
      (cc == 7)
      )
     )
+
+  regwr = ~p & ~stall | (LDR & stall1)| (BR & cond & v)
+
+  if ~rst:
+    pcmux = 0
+  elif stall:
+    pcmux = PC
+  elif BR & cond & u:
+    pcmux = off[11:0] + nxpc
+  elif (BR & cond & ~u):
+    pcmux = C0[13:2]
+  elif (BR & cond & ~u & IR[5]):
+    pcmux = concat(intbv(0)[14:], irc)
+    # {14'b0, irc}
+  else:
+    pcmux = nxpc
+
+  sa = aluRes[31];
+  sb = B[31];
+  sc = C1[31] ^ SUB;
+
+  stall.next = stallL | stallM | stallD;
+  stallL.next = LDR & ~stall1;
+
+  PC.next = pcmux;
+  stall1.next = stallL;
+  R[ira0].next = regmux if regwr else A
+  N.next = regmux[31] if regwr else N
+  Z.next = (regmux[31:0] == 0) if regwr else Z
+  C.next = aluRes[32] if (ADD|SUB) else C
+  OV.next = (sa & ~sb & ~sc | ~sa & sb & sc) if (ADD|SUB) else OV
+  H.next = product[63:32] if MUL else remainder if DIV else H
+
+
+def ClkDriver(clk, period=10):
+  halfPeriod = delay(period / 2)
+  @always(halfPeriod)
+  def driveClk():
+    clk.next = not clk
+  return driveClk
 
 
 def control_unit():
@@ -153,30 +240,6 @@ Fad = 12; Fsb = 13; Fml = 14; Fdv = 15;
 Ldr = 8; Str = 10;
 
 
-def ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes):
-##  MOV ?
-  if op == Mov:
-##  (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
-    if q:
-      if ~u:
-        res = concat(*([v] * 16 + [imm]))
-      else:
-        res = concat(imm, *([intbv(0)] * 16))
-    else:
-##  (~u ? C0 : ... )) :
-      if ~u:
-        res = C0.val
-      else:
-# ... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
-        if ~irc[0]:
-          res = H # wtf is H?
-        else:
-          res = concat(
-            N, Z, C, OV,
-            intbv(0)[20:],
-            intbv(0b01010000),
-            )
-  aluRes.next = res
 
 
 def thinker():
@@ -203,9 +266,8 @@ def iii(clk):
 
 sim = Simulation(
   ClkDriver(clk),
-  sparseMemory(memory, codebus, outbus, adr, iowr, stall1, clk),
+  sparseMemory(memory, pmout, outbus, adr, iowr, stall1, clk),
   thinker(),
-  control_unit(),
   iii(clk),
   )
 print "                      IR,                                codebus, adr, PC"
