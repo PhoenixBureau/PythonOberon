@@ -11,7 +11,7 @@ def Put3(op, cond, off):
     ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000)
     )[2:]
 
-print Put3(2, 7, 3)
+print Put3(2, 7, -3)
 print Put3(3, 15, 15)
 print Put3(-11, 1, 1)
 print Put3(4, 16, 16)

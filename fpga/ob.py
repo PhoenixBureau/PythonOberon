@@ -7,7 +7,7 @@ ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 
 
 clk = ibv(1)
-rst = ibv(1)
+rst = ibv(1, 1)
 inbus = ibv(32)
 ioadr = ibv(6)
 iord = ibv(1)
@@ -30,7 +30,7 @@ cond, S, sa, sb, sc = (ibv(1) for _ in range(5))
 
 
 p, q, u, v, w = IR(31), IR(30), IR(29), IR(28), IR(16)
-op, ira, ira0, irb, irc = (IR(20, 16), IR(28, 24), ibv(4),
+op, ira, ira0, irb, irc = (IR(20, 16), IR(28, 24), 0,
                            IR(24, 20), IR(4, 0))
 cc = IR(27, 24)
 imm = IR(16, 0)
@@ -53,47 +53,47 @@ product = ibv(64)
 stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
 
 
-##fsum, fprod, fquot
-ben = Signal(0)
-codebus = ibv(32)
-adr = ibv(20)
 memory = defaultdict(int)
-memory[5] = ibv(32, 0b11100111000000000000000000000011)
+memory[0] = ibv(32, 0b01000111000000000000000000000011)
+memory[1] = ibv(32, 0b01001000000000000000000000000101)
+memory[2] = ibv(32, 0b00000001100010000000000000000111)
+memory[5] = ibv(32, 0b11000111000000000000000000000011)
 
 
 def assign():
-  IR.next = pmout.val
-  MOV = ~p & (op == 0);
-  LSL = ~p & (op == 1);
-  ASR = ~p & (op == 2);
-  ROR = ~p & (op == 3);
-  AND = ~p & (op == 4);
-  ANN = ~p & (op == 5);
-  IOR = ~p & (op == 6);
-  XOR = ~p & (op == 7);
-  ADD = ~p & (op == 8);
-  SUB = ~p & (op == 9);
-  MUL = ~p & (op == 10);
-  DIV = ~p & (op == 11);
+  MOV = (not p) & (op == 0)
+  LSL = (not p) & (op == 1)
+  ASR = (not p) & (op == 2)
+  ROR = (not p) & (op == 3)
+  AND = (not p) & (op == 4)
+  ANN = (not p) & (op == 5)
+  IOR = (not p) & (op == 6)
+  XOR = (not p) & (op == 7)
+  ADD = (not p) & (op == 8)
+  SUB = (not p) & (op == 9)
+  MUL = (not p) & (op == 10)
+  DIV = (not p) & (op == 11)
 
-  LDR = p & ~q & ~u;
-  STR = p & ~q & u;
-  BR  = p & q;
+  LDR = p & (not q) & (not u)
+  STR = p & (not q) & u
+  BR  = p & q
 
+  # Arithmetic-logical unit (ALU)
+  global ira0
   A.next = R[ira0].val
   B.next = R[irb].val
   C0.next = R[irc].val
 
-  # Arithmetic-logical unit (ALU)
-  ira0.next = 15 if BR else ira
+  ira0 = 15 if BR else ira
+
  #C1 = ~q ? C0 : {{16{v}}, imm};
-  C1.next = concat(*([v] * 16 + [imm])) if ~q else C0.val
+  C1.next = concat(*([v] * 16 + [imm])) if not q else C0.val
 
   dmadr.next = B[13:0] + off[13:0];
-  dmwr.next = STR & ~stall;
+  dmwr.next = STR & (not stall)
   dmin.next = A.val;
 
-  ioenb.next = (dmadr[13:6] == 0b11111111);
+  ioenb.next = (dmadr[14:6] == 0b11111111);
   iowr.next = STR & ioenb;
   iord.next = LDR & ioenb;
   ioadr.next = dmadr[5:0];
@@ -106,17 +106,17 @@ def assign():
   if MOV:
    #  (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
     if q:
-      if ~u:
+      if not u:
         res = concat(*([v] * 16 + [imm]))
       else:
-        res = concat(imm, *([intbv(0)] * 16))
+        res = concat(imm, intbv(0)[16:])
     else:
      #  (~u ? C0 : ... )) :
-      if ~u:
+      if not u:
         res = C0.val
       else:
-     #... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
-        if ~irc[0]:
+     # ... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
+        if not irc[0]:
           res = H.val
         else:
           res = concat(
@@ -127,7 +127,7 @@ def assign():
   elif LSL:
     res = t3.val
   elif ASR or ROR:
-    res = t3.val
+    res = s3.val
   elif AND:
     res = B & C1
   elif ANN:
@@ -147,14 +147,16 @@ def assign():
   else:
     res = 0
 
-  aluRes = res
+  aluRes = intbv(res)
 
-  if (LDR & ~ioenb):
+  # The control unit
+
+  if (LDR & (not ioenb)):
     regmux = dmout
   elif (LDR & ioenb):
     regmux = inbus
   elif (BR & v):
-    regmux = concat(intbv(0)[18:], nxpc, intbv(0)[2:])
+    regmux = concat(nxpc, intbv(0)[2:])
     # {18'b0, nxpc, 2'b0}
   else:
     regmux = aluRes
@@ -174,17 +176,19 @@ def assign():
      )
     )
 
-  regwr = ~p & ~stall | (LDR & stall1)| (BR & cond & v)
+  regwr = (not p) & (not stall) | (LDR & stall1)| (BR & cond & v)
 
-  if ~rst:
+  IR.next = pmout.val
+
+  if not rst:
     pcmux = 0
   elif stall:
     pcmux = PC
   elif BR & cond & u:
     pcmux = off[11:0] + nxpc
-  elif (BR & cond & ~u):
-    pcmux = C0[13:2]
-  elif (BR & cond & ~u & IR[5]):
+  elif (BR & cond & (not u)):
+    pcmux = C0[20:2]
+  elif (BR & cond & (not u) & IR[5]):
     pcmux = concat(intbv(0)[14:], irc)
     # {14'b0, irc}
   else:
@@ -195,7 +199,7 @@ def assign():
   sc = C1[31] ^ SUB;
 
   stall.next = stallL | stallM | stallD;
-  stallL.next = LDR & ~stall1;
+  stallL.next = LDR & (not stall1);
 
   PC.next = pcmux;
   stall1.next = stallL;
@@ -203,7 +207,7 @@ def assign():
   N.next = regmux[31] if regwr else N
   Z.next = (regmux[31:0] == 0) if regwr else Z
   C.next = aluRes[32] if (ADD|SUB) else C
-  OV.next = (sa & ~sb & ~sc | ~sa & sb & sc) if (ADD|SUB) else OV
+  OV.next = (sa & (not sb) & (not sc) | (not sa) & sb & sc) if (ADD|SUB) else OV
   H.next = product[63:32] if MUL else remainder if DIV else H
 
 
@@ -215,60 +219,33 @@ def ClkDriver(clk, period=10):
   return driveClk
 
 
-def control_unit():
-  @always(clk.posedge)
-  def next_PC():
-    IR.next = codebus.val
-    if not rst:
-      pcmux = 0
-    elif stall:
-      pcmux = PC.val
-    elif IR[32:28] == 14 and condition(): # BR
-        if u:
-          pcmux = PC.val - imm.val # wrong
-        else:
-          pcmux = C0[19:2]
-    else:
-      pcmux = PC + 1
-    PC.next = pcmux
-  return next_PC
-
-
-Mov = 0; Lsl = 1; Asr = 2; Ror= 3; And = 4; Ann = 5; Ior = 6; Xor = 7;
-Add = 8; Sub = 9; Cmp = 9; Mul = 10; Div = 11;
-Fad = 12; Fsb = 13; Fml = 14; Fdv = 15;
-Ldr = 8; Str = 10;
-
-
-
-
 def thinker():
-
   @always(clk.posedge)
   def think():
     assign()
-##    adr.next = PC.val # for now..
-####assign C1 = q ? {{16{v}}, imm} : C0;
-##    ALU(op, q, u, v, imm, irc, N, Z, C, OV, C0, aluRes)
-##    R[ira].next = aluRes.next
-
   return think
 
 
 def iii(clk):
   @always(clk.negedge)
   def jjj():
-    print '%32s %32s %s %s' % (
-      bin(IR)[2:], bin(codebus)[2:], adr, PC
+    print '%08x %08x %s' % (
+      IR, pmout, PC
+#      bin(IR)[2:], bin(pmout)[2:], PC
       )
+    for i, reg in enumerate(R):
+      print '[ %2i %7x %32i]' % (i, reg, reg)
+##      if not i % 4:
+##        print
+    print
   return jjj
 
 
 sim = Simulation(
   ClkDriver(clk),
-  sparseMemory(memory, pmout, outbus, adr, iowr, stall1, clk),
+  sparseMemory(memory, pmout, outbus, PC, iowr, stall1, clk),
   thinker(),
   iii(clk),
   )
-print "                      IR,                                codebus, adr, PC"
+print " IR,         pmout, PC"
 sim.run(250)
