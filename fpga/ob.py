@@ -9,8 +9,8 @@ ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 clk = ibv(1)
 rst = ibv(1, 1)
 inbus = ibv(32)
-ioadr = ibv(6)
-iord = ibv(1)
+##ioadr = ibv(6)
+##iord = ibv(1)
 iowr = ibv(1)
 outbus = ibv(32)
 
@@ -49,17 +49,14 @@ stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
 del C1, C0
 
 memory = defaultdict(int)
-##memory[0] = ibv(32, 0b01000111000000000000000000000011)
-##memory[1] = ibv(32, 0b01001000000000000000000000000101)
-##memory[2] = ibv(32, 0b00000001100010000000000000000111)
-##memory[5] = ibv(32, 0b11000111000000000000000000000011)
 memory.update({
-  0: intbv(1207959553),
-  1: intbv(1191182337),
-  2: intbv(24641544),
-  3: intbv(1091633154),
-  4: intbv(3607101441),
+  0: intbv(1207959553), # Mov_imm(8, 1)
+  1: intbv(1090519041), # Mov_imm(1, 1)
+  2: intbv(18350088),   # Add(1, 1, 8)
+  3: intbv(1091633154), # Lsl_imm(1, 1, 2)
+  4: intbv(3607101441), # T_link(1)
   })
+
 
 def assign():
   MOV = (not p) & (op == 0)
@@ -179,7 +176,7 @@ def assign():
   if not rst:
     pcmux = 0
   elif stall:
-    pcmux = PC
+    pcmux = PC.val
   elif BR & cond & u:
     pcmux = off[11:0] + nxpc
   elif (BR & cond & (not u)):
@@ -190,6 +187,8 @@ def assign():
   else:
     pcmux = nxpc
 
+  PC.next = pcmux;
+
   sa = aluRes[31];
   sb = B[31];
   sc = C1[31] ^ SUB;
@@ -197,7 +196,6 @@ def assign():
   stall.next = stallL | stallM | stallD;
   stallL.next = LDR & (not stall1);
 
-  PC.next = pcmux;
   stall1.next = stallL;
   R[ira0].next = regmux if regwr else A
   N.next = regmux[31] if regwr else N

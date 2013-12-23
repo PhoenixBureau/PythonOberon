@@ -140,8 +140,8 @@ if __name__ == '__main__':
   mem = {}
   for i, instruction in enumerate((
     Mov_imm(8, 1),
-    Mov_imm(7, 1),
-    Add(1, 7, 8),
+    Mov_imm(1, 1),
+    Add(1, 1, 8),
     Lsl_imm(1, 1, 2),
     T_link(1),
     )):
