@@ -25,7 +25,7 @@ stall1 = ibv(1)
 IR = ibv(32)
 pmout = ibv(32)
 pcmux = ibv(12)
-nxpc = ibv(12)
+##nxpc = ibv(12)
 cond, S, sa, sb, sc = (ibv(1) for _ in range(5))
 
 
@@ -37,28 +37,28 @@ imm = IR(16, 0)
 off = IR(20, 0)
 
 ccwr, regwr = ibv(1), ibv(1)
-dmadr = ibv(14)
-dmwr, ioenb = ibv(1), ibv(1)
-dmin = ibv(32)
-dmout = ibv(32)
 sc1, sc0 = ibv(2), ibv(2) # shift counts
-
+ioenb = ibv(1)
 
 (A, B, C0, C1, regmux,
  s1, s2, s3, t1, t2, t3,
  quotient, remainder,
  ) = (ibv(32) for _ in range(13))
-#aluRes = ibv(33)
 product = ibv(64)
 stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
 
 
 memory = defaultdict(int)
-memory[0] = ibv(32, 0b01000111000000000000000000000011)
-memory[1] = ibv(32, 0b01001000000000000000000000000101)
-memory[2] = ibv(32, 0b00000001100010000000000000000111)
-memory[5] = ibv(32, 0b11000111000000000000000000000011)
-
+##memory[0] = ibv(32, 0b01000111000000000000000000000011)
+##memory[1] = ibv(32, 0b01001000000000000000000000000101)
+##memory[2] = ibv(32, 0b00000001100010000000000000000111)
+##memory[5] = ibv(32, 0b11000111000000000000000000000011)
+memory.update({
+  0: intbv(1207959555),
+  1: intbv(1191182338),
+  2: intbv(24641544),
+  3: intbv(3607101441),
+  })
 
 def assign():
   MOV = (not p) & (op == 0)
@@ -89,18 +89,11 @@ def assign():
  #C1 = ~q ? C0 : {{16{v}}, imm};
   C1.next = concat(*([v] * 16 + [imm])) if not q else C0.val
 
-  dmadr.next = B[13:0] + off[13:0];
-  dmwr.next = STR & (not stall)
-  dmin.next = A.val;
-
-  ioenb.next = (dmadr[14:6] == 0b11111111);
-  iowr.next = STR & ioenb;
-  iord.next = LDR & ioenb;
-  ioadr.next = dmadr[5:0];
+  ioenb.next = (pmout[20:6] == 0b11111111111111);
   outbus.next = A.val;
 
-  sc0 = C1[1:0];
-  sc1 = C1[3:2];
+##  sc0 = C1[1:0];
+##  sc1 = C1[3:2];
 
  #  MOV ?
   if MOV:
@@ -151,6 +144,8 @@ def assign():
 
   # The control unit
 
+  nxpc = PC + 1
+
   if (LDR & (not ioenb)):
     regmux = dmout
   elif (LDR & ioenb):
@@ -162,7 +157,6 @@ def assign():
     regmux = aluRes
 
   S = N ^ OV
-  nxpc = PC + 1
   cond = (
     IR[27] ^
     ((cc == 0) & N |
@@ -229,14 +223,15 @@ def thinker():
 def iii(clk):
   @always(clk.negedge)
   def jjj():
-    print '%08x %08x %s' % (
-      IR, pmout, PC
+    print '0x%04x: 0x%08x -> 0x%08x' % (
+      PC,
+      pmout,
+      IR,
 #      bin(IR)[2:], bin(pmout)[2:], PC
       )
     for i, reg in enumerate(R):
-      print '[ %2i %7x %32i]' % (i, reg, reg)
-##      if not i % 4:
-##        print
+      if reg:
+        print 'R[0x%02x] == 0x%08x == %i' % (i, reg, reg)
     print
   return jjj
 
@@ -247,5 +242,5 @@ sim = Simulation(
   thinker(),
   iii(clk),
   )
-print " IR,         pmout, PC"
+print "PC    : in RAM     ->  IR"
 sim.run(250)
