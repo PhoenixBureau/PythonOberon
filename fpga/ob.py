@@ -9,56 +9,33 @@ ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 clk = ibv(1)
 rst = ibv(1, 1)
 inbus = ibv(32)
-##ioadr = ibv(6)
-##iord = ibv(1)
 iowr = ibv(1)
 outbus = ibv(32)
-
-
 PC = ibv(18)
 N, Z, C, OV = (ibv(1) for _ in range(4))
 R = [ibv(32) for i in range(16)]
 H = ibv(32)
 stall1 = ibv(1)
-
-
 IR = ibv(32)
 pmout = ibv(32)
 pcmux = ibv(12)
-##nxpc = ibv(12)
 cond, S, sa, sb, sc = (ibv(1) for _ in range(5))
-
-
 p, q, u, v, w = IR(31), IR(30), IR(29), IR(28), IR(16)
-op, ira, ira0, irb, irc = (IR(20, 16), IR(28, 24), 0,
-                           IR(24, 20), IR(4, 0))
+op, ira, irb, irc = IR(20, 16), IR(28, 24), IR(24, 20), IR(4, 0)
 cc = IR(27, 24)
 imm = IR(16, 0)
 off = IR(20, 0)
-
-ccwr, regwr = ibv(1), ibv(1)
-sc1, sc0 = ibv(2), ibv(2) # shift counts
+##sc1, sc0 = ibv(2), ibv(2) # shift counts
 ioenb = ibv(1)
-
-(A, B, C0, C1, regmux,
+(
  s1, s2, s3, t1, t2, t3,
  quotient, remainder,
- ) = (ibv(32) for _ in range(13))
+ ) = (ibv(32) for _ in range(8))
 product = ibv(64)
 stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
-del C1, C0
-
-memory = defaultdict(int)
-memory.update({
-  0: intbv(1207959553), # Mov_imm(8, 1)
-  1: intbv(1090519041), # Mov_imm(1, 1)
-  2: intbv(18350088),   # Add(1, 1, 8)
-  3: intbv(1091633154), # Lsl_imm(1, 1, 2)
-  4: intbv(3607101441), # T_link(1)
-  })
 
 
-def assign():
+def risc_cpu():
   MOV = (not p) & (op == 0)
   LSL = (not p) & (op == 1)
   ASR = (not p) & (op == 2)
@@ -76,13 +53,13 @@ def assign():
   STR = p & (not q) & u
   BR  = p & q
 
+  ira0 = 15 if BR else ira
+
   # Arithmetic-logical unit (ALU)
-  global ira0
+
   A = R[ira0].val
   B = R[irb].val
   C0 = R[irc].val
-
-  ira0 = 15 if BR else ira
 
  #C1 = ~q ? C0 : {{16{v}}, imm};
   # except it seems ~~q...:
@@ -94,7 +71,6 @@ def assign():
 ##  sc0 = C1[1:0];
 ##  sc1 = C1[3:2];
 
- #  MOV ?
   if MOV:
    #  (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
     if q:
@@ -213,13 +189,6 @@ def ClkDriver(clk, period=10):
   return driveClk
 
 
-def thinker():
-  @always(clk.posedge)
-  def think():
-    assign()
-  return think
-
-
 def iii(clk):
   @always(clk.negedge)
   def jjj():
@@ -227,7 +196,6 @@ def iii(clk):
       PC,
       pmout,
       IR,
-#      bin(IR)[2:], bin(pmout)[2:], PC
       )
     for i, reg in enumerate(R):
       if reg:
@@ -236,10 +204,20 @@ def iii(clk):
   return jjj
 
 
+memory = defaultdict(int)
+memory.update({
+  0: intbv(1207959553), # Mov_imm(8, 1)
+  1: intbv(1090519041), # Mov_imm(1, 1)
+  2: intbv(18350088),   # Add(1, 1, 8)
+  3: intbv(1091633154), # Lsl_imm(1, 1, 2)
+  4: intbv(3607101441), # T_link(1)
+  })
+
+
 sim = Simulation(
   ClkDriver(clk),
   sparseMemory(memory, pmout, outbus, PC, iowr, stall1, clk),
-  thinker(),
+  always(clk.posedge)(risc_cpu),
   iii(clk),
   )
 print "PC    : in RAM     ->  IR"
