@@ -46,7 +46,7 @@ ioenb = ibv(1)
  ) = (ibv(32) for _ in range(13))
 product = ibv(64)
 stall, stallL, stallM, stallD  = (ibv(1) for _ in range(4))
-
+del C1, C0
 
 memory = defaultdict(int)
 ##memory[0] = ibv(32, 0b01000111000000000000000000000011)
@@ -80,17 +80,18 @@ def assign():
 
   # Arithmetic-logical unit (ALU)
   global ira0
-  A.next = R[ira0].val
-  B.next = R[irb].val
-  C0.next = R[irc].val
+  A = R[ira0].val
+  B = R[irb].val
+  C0 = R[irc].val
 
   ira0 = 15 if BR else ira
 
  #C1 = ~q ? C0 : {{16{v}}, imm};
-  C1.next = concat(*([v] * 16 + [imm])) if not q else C0.val
+  # except it seems ~~q...:
+  C1 = concat(*([v] * 16 + [imm])) if q else C0
 
   ioenb.next = (pmout[20:6] == 0b11111111111111);
-  outbus.next = A.val;
+  outbus.next = A
 
 ##  sc0 = C1[1:0];
 ##  sc1 = C1[3:2];
@@ -106,7 +107,7 @@ def assign():
     else:
      #  (~u ? C0 : ... )) :
       if not u:
-        res = C0.val
+        res = C0
       else:
      # ... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
         if not irc[0]:
@@ -243,4 +244,4 @@ sim = Simulation(
   iii(clk),
   )
 print "PC    : in RAM     ->  IR"
-sim.run(250)
+sim.run(120)
