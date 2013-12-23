@@ -1,4 +1,5 @@
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
+from assembler import bits2signed_int, signed
 from ram import sparseMemory
 
 
@@ -57,7 +58,8 @@ def risc_cpu():
   # Arithmetic-logical unit (ALU)
 
   A = R[ira0].val
-  B = R[irb].val
+##  B = R[irb].val
+  B = intbv(R[irb].val)[32:]
   C0 = R[irc].val
 
  #C1 = ~q ? C0 : {{16{v}}, imm};
@@ -104,9 +106,13 @@ def risc_cpu():
   elif XOR:
     res = B ^ C1
   elif ADD:
-    res = B + C1 + (u & C)
+    x = B + C1 + (u & C)
+    print B, C1, x
+    res = signed(x, 32)
   elif SUB:
     res = B - C1 - (u & C)
+    print B, C1, res
+    res = signed(res, 32)
   elif MUL:
     res = product[32:0]
   elif DIV:
@@ -153,7 +159,7 @@ def risc_cpu():
   elif stall:
     pcmux = PC.val
   elif BR & cond & u:
-    pcmux = off[11:0] + nxpc
+    pcmux = bits2signed_int(off[12:0]) + nxpc
   elif (BR & cond & (not u)):
     pcmux = C0[20:2]
   elif (BR & cond & (not u) & IR[5]):
@@ -193,7 +199,7 @@ def iii(clk):
   def jjj():
     print '0x%04x: 0x%08x -> 0x%08x' % (
       PC,
-      pmout,
+      memory[int(PC)],
       IR,
       )
     for i, reg in enumerate(R):
@@ -205,15 +211,19 @@ def iii(clk):
 
 if __name__ == '__main__':
   from collections import defaultdict
-  memory = defaultdict(int)
-  memory.update({
-    0: intbv(1207959553), # Mov_imm(8, 1)
-    1: intbv(1090519041), # Mov_imm(1, 1)
-    2: intbv(18350088),   # Add(1, 1, 8)
-    3: intbv(1091633154), # Lsl_imm(1, 1, 2)
-    4: intbv(3607101441), # T_link(1)
-    })
+  from assembler import Mov_imm, Add, Lsl_imm, T_link
 
+  memory = {} # defaultdict(int)
+  memory.update({
+    0: Mov_imm(8, 1),
+    1: Mov_imm(1, 1),
+    2: Add(1, 1, 8),
+    3: Lsl_imm(1, 1, 2),
+    4: T_link(1),
+    5: 0,
+    6: 0,
+    9: 0,
+    })
 
   sim = Simulation(
     ClkDriver(clk),
@@ -221,5 +231,6 @@ if __name__ == '__main__':
     always(clk.posedge)(risc_cpu),
     iii(clk),
     )
-  print "PC    : in RAM     ->  IR"
+  print "PC    : RAM[PC]     ->  IR"
+  print "0x%04x: 0x%08x" % (PC, memory[0])
   sim.run(120)
