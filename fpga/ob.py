@@ -1,4 +1,3 @@
-from collections import defaultdict
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
 from ram import sparseMemory
 
@@ -204,21 +203,23 @@ def iii(clk):
   return jjj
 
 
-memory = defaultdict(int)
-memory.update({
-  0: intbv(1207959553), # Mov_imm(8, 1)
-  1: intbv(1090519041), # Mov_imm(1, 1)
-  2: intbv(18350088),   # Add(1, 1, 8)
-  3: intbv(1091633154), # Lsl_imm(1, 1, 2)
-  4: intbv(3607101441), # T_link(1)
-  })
+if __name__ == '__main__':
+  from collections import defaultdict
+  memory = defaultdict(int)
+  memory.update({
+    0: intbv(1207959553), # Mov_imm(8, 1)
+    1: intbv(1090519041), # Mov_imm(1, 1)
+    2: intbv(18350088),   # Add(1, 1, 8)
+    3: intbv(1091633154), # Lsl_imm(1, 1, 2)
+    4: intbv(3607101441), # T_link(1)
+    })
 
 
-sim = Simulation(
-  ClkDriver(clk),
-  sparseMemory(memory, pmout, outbus, PC, iowr, stall1, clk),
-  always(clk.posedge)(risc_cpu),
-  iii(clk),
-  )
-print "PC    : in RAM     ->  IR"
-sim.run(120)
+  sim = Simulation(
+    ClkDriver(clk),
+    sparseMemory(memory, pmout, outbus, PC, iowr, stall1, clk),
+    always(clk.posedge)(risc_cpu),
+    iii(clk),
+    )
+  print "PC    : in RAM     ->  IR"
+  sim.run(120)
