@@ -30,6 +30,20 @@ def make_F0(u, op, a, b, c):
     )
 
 
+def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
+def Lsl(a, b, c, u=0): return make_F0(u, 1, a, b, c)
+def Asr(a, b, c, u=0): return make_F0(u, 2, a, b, c)
+def Ror(a, b, c, u=0): return make_F0(u, 3, a, b, c)
+def And(a, b, c, u=0): return make_F0(u, 4, a, b, c)
+def Ann(a, b, c, u=0): return make_F0(u, 5, a, b, c)
+def Ior(a, b, c, u=0): return make_F0(u, 6, a, b, c)
+def Xor(a, b, c, u=0): return make_F0(u, 7, a, b, c)
+def Add(a, b, c, u=0): return make_F0(u, 8, a, b, c)
+def Sub(a, b, c, u=0): return make_F0(u, 9, a, b, c)
+def Mul(a, b, c, u=0): return make_F0(u, 10, a, b, c)
+def Div(a, b, c, u=0): return make_F0(u, 11, a, b, c)
+
+
 def make_F1(u, v, op, a, b, K):
   assert bool(u) == u, repr(u)
   assert bool(v) == v, repr(v)
@@ -46,20 +60,6 @@ def make_F1(u, v, op, a, b, K):
     (op << 16) +
     signed(K)
     )
-
-
-def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
-def Lsl(a, b, c, u=0): return make_F0(u, 1, a, b, c)
-def Asr(a, b, c, u=0): return make_F0(u, 2, a, b, c)
-def Ror(a, b, c, u=0): return make_F0(u, 3, a, b, c)
-def And(a, b, c, u=0): return make_F0(u, 4, a, b, c)
-def Ann(a, b, c, u=0): return make_F0(u, 5, a, b, c)
-def Ior(a, b, c, u=0): return make_F0(u, 6, a, b, c)
-def Xor(a, b, c, u=0): return make_F0(u, 7, a, b, c)
-def Add(a, b, c, u=0): return make_F0(u, 8, a, b, c)
-def Sub(a, b, c, u=0): return make_F0(u, 9, a, b, c)
-def Mul(a, b, c, u=0): return make_F0(u, 10, a, b, c)
-def Div(a, b, c, u=0): return make_F0(u, 11, a, b, c)
 
 
 def Mov_imm(a, K, v=0, u=0): return make_F1(u, v, 0, a, 0, K)
@@ -89,6 +89,7 @@ def make_F3(cond, c, invert=False, v=False):
     (cond << 24) +
     c
     )
+
 
 def MI(c): return make_F3(0, c)
 def PL(c): return make_F3(0, c, True)
@@ -138,9 +139,10 @@ def F_link(c): return make_F3(7, c, True, True)
 if __name__ == '__main__':
   mem = {}
   for i, instruction in enumerate((
-    Mov_imm(8, 3),
-    Mov_imm(7, 2),
+    Mov_imm(8, 1),
+    Mov_imm(7, 1),
     Add(1, 7, 8),
+    Lsl_imm(1, 1, 2),
     T_link(1),
     )):
     print instruction, bin(instruction)

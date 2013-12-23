@@ -54,10 +54,11 @@ memory = defaultdict(int)
 ##memory[2] = ibv(32, 0b00000001100010000000000000000111)
 ##memory[5] = ibv(32, 0b11000111000000000000000000000011)
 memory.update({
-  0: intbv(1207959555),
-  1: intbv(1191182338),
+  0: intbv(1207959553),
+  1: intbv(1191182337),
   2: intbv(24641544),
-  3: intbv(3607101441),
+  3: intbv(1091633154),
+  4: intbv(3607101441),
   })
 
 def assign():
@@ -119,7 +120,7 @@ def assign():
             intbv(0b01010000),
             )
   elif LSL:
-    res = t3.val
+    res = B << C1
   elif ASR or ROR:
     res = s3.val
   elif AND:
