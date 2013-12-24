@@ -453,7 +453,7 @@ def factor(x):
       selector(x);
       if sym == ORS.lparen:
         sym = ORS.Get()
-        ORG.PrepCall(x, rx)
+        rx = ORG.PrepCall(x)
         ParamList(x)
         if (x.type_.form == ORB.Proc) and (x.type_.base.form != ORB.NoTyp):
           ORG.Call(x, rx)
@@ -795,7 +795,7 @@ def StatSequence():
           expression(y)
         elif sym == ORS.lparen: # (*procedure call*)
           sym = ORS.Get()
-          ORG.PrepCall(x, rx)
+          rx = ORG.PrepCall(x)
           ParamList(x);
           if (x.type_.form == ORB.Proc) and (x.type_.base.form == ORB.NoTyp):
             ORG.Call(x, rx)
@@ -806,7 +806,7 @@ def StatSequence():
           if x.type_.nofpar > 0:
             ORS.Mark("missing parameters")
           if x.type_.base.form == ORB.NoTyp:
-            ORG.PrepCall(x, rx)
+            rx = ORG.PrepCall(x)
             ORG.Call(x, rx)
           else:
             ORS.Mark("not a procedure")
@@ -825,7 +825,7 @@ def StatSequence():
       L0 = 0
       while sym == ORS.elsif:
         sym = ORS.Get()
-        ORG.FJump(L0)
+        L0 = ORG.FJump(L0)
         ORG.Fixup(x)
         expression(x)
         CheckBool(x)
@@ -835,7 +835,7 @@ def StatSequence():
 
       if sym == ORS.else_:
         sym = ORS.Get();
-        ORG.FJump(L0);
+        L0 = ORG.FJump(L0);
         ORG.Fixup(x);
         StatSequence()
 
@@ -930,7 +930,7 @@ def StatSequence():
         L0 = 0;
         while sym == ORS.bar:
           sym = ORS.Get()
-          ORG.FJump(L0)
+          L0 = ORG.FJump(L0)
           ORG.Fixup(x)
           obj.type_ = orgtype
           TypeCase(obj, x)
@@ -1424,7 +1424,7 @@ def ProcedureDecl():
     proc.type_.dsc = ORB.topScope.next
     if sym == ORS.procedure:
       L = 0
-      ORG.FJump(L);
+      L = ORG.FJump(L);
       while True:
         ProcedureDecl()
         Check(ORS.semicolon, "no ;")
