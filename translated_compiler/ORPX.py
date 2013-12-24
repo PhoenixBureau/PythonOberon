@@ -25,7 +25,6 @@ FormalType = None # : # def (VAR typ: ORB.Type; dim: INTEGER);
 modid = None # : # ORS.Ident;
 pbsList = None # : # PtrBase;  # (*list of names of pointer base types*)
 dummy = None # : ORB.Object;
-W = None # : Texts.Writer;
 
 
 def Check(s, msg):
@@ -1431,13 +1430,13 @@ def Module;
 ##  VAR key: LONGINT;
 ##    obj: ORB.Object;
 ##    impid, impid1: ORS.Ident;
-  Texts.WriteString(W, "  compiling ")
+  print "  compiling ",
   ORS.Get(sym);
   if sym == ORS.module:
     ORS.Get(sym);
     if sym == ORS.times:
       version = 0
-      Texts.Write(W, "*")
+      print "*",
       ORS.Get(sym)
     else:
       version = 1
@@ -1446,8 +1445,7 @@ def Module;
     if sym == ORS.ident:
       ORS.CopyId(modid)
       ORS.Get(sym);
-      Texts.WriteString(W, modid)
-      Texts.Append(Oberon.Log, W.buf)
+      print modid,
     else:
       ORS.Mark("identifier expected")
 
@@ -1504,90 +1502,31 @@ def Module;
     if ORS.errcnt == 0:
       ORB.Export(modid, newSF, key);
       if newSF:
-        Texts.WriteLn(W)
-        Texts.WriteString(W, "new symbol file ")
+        print
+        print "new symbol file "
 
     if ORS.errcnt == 0:
       ORG.Close(modid, key, exno)
-      Texts.WriteLn(W)
-      Texts.WriteString(W, "compilation done ");
-      Texts.WriteInt(W, ORG.pc, 6)
-      Texts.WriteInt(W, dc, 6)
+      print
+      print "compilation done ", ORG.pc, dc,
     else:
-      Texts.WriteLn(W)
-      Texts.WriteString(W, "compilation FAILED")
+      print
+      print "compilation FAILED"
 
-    Texts.WriteLn(W)
-    Texts.Append(Oberon.Log, W.buf);
+    print
     ORB.CloseScope()
     pbsList = None
   else:
     ORS.Mark("must start with MODULE")
 
 
-def Option(VAR S: Texts.Scanner);
-  newSF = False;
-  if S.nextCh == "/":
-    Texts.Scan(S)
-    Texts.Scan(S)
-    if (S.class_ == Texts.Name) and (S.s[0] == "s"):
-      newSF = True
-
-
-def Compile*;
-##  VAR beg, end, time: LONGINT;
-##    T: Texts.Text;
-##    S: Texts.Scanner;
-  Texts.OpenScanner(S, Oberon.Par.text, Oberon.Par.pos)
-  Texts.Scan(S)
-  if S.class_ == Texts.Char:
-    if S.c == "@":
-      Option(S)
-      Oberon.GetSelection(T, beg, end, time);
-      if time >= 0:
-        ORS.Init(T, beg);
-        Module()
-    elif S.c == "^":
-      Option(S)
-      Oberon.GetSelection(T, beg, end, time);
-      if time >= 0:
-        Texts.OpenScanner(S, T, beg)
-        Texts.Scan(S);
-        if S.class_ == Texts.Name:
-          Texts.WriteString(W, S.s)
-          NEW(T)
-          Texts.Open(T, S.s);
-          if T.len_ > 0:
-            ORS.Init(T, 0)
-            Module()
-
-  else: 
-    while S.class_ == Texts.Name:
-      NEW(T)
-      Texts.Open(T, S.s);
-      if T.len_ > 0:
-        Option(S)
-        ORS.Init(T, 0)
-        Module()
-      else:
-        Texts.WriteString(W, S.s)
-        Texts.WriteString(W, " not found");
-        Texts.WriteLn(W)
-        Texts.Append(Oberon.Log, W.buf)
-
-      if (T.len_ != 0) and (ORS.errcnt == 0):
-        Texts.Scan(S)
-      else:
-        S.class_ = 0
-
-  Oberon.Collect(0)
+def Compile(T, beg=0):
+  ORS.Init(T, beg);
+  Module()
 
 
 if __name__ == '__main__':
-  Texts.OpenWriter(W)
-  Texts.WriteString(W, "OR Compiler  5.11.2013");
-  Texts.WriteLn(W)
-  Texts.Append(Oberon.Log, W.buf)
+  print "OR Compiler  5.11.2013"
   NEW(dummy)
   dummy.class_ = ORB.Var
   dummy.type_ = ORB.intType
