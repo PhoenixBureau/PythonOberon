@@ -97,7 +97,7 @@ def CheckReadOnly(x):
     ORS.Mark("read-only")
 
 
-def CheckExport(VAR expo: BOOLEAN);
+def CheckExport():
   if sym == ORS.times:
     expo = True
     ORS.Get(sym);
@@ -105,6 +105,7 @@ def CheckExport(VAR expo: BOOLEAN);
       ORS.Mark("remove asterisk")
   else:
     expo = False
+  return expo
 
 
 def IsExtension(t0, t1: ORB.Type):
@@ -937,13 +938,13 @@ def IdentList(class_: INTEGER; VAR first: ORB.Object):
   if sym == ORS.ident:
     ORB.NewObj(first, ORS.id_, class_)
     ORS.Get(sym)
-    CheckExport(first.expo)
+    first.expo = CheckExport()
     while sym == ORS.comma:
       ORS.Get(sym);
       if sym == ORS.ident:
         ORB.NewObj(obj, ORS.id_, class_)
         ORS.Get(sym)
-        CheckExport(obj.expo)
+        obj.expo = CheckExport()
       else:
         ORS.Mark("ident?")
 
@@ -1038,7 +1039,7 @@ def RecordType(VAR type_: ORB.Type);
       obj = new
       INC(n);
       ORS.Get(sym)
-      CheckExport(new.expo);
+      new.expo = CheckExport()
       if (sym != ORS.comma) and (sym != ORS.colon):
         ORS.Mark("comma expected")
       elif sym == ORS.comma:
@@ -1258,7 +1259,7 @@ def Declarations(VAR varsize: LONGINT);
     while sym == ORS.ident:
       ORS.CopyId(id_)
       ORS.Get(sym)
-      CheckExport(expo);
+      expo = CheckExport()
       if sym == ORS.eql:
         ORS.Get(sym)
       else:
@@ -1283,7 +1284,7 @@ def Declarations(VAR varsize: LONGINT);
     while sym == ORS.ident:
       ORS.CopyId(id_)
       ORS.Get(sym)
-      CheckExport(expo);
+      expo = CheckExport()
       if sym == ORS.eql:
         ORS.Get(sym)
       else:
@@ -1370,7 +1371,7 @@ def ProcedureDecl;
     type_.form = ORB.Proc
     type_.size = ORG.WordSize
     proc.type_ = type_;
-    CheckExport(proc.expo);
+    proc.expo = CheckExport()
     if proc.expo:
       proc.exno = exno
       INC(exno)
