@@ -488,6 +488,7 @@ def FindPtrFlds(typ, off, dcw):
     s = typ.base.size;
     for i in range(typ.len_):
       dcw = FindPtrFlds(typ.base, i*s + off, dcw)
+  return dcw
 
 
 def BuildTD(T, dc):

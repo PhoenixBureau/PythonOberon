@@ -1286,7 +1286,7 @@ def Type(type_):
 
 
 def Declarations(varsize):
-  global sym, id_
+  global sym, id_, exno
 ##  VAR obj, first: ORB.Object;
 ##    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
 ##    expo: BOOLEAN; id_: ORS.Ident;
@@ -1345,7 +1345,7 @@ def Declarations(varsize):
       tp.typobj = obj;
       if expo and (obj.type_.form == ORB.Record):
         obj.exno = exno
-        INC(exno)
+        exno += 1
       else:
         obj.exno = 0
       if tp.form == ORB.Record:
@@ -1380,7 +1380,7 @@ def Declarations(varsize):
         varsize = varsize + obj.type_.size;
         if obj.expo:
           obj.exno = exno
-          INC(exno)
+          exno += 1
         obj = obj.next
 
       Check(ORS.semicolon, "; missing")
@@ -1424,7 +1424,7 @@ def ProcedureDecl():
     proc.expo = CheckExport()
     if proc.expo:
       proc.exno = exno
-      INC(exno)
+      exno += 1
     ORB.OpenScope()
     INC(level)
     proc.val = -1
