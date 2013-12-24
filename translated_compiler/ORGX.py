@@ -1617,74 +1617,123 @@ def FindPtrs(R, typ, adr):
 
 
 def Close*(VAR modid: ORS.Ident; key, nofent):
-  VAR obj: ORB.Object;
-    i, comsize, nofimps, nofptrs, size: LONGINT;
-    name: ORS.Ident;
-    F: Files.File; R: Files.Rider;
-BEGIN  (*exit code*)
-  if version == 0: Put1(Mov, 0, 0, 0); Put3(BR, 7, 0)  (*RISC-0*)
-  else: Put2(Ldr, LNK, SP, 0); Put1(Add, SP, SP, 4); Put3(BR, 7, LNK)
-  END ;
-  obj = ORB.topScope.next; nofimps = 0; comsize = 4; nofptrs = 0;
-  while obj != None:
-    if (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system): nofimps += 1 (*count imports*)
-    elif (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc)
-        and (obj.type.nofpar == 0) and (obj.type.base == ORB.noType): i = 0; (*count commands*)
-      while obj.name[i] != 0X: i += 1 END ;
-      i = (i+4) / 4 * 4; comsize += i+4
-    elif obj.class_ == ORB.Var: nofptrs += NofPtrs(obj.type)  (*count pointers*)
-    END ;
-    obj = obj.next
-  END ;
-  size = varsize + strx + comsize + (pc + nofimps + nofent + nofptrs + 1)*4;  (*varsize includes type descriptors*)
+##  VAR obj: ORB.Object;
+##    i, comsize, nofimps, nofptrs, size: LONGINT;
+##    name: ORS.Ident;
+##    F: Files.File; R: Files.Rider;
 
-  ORB.MakeFileName(name, modid, ".rsc"); (*write code file*)
-  F = Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); Files.WriteByte(R, version);
-  Files.WriteInt(R, size);
-  obj = ORB.topScope.next;
-  while (obj != None) and (obj.class_ == ORB.Mod):  (*imports*)
-    if obj.dsc != ORB.system: Files.WriteString(R, obj(ORB.Module).orgname); Files.WriteInt(R, obj.val) END ;
+  #  (*exit code*)
+  if version == 0:
+    Put1(Mov, 0, 0, 0)
+    Put3(BR, 7, 0) # (*RISC-0*)
+  else:
+    Put2(Ldr, LNK, SP, 0)
+    Put1(Add, SP, SP, 4)
+    Put3(BR, 7, LNK)
+
+  obj = ORB.topScope.next
+  nofimps = 0
+  comsize = 4
+  nofptrs = 0
+
+  while obj != None:
+    if (obj.class_ == ORB.Mod) and (obj.dsc != ORB.system):
+      nofimps += 1 # (*count imports*)
+    elif (
+      (obj.exno != 0) and
+      (obj.class_ == ORB.Const) and
+      (obj.type.form == ORB.Proc) and
+      (obj.type.nofpar == 0) and
+      (obj.type.base == ORB.noType)
+      ):
+      i = 0 # (*count commands*)
+      while obj.name[i] != 0x0:
+        i += 1
+      i = (i+4) / 4 * 4
+      comsize += i+4
+    elif obj.class_ == ORB.Var:
+      nofptrs += NofPtrs(obj.type) # (*count pointers*)
+
     obj = obj.next
-  END ;
+
+  size = varsize + strx + comsize + (pc + nofimps + nofent + nofptrs + 1)*4 # (*varsize includes type descriptors*)
+
+  ORB.MakeFileName(name, modid, ".rsc") # (*write code file*)
+
+  F = Files.New(name)
+  Files.Set(R, F, 0)
+  Files.WriteString(R, modid)
+  Files.WriteInt(R, key)
+  Files.WriteByte(R, version);
+  Files.WriteInt(R, size);
+
+  obj = ORB.topScope.next;
+  while (obj != None) and (obj.class_ == ORB.Mod): # (*imports*)
+    if obj.dsc != ORB.system:
+      Files.WriteString(R, obj(ORB.Module).orgname)
+      Files.WriteInt(R, obj.val)
+    obj = obj.next
+
   Files.Write(R, 0X);
   Files.WriteInt(R, tdx*4);
+
   i = 0;
-  while i < tdx: Files.WriteInt(R, data[i]); i += 1 END ; (*type descriptors*)
-  Files.WriteInt(R, varsize - tdx*4);  (*data*)
-  Files.WriteInt(R, strx);
-  FOR i = 0 TO strx-1: Files.Write(R, str_[i]) END ;  (*strings*)
-  Files.WriteInt(R, pc);  (*code len_*)
-  FOR i = 0 TO pc-1: Files.WriteInt(R, code[i]) END ;  (*program*)
-  obj = ORB.topScope.next;
-  while obj != None:  (*commands*)
-    if (obj.exno != 0) and (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) and
-        (obj.type.nofpar == 0) and (obj.type.base == ORB.noType):
-      Files.WriteString(R, obj.name); Files.WriteInt(R, obj.val)
-    END ;
+  while i < tdx:
+    Files.WriteInt(R, data[i])
+    i += 1 # (*type descriptors*)
+
+  Files.WriteInt(R, varsize - tdx*4) # (*data*)
+  Files.WriteInt(R, strx)
+
+  for i in range(strx):
+    Files.Write(R, str_[i]) # (*strings*)
+
+  Files.WriteInt(R, pc) # (*code len_*)
+  for i in range(pc):
+    Files.WriteInt(R, code[i]) # (*program*)
+
+  obj = ORB.topScope.next
+  while obj != None: # (*commands*)
+    if (
+      (obj.exno != 0) and
+      (obj.class_ == ORB.Const) and
+      (obj.type.form == ORB.Proc) and
+      (obj.type.nofpar == 0) and
+      (obj.type.base == ORB.noType)
+      ):
+      Files.WriteString(R, obj.name)
+      Files.WriteInt(R, obj.val)
     obj = obj.next
-  END ;
+
   Files.Write(R, 0X);
-  Files.WriteInt(R, nofent); Files.WriteInt(R, entry);
+  Files.WriteInt(R, nofent)
+  Files.WriteInt(R, entry)
+
   obj = ORB.topScope.next;
-  while obj != None:  (*entries*)
+  while obj != None: # (*entries*)
     if obj.exno != 0:
       if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
-        if obj.type.form == ORB.Record: Files.WriteInt(R,  obj.type.len_ % 0x10000)
+        if obj.type.form == ORB.Record:
+          Files.WriteInt(R,  obj.type.len_ % 0x10000)
         elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == None) or (obj.type.base.typobj.exno == 0)):
           Files.WriteInt(R, obj.type.base.len_ % 0x10000)
-        END
-      END
-    END ;
+
     obj = obj.next
-  END ;
+
   obj = ORB.topScope.next;
-  while obj != None:  (*pointer variables*)
-    if obj.class_ == ORB.Var: FindPtrs(R, obj.type, obj.val) END ;
+  while obj != None: # (*pointer variables*)
+    if obj.class_ == ORB.Var:
+      FindPtrs(R, obj.type, obj.val)
     obj = obj.next
-  END ;
-  Files.WriteInt(R, -1);
-  Files.WriteInt(R, fixorgP); Files.WriteInt(R, fixorgD); Files.WriteInt(R, fixorgT); Files.WriteInt(R, entry);
-  Files.Write(R, "O"); Files.Register(F)
-END Close;
+
+  Files.WriteInt(R, -1)
+  Files.WriteInt(R, fixorgP)
+  Files.WriteInt(R, fixorgD)
+  Files.WriteInt(R, fixorgT)
+  Files.WriteInt(R, entry)
+  Files.Write(R, "O")
+
+  Files.Register(F)
+
