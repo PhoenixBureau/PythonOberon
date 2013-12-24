@@ -55,7 +55,7 @@ relmap = {} # (*condition codes for relations*)
 relmap[0] = 1; relmap[1] = 9; relmap[2] = 5; relmap[3] = 6; relmap[4] = 14; relmap[5] = 13
 
 code = {} # : ARRAY maxCode OF LONGINT;
-data = {} # : ARRAY maxTD OF LONGINT;  (*type descriptors*)
+data = {} # : ARRAY maxTD OF LONGINT;  (*type_ descriptors*)
 str_ = {} # : ARRAY maxStrx OF 0xCAR;
 
 #(*instruction assemblers according to formats*)
@@ -203,7 +203,7 @@ def NilCheck():
 
 
 def load(x):
-  if x.type.size == 1:
+  if x.type_.size == 1:
     op = Ldr+1
   else:
     op = Ldr
@@ -225,7 +225,7 @@ def load(x):
 
     elif x.mode == ORB.Const:
 
-      if x.type.form == ORB.Proc:
+      if x.type_.form == ORB.Proc:
         if x.r > 0:
           ORS.Mark("not allowed")
         elif x.r == 0:
@@ -287,7 +287,7 @@ def loadAdr(x):
 
 def loadCond(x):
   global RH
-  if x.type.form == ORB.Bool:
+  if x.type_.form == ORB.Bool:
     if x.mode == ORB.Const:
       x.r = 15 - x.a*8
     else:
@@ -320,16 +320,16 @@ def loadStringAdr(x):
 # (* Items: Conversion from constants or from Objects on the Heap to Items on the Stack*)
 
 def MakeConstItem(x, typ, val):
-  x.mode = ORB.Const; x.type = typ; x.a = val
+  x.mode = ORB.Const; x.type_ = typ; x.a = val
 
 
 def MakeRealItem(x, val):
-  x.mode = ORB.Const; x.type = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
+  x.mode = ORB.Const; x.type_ = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
 
 
 def MakeStringItem(x, len_): # (*copies string from ORS-buffer to ORG-string array*)
   x.mode = ORB.Const
-  x.type = ORB.strType
+  x.type_ = ORB.strType
   x.a = strx
   x.b = len_
   i = 0
@@ -348,16 +348,16 @@ def MakeStringItem(x, len_): # (*copies string from ORS-buffer to ORG-string arr
 
 def MakeItem(x, y, curlev):
   x.mode = y.class_
-  x.type = y.type
+  x.type_ = y.type_
   x.a = y.val
   x.rdo = y.rdo;
 
   if y.class_ == ORB.Par:
     x.b = 0
   elif y.class_ == ORB.Typ:
-    x.a = y.type.len_
+    x.a = y.type_.len_
     x.r = -y.lev
-  elif (y.class_ == ORB.Const) and (y.type.form == ORB.String):
+  elif (y.class_ == ORB.Const) and (y.type_.form == ORB.String):
     x.b = y.lev # (*len_*)
   else:
     x.r = y.lev
@@ -383,8 +383,8 @@ def Field(x, y): # (* x = x.y *)
 
 
 def Index(x, y): # (* x = x[y] *)
-  s = x.type.base.size
-  lim = x.type.len_
+  s = x.type_.base.size
+  lim = x.type_.len_
   if (y.mode == ORB.Const) and (lim >= 0):
     if (y.a < 0) or (y.a >= lim):
       ORS.Mark("bad index")
@@ -466,7 +466,7 @@ def DeRef(x):
 
 def Q(T, dcw):
   global fixorgT
-  # (*one entry of type descriptor extension table*)
+  # (*one entry of type_ descriptor extension table*)
   if T.base != None:
     dcw = Q(T.base, dcw)
     data[dcw] = (T.mno*0x1000 + T.len_) * 0x1000 + dcw - fixorgT
@@ -482,7 +482,7 @@ def FindPtrFlds(typ, off, dcw):
   elif typ.form == ORB.Record:
     fld = typ.dsc;
     while fld != None:
-      dcw = FindPtrFlds(fld.type, fld.val + off, dcw)
+      dcw = FindPtrFlds(fld.type_, fld.val + off, dcw)
       fld = fld.next
   elif typ.form == ORB.Array:
     s = typ.base.size;
@@ -588,7 +588,7 @@ def Or2(x, y):
 # (* Code generation for arithmetic operators *)
 
 def Neg(x): # (* x = -x *)
-  if x.type.form == ORB.Int:
+  if x.type_.form == ORB.Int:
     if x.mode == ORB.Const:
       x.a = -x.a
     else:
@@ -596,7 +596,7 @@ def Neg(x): # (* x = -x *)
       Put1(Mov, RH, 0, 0)
       Put0(Sub, x.r, RH, x.r)
 
-  elif x.type.form == ORB.Real:
+  elif x.type_.form == ORB.Real:
     if x.mode == ORB.Const:
       x.a = x.a + 0x7FFFFFFF + 1
     else:
@@ -860,7 +860,7 @@ def SetOp(op, x, y): # (* x = x op y *)
 
 def IntRelation(op, x, y): # (* x = x < y *)
   global RH
-  if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
+  if (y.mode == ORB.Const) and (y.type_.form != ORB.Proc):
     load(x)
     if (y.a != 0) or (op not in [ORS.eql, ORS.neq]) or (code[pc-1] / 0x40000000 != -2):
       Put1a(Cmp, x.r, x.r, y.a)
@@ -907,11 +907,11 @@ def RealRelation(op, x, y): #   (* x = x < y *)
 def StringRelation(op, x, y): #  (* x = x < y *)
   global RH
   #(*x, y are char arrays or strings*)
-  if x.type.form == ORB.String:
+  if x.type_.form == ORB.String:
     loadStringAdr(x)
   else:
     loadAdr(x)
-  if y.type.form == ORB.String:
+  if y.type_.form == ORB.String:
     loadStringAdr(y)
   else:
     loadAdr(y)
@@ -933,7 +933,7 @@ def StringRelation(op, x, y): #  (* x = x < y *)
 
 def StrToChar(x):
   global strx
-  x.type = ORB.charType
+  x.type_ = ORB.charType
   strx -= 4
   x.a = ORD(str_[x.a])
 
@@ -942,7 +942,7 @@ def Store(x, y): # (* x = y *)
   global RH
   #VAR op: LONGINT;
   load(y);
-  if x.type.size == 1:
+  if x.type_.size == 1:
     op = Str+1
   else:
     op = Str
@@ -967,15 +967,15 @@ def StoreStruct(x, y): # (* x = y *)
   global RH
   # VAR s, pc0: LONGINT;
   loadAdr(x); loadAdr(y)
-  if (x.type.form == ORB.Array) and (x.type.len_ > 0):
-    if y.type.len_ >= 0: 
-      if x.type.len_ >= y.type.len_:
-        Put1(Mov, RH, 0, (y.type.size+3) / 4)
+  if (x.type_.form == ORB.Array) and (x.type_.len_ > 0):
+    if y.type_.len_ >= 0: 
+      if x.type_.len_ >= y.type_.len_:
+        Put1(Mov, RH, 0, (y.type_.size+3) / 4)
       else:
         ORS.Mark("source array too long")
     else: # (*y is open array*)
       Put2(Ldr, RH, SP, y.a+4)
-      s = y.type.base.size #  (*element size*)
+      s = y.type_.base.size #  (*element size*)
       pc0 = pc
       Put3(BC, EQ, 0)
       if s == 1:
@@ -985,14 +985,14 @@ def StoreStruct(x, y): # (* x = y *)
         Put1(Mul, RH, RH, s / 4)
 
       if check:
-        Put1(Mov, RH+1, 0, (x.type.size+3) / 4)
+        Put1(Mov, RH+1, 0, (x.type_.size+3) / 4)
         Put0(Cmp, RH+1, RH, RH+1)
         Trap(GT, 3)
 
       fix(pc0, pc + 5 - pc0)
 
-  elif x.type.form == ORB.Record:
-    Put1(Mov, RH, 0, x.type.size / 4)
+  elif x.type_.form == ORB.Record:
+    Put1(Mov, RH, 0, x.type_.size / 4)
   else:
     ORS.Mark("inadmissible assignment")
 
@@ -1010,7 +1010,7 @@ def CopyString(x, y): # (*from x to y*)
   global RH
   #VAR len_: LONGINT;
   loadAdr(y)
-  len_ = y.type.len_
+  len_ = y.type_.len_
   if len_ >= 0:
     if x.b > len_:
       ORS.Mark("string too long")
@@ -1036,8 +1036,8 @@ def VarParam(x, ftype):
   xmd = x.mode
   loadAdr(x);
   if (ftype.form == ORB.Array) and (ftype.len_ < 0): # (*open array*)
-    if x.type.len_ >= 0:
-      Put1(Mov, RH, 0, x.type.len_)
+    if x.type_.len_ >= 0:
+      Put1(Mov, RH, 0, x.type_.len_)
     else:
       Put2(Ldr, RH, SP, x.a+4)
     incR()
@@ -1046,7 +1046,7 @@ def VarParam(x, ftype):
       Put2(Ldr, RH, SP, x.a+4);
       incR()
     else:
-      loadTypTagAdr(x.type)
+      loadTypTagAdr(x.type_)
   return x
 
 
@@ -1056,8 +1056,8 @@ def ValueParam(x):
 
 def OpenArrayParam(x):
   loadAdr(x)
-  if x.type.len_ >= 0:
-    Put1a(Mov, RH, 0, x.type.len_)
+  if x.type_.len_ >= 0:
+    Put1a(Mov, RH, 0, x.type_.len_)
   else:
     Put2(Ldr, RH, SP, x.a+4)
   incR()
@@ -1144,7 +1144,7 @@ def Fixup(x):
 
 def PrepCall(x):
   global RH
-  if x.type.form == ORB.Proc:
+  if x.type_.form == ORB.Proc:
     if x.mode != ORB.Const:
       load(x)
       code[pc-1] = code[pc-1] + 0x0B000000
@@ -1167,7 +1167,7 @@ def Call(x, r):
   if r > 0:
     SaveRegs(r)
 
-  if x.type.form == ORB.Proc:
+  if x.type_.form == ORB.Proc:
     if x.mode == ORB.Const:
       if x.r >= 0:
         Put3(BL, 7, (x.a / 4)-pc-1)
@@ -1182,7 +1182,7 @@ def Call(x, r):
   else:
     ORS.Mark("not a procedure")
 
-  if x.type.base.form == ORB.NoTyp:
+  if x.type_.base.form == ORB.NoTyp:
     RH = 0
   else:
     if r > 0:
@@ -1236,9 +1236,9 @@ def Increment(upordown, x, y):
   else:
     op = Sub
 
-  v = x.type == ORB.byteType
+  v = x.type_ == ORB.byteType
 
-  if y.type.form == ORB.NoTyp:
+  if y.type_.form == ORB.NoTyp:
     y.mode = ORB.Const
     y.a = 1
 
@@ -1320,7 +1320,7 @@ def Assert(x):
 def New(x):
   global RH
   loadAdr(x)
-  loadTypTagAdr(x.type.base)
+  loadTypTagAdr(x.type_.base)
   Put3(BLR, 7, MT)
   RH = 0
   invalSB()
@@ -1343,7 +1343,7 @@ def Unpk(x, y):
   load(x)
   e0.mode = Reg
   e0.r = RH
-  e0.type = ORB.intType;
+  e0.type_ = ORB.intType;
   Put1(Asr, RH, x.r, 23)
   Put1(Sub, RH, RH, 127)
   Store(y, e0)
@@ -1363,7 +1363,7 @@ def Led(x):
 
 def Get(x, y):
   load(x)
-  x.type = y.type
+  x.type_ = y.type_
   x.mode = RegI
   x.a = 0
   Store(y, x)
@@ -1371,7 +1371,7 @@ def Get(x, y):
 
 def Put(x, y):
   load(x)
-  x.type = y.type
+  x.type_ = y.type_
   x.mode = RegI
   x.a = 0
   Store(x, y)
@@ -1420,7 +1420,7 @@ def Abs(x):
     x.a = ABS(x.a)
   else:
     load(x);
-    if x.type.form == ORB.Real:
+    if x.type_.form == ORB.Real:
       Put1(Lsl, x.r, x.r, 1)
       Put1(Ror, x.r, x.r, 1)
     else:
@@ -1456,9 +1456,9 @@ def Ord(x):
 
 
 def Len(x):
-  if x.type.len_ >= 0:
+  if x.type_.len_ >= 0:
     x.mode = ORB.Const
-    x.a = x.type.len_
+    x.a = x.type_.len_
   else: # (*open array*)
     Put2(Ldr, RH, SP, x.a + 4)
     x.mode = Reg
@@ -1541,9 +1541,9 @@ def H(x):
 def Adr(x):
   if x.mode in {ORB.Var, ORB.Par, RegI}:
     loadAdr(x)
-  elif (x.mode == ORB.Const) and (x.type.form == ORB.Proc):
+  elif (x.mode == ORB.Const) and (x.type_.form == ORB.Proc):
     load(x)
-  elif (x.mode == ORB.Const) and (x.type.form == ORB.String):
+  elif (x.mode == ORB.Const) and (x.type_.form == ORB.String):
     loadStringAdr(x)
   else:
     ORS.Mark("not addressable")
@@ -1591,7 +1591,7 @@ def NofPtrs(typ):
     fld = typ.dsc
     n = 0;
     while fld != None:
-      n = NofPtrs(fld.type) + n
+      n = NofPtrs(fld.type_) + n
       fld = fld.next
   elif typ.form == ORB.Array:
     n = NofPtrs(typ.base) * typ.len_
@@ -1608,7 +1608,7 @@ def FindPtrs(R, typ, adr):
   elif typ.form == ORB.Record:
     fld = typ.dsc
     while fld != None:
-      FindPtrs(R, fld.type, fld.val + adr)
+      FindPtrs(R, fld.type_, fld.val + adr)
       fld = fld.next
   elif typ.form == ORB.Array:
     s = typ.base.size;
@@ -1642,9 +1642,9 @@ def Close(modid, key, nofent):
     elif (
       (obj.exno != 0) and
       (obj.class_ == ORB.Const) and
-      (obj.type.form == ORB.Proc) and
-      (obj.type.nofpar == 0) and
-      (obj.type.base == ORB.noType)
+      (obj.type_.form == ORB.Proc) and
+      (obj.type_.nofpar == 0) and
+      (obj.type_.base == ORB.noType)
       ):
       i = 0 # (*count commands*)
       while obj.name[i] != 0x0:
@@ -1652,11 +1652,11 @@ def Close(modid, key, nofent):
       i = (i+4) / 4 * 4
       comsize += i+4
     elif obj.class_ == ORB.Var:
-      nofptrs += NofPtrs(obj.type) # (*count pointers*)
+      nofptrs += NofPtrs(obj.type_) # (*count pointers*)
 
     obj = obj.next
 
-  size = varsize + strx + comsize + (pc + nofimps + nofent + nofptrs + 1)*4 # (*varsize includes type descriptors*)
+  size = varsize + strx + comsize + (pc + nofimps + nofent + nofptrs + 1)*4 # (*varsize includes type_ descriptors*)
 
   ORB.MakeFileName(name, modid, ".rsc") # (*write code file*)
 
@@ -1680,7 +1680,7 @@ def Close(modid, key, nofent):
   i = 0;
   while i < tdx:
     Files.WriteInt(R, data[i])
-    i += 1 # (*type descriptors*)
+    i += 1 # (*type_ descriptors*)
 
   Files.WriteInt(R, varsize - tdx*4) # (*data*)
   Files.WriteInt(R, strx)
@@ -1697,9 +1697,9 @@ def Close(modid, key, nofent):
     if (
       (obj.exno != 0) and
       (obj.class_ == ORB.Const) and
-      (obj.type.form == ORB.Proc) and
-      (obj.type.nofpar == 0) and
-      (obj.type.base == ORB.noType)
+      (obj.type_.form == ORB.Proc) and
+      (obj.type_.nofpar == 0) and
+      (obj.type_.base == ORB.noType)
       ):
       Files.WriteString(R, obj.name)
       Files.WriteInt(R, obj.val)
@@ -1712,20 +1712,20 @@ def Close(modid, key, nofent):
   obj = ORB.topScope.next;
   while obj != None: # (*entries*)
     if obj.exno != 0:
-      if (obj.class_ == ORB.Const) and (obj.type.form == ORB.Proc) or (obj.class_ == ORB.Var):
+      if (obj.class_ == ORB.Const) and (obj.type_.form == ORB.Proc) or (obj.class_ == ORB.Var):
         Files.WriteInt(R, obj.val)
       elif obj.class_ == ORB.Typ:
-        if obj.type.form == ORB.Record:
-          Files.WriteInt(R,  obj.type.len_ % 0x10000)
-        elif (obj.type.form == ORB.Pointer) and ((obj.type.base.typobj == None) or (obj.type.base.typobj.exno == 0)):
-          Files.WriteInt(R, obj.type.base.len_ % 0x10000)
+        if obj.type_.form == ORB.Record:
+          Files.WriteInt(R,  obj.type_.len_ % 0x10000)
+        elif (obj.type_.form == ORB.Pointer) and ((obj.type_.base.typobj == None) or (obj.type_.base.typobj.exno == 0)):
+          Files.WriteInt(R, obj.type_.base.len_ % 0x10000)
 
     obj = obj.next
 
   obj = ORB.topScope.next;
   while obj != None: # (*pointer variables*)
     if obj.class_ == ORB.Var:
-      FindPtrs(R, obj.type, obj.val)
+      FindPtrs(R, obj.type_, obj.val)
     obj = obj.next
 
   Files.WriteInt(R, -1)

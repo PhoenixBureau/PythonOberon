@@ -15,6 +15,12 @@ import ORSX as ORS, ORBX as ORB, ORGX as ORG
 ##
 ##VAR
 
+class PtrBase(object):
+  def __init__(self,):
+    self.name = ''
+    self.type_ = self.next = None
+
+
 sym = 0 #  (*last symbol read*)
 dc = 0 #: LONGINT;   # (*data counter*)
 level, exno, version = 0, 0, 0 #: INTEGER;
@@ -31,7 +37,7 @@ def Check(s, msg):
     ORS.Mark(msg)
 
 
-def qualident(obj):
+def qualident():
   global sym
   obj = ORB.thisObj()
   sym = ORS.Get();
@@ -49,6 +55,7 @@ def qualident(obj):
     else:
       ORS.Mark("identifier expected")
       obj = dummy
+  return obj
 
 
 def CheckBool(x):
@@ -203,7 +210,7 @@ def selector(x):
     elif (sym == ORS.lparen) and (x.type_.form in [ORB.Record, ORB.Pointer]): # (*type_ guard*)
       sym = ORS.Get()
       if sym == ORS.ident:
-        qualident(obj)
+        obj = qualident()
         if obj.class_ == ORB.Typ:
           TypeTest(x, obj.type_, True)
         else:
@@ -445,7 +452,7 @@ def factor(x):
         break
 
   if sym == ORS.ident:
-    qualident(obj);  
+    obj = qualident();  
     if obj.class_ == ORB.SFunc:
       x = StandFunc(x, obj.val, obj.type_)
     else:
@@ -647,7 +654,7 @@ def expression(x):
 
   elif sym == ORS.is_:
     sym = ORS.Get()
-    qualident(obj)
+    obj = qualident()
     TypeTest(x, obj.type_, False)
     x.type_ = ORB.boolType
 
@@ -745,7 +752,7 @@ def StatSequence():
   def TypeCase(obj, x):
   #  VAR typobj: ORB.Object;
     if sym == ORS.ident:
-      qualident(typobj)
+      typobj = qualident()
       ORG.MakeItem(x, obj, level)
       if typobj.class_ != ORB.Typ:
         ORS.Mark("not a type_")
@@ -767,7 +774,7 @@ def StatSequence():
         if (sym == ORS.ident) or (sym >= ORS.if_):
           break
     if sym == ORS.ident:
-      qualident(obj)
+      obj = qualident()
       ORG.MakeItem(x, obj, level);
       if x.mode == ORB.SProc:
         StandProc(obj.val)
@@ -882,7 +889,7 @@ def StatSequence():
     elif sym == ORS.for_:
       sym = ORS.Get()
       if sym == ORS.ident:
-        qualident(obj)
+        obj = qualident()
         ORG.MakeItem(x, obj, level)
         CheckInt(x)
         CheckReadOnly(x);
@@ -920,7 +927,7 @@ def StatSequence():
     elif sym == ORS.case:
       sym = ORS.Get();
       if sym == ORS.ident:
-        qualident(obj)
+        obj = qualident()
         orgtype = obj.type_;
         if not ((orgtype.form == ORB.Pointer) or (orgtype.form == ORB.Record) and (obj.class_ == ORB.Par)):
           ORS.Mark("bad case var")
@@ -1022,7 +1029,7 @@ def RecordType(type_):
 ##  VAR obj, obj0, new, bot, base: ORB.Object;
 ##    typ, tp: ORB.Type;
 ##    offset, off, n: LONGINT;
-  NEW(typ)
+  typ = ORB.Type()
   typ.form = ORB.NoTyp
   typ.base = None
   typ.mno = level
@@ -1032,7 +1039,7 @@ def RecordType(type_):
   if sym == ORS.lparen:
     sym = ORS.Get() # (*record extension*)
     if sym == ORS.ident:
-      qualident(base)
+      base = qualident()
       if base.class_ == ORB.Typ:
         if base.type_.form == ORB.Record:
           typ.base = base.type_
@@ -1059,12 +1066,12 @@ def RecordType(type_):
         obj0 = obj0.next
       if obj0 != None:
         ORS.Mark("mult def")
-      NEW(new)
+      new = ORB.Object()
       new.name = ORS.CopyId()
       new.class_ = ORB.Fld
       new.next = obj
       obj = new
-      INC(n);
+      n += 1
       sym = ORS.Get()
       new.expo = CheckExport()
       if (sym != ORS.comma) and (sym != ORS.colon):
@@ -1073,6 +1080,7 @@ def RecordType(type_):
         sym = ORS.Get()
 
     Check(ORS.colon, "colon expected")
+    tp = ORB.Type()
     tp = Type(tp)
     if (tp.form == ORB.Array) and (tp.len_ < 0):
       ORS.Mark("dyn array not allowed")
@@ -1160,7 +1168,7 @@ def ProcedureType(ptype, parblksize):
     if sym == ORS.colon: # (*function*)
       sym = ORS.Get()
       if sym == ORS.ident:
-        qualident(obj)
+        obj = qualident()
         if (obj.class_ == ORB.Typ) and (obj.type_.form in (
           range(ORB.Byte, ORB.Pointer+1) + [ORB.Proc]
           )
@@ -1178,7 +1186,7 @@ def FormalType(typ, dim):
   global sym
   # VAR obj: ORB.Object; dmy: LONGINT;
   if sym == ORS.ident:
-    qualident(obj);
+    obj = qualident();
     if obj.class_ == ORB.Typ:
       typ = obj.type_
     else:
@@ -1210,9 +1218,10 @@ def FormalType(typ, dim):
 
 
 def Type(type_):
-  global sym
+  global sym, pbsList
   # VAR dmy: LONGINT; obj: ORB.Object; ptbase: PtrBase;
   type_ = ORB.intType # (*sync*)
+  obj = ORB.Object()
   if (sym != ORS.ident) and (sym < ORS.array):
     ORS.Mark("not a type_")
     while True:
@@ -1221,7 +1230,7 @@ def Type(type_):
         break
 
   if sym == ORS.ident:
-    qualident(obj);
+    obj = qualident()
     if obj.class_ == ORB.Typ:
       if (obj.type_ != None) and (obj.type_.form != ORB.NoTyp):
         type_ = obj.type_
@@ -1238,7 +1247,7 @@ def Type(type_):
   elif sym == ORS.pointer:
     sym = ORS.Get()
     Check(ORS.to, "no TO");
-    NEW(type_)
+   # NEW(type_)
     type_.form = ORB.Pointer
     type_.size = ORG.WordSize
     type_.base = ORB.intType;
@@ -1251,7 +1260,8 @@ def Type(type_):
         else:
           ORS.Mark("no valid base type_")
 
-      NEW(ptbase)
+     # NEW(ptbase)
+      ptbase = PtrBase()
       ptbase.name = ORS.CopyId()
       ptbase.type_ = type_
       ptbase.next = pbsList
@@ -1281,6 +1291,9 @@ def Declarations(varsize):
 ##    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
 ##    expo: BOOLEAN; id_: ORS.Ident;
   # (*sync*)
+  x = ORG.Item()
+  obj = ORB.Object()
+  tp = ORB.Type()
   pbsList = None
   if (sym < ORS.const) and (sym != ORS.end):
     ORS.Mark("declaration?");
