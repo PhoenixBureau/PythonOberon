@@ -54,9 +54,9 @@ nofmod, Ref = 0,0
 typtab = {}
 
 
-def NewObj(obj, id_, class_):
+def NewObj(id_, class_):
   '''(*insert new Object with name id*)'''
-
+  assert isinstance(id_, basestring), repr(id_)
   x = topScope
   while (x.next != None) and (x.next.name != id_):
     x = x.next

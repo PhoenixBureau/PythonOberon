@@ -966,13 +966,13 @@ def IdentList(class_, first):
   global sym
   # VAR obj: ORB.Object;
   if sym == ORS.ident:
-    ORB.NewObj(first, ORS.id_, class_)
+    first = ORB.NewObj(''.join(ORS.id_), class_)
     sym = ORS.Get()
     first.expo = CheckExport()
     while sym == ORS.comma:
       sym = ORS.Get();
       if sym == ORS.ident:
-        ORB.NewObj(obj, ORS.id_, class_)
+        obj = ORB.NewObj(''.join(ORS.id_), class_)
         sym = ORS.Get()
         obj.expo = CheckExport()
       else:
@@ -990,12 +990,13 @@ def IdentList(class_, first):
 def ArrayType(type_):
   global sym
   # VAR x: ORG.Item; typ: ORB.Type; len_: LONGINT;
-  NEW(typ)
+  typ = ORB.Type()
   typ.form = ORB.NoTyp
   if sym == ORS.of: # (*dynamic array*)
     len_ = -1
   else:
-    expression(x);
+    x = ORG.Item()
+    expression(x)
     if (x.mode == ORB.Const) and (x.type_.form == ORB.Int) and (x.a >= 0):
       len_ = x.a
     else:
@@ -1315,7 +1316,7 @@ def Declarations(varsize):
       expression(x)
       if (x.type_.form == ORB.String) and (x.b == 2):
         ORG.StrToChar(x)
-      ORB.NewObj(obj, id_, ORB.Const)
+      obj = ORB.NewObj(id_, ORB.Const)
       obj.expo = expo;
       if x.mode == ORB.Const:
         obj.val = x.a
@@ -1338,7 +1339,7 @@ def Declarations(varsize):
       else:
         ORS.Mark("=?")
       tp = Type(tp)
-      ORB.NewObj(obj, id_, ORB.Typ)
+      obj = ORB.NewObj(id_, ORB.Typ)
       obj.type_ = tp
       obj.expo = expo
       obj.lev = level
@@ -1368,7 +1369,7 @@ def Declarations(varsize):
   if sym == ORS.var:
     sym = ORS.Get()
     while sym == ORS.ident:
-      first = IdentList(ORB.Var, first)
+      first = IdentList(ORB.Var, ORB.Object())
       tp = Type(tp)
       obj = first
       while obj != None:
@@ -1415,7 +1416,7 @@ def ProcedureDecl():
     procid = ORS.CopyId()
     sym = ORS.Get();
     # (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
-    ORB.NewObj(proc, ORS.id_, ORB.Const)
+    proc = ORB.NewObj(ORS.id_, ORB.Const)
     parblksize = 4;
     NEW(type_)
     type_.form = ORB.Proc

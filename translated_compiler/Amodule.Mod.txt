@@ -24,7 +24,7 @@ MODULE Amodule;   (* Just a comment*)
       val*: LONGINT
     END ;
 
-    ModDesc* = RECORD (ObjDesc) orgname*: ORS.Ident END ;
+    ModDesc* = RECORD (ObjDesc) orgname*: INTEGER (* ORS.Ident *) END ;
 
     TypeDesc* = RECORD
       form*, ref*, mno*: INTEGER;  (*ref is only used for import/export*)
