@@ -568,7 +568,7 @@ def SimpleExpression(x):
       ORG.SetOp(op, x, y)
 
 
-def expression0(x):
+def expression(x):
   # VAR y: ORG.Item; obj: ORB.Object; rel, xf, yf: INTEGER;
   SimpleExpression(x);
   if (sym >= ORS.eql) and (sym <= ORS.geq):
@@ -580,33 +580,33 @@ def expression0(x):
     if (CompTypes(x.type_, y.type_, False) or
         (xf == ORB.Pointer) and (yf == ORB.Pointer) and IsExtension(y.type_.base, x.type_.base)):
       if (xf in [ORB.Char, ORB.Int]):
-        ORG.IntRelation(rel, x, y)
+        x, y = ORG.IntRelation(rel, x, y)
       elif xf == ORB.Real:
-        ORG.RealRelation(rel, x, y)
+        x, y = ORG.RealRelation(rel, x, y)
       elif xf == ORB.Set:
-        ORG.SetRelation(rel, x, y)
+        x, y = ORG.SetRelation(rel, x, y)
       elif (xf in [ORB.Pointer, ORB.Proc, ORB.NilTyp]):
         if rel <= ORS.neq:
-          ORG.IntRelation(rel, x, y)
+          x, y = ORG.IntRelation(rel, x, y)
         else:
           ORS.Mark("only == or !=")
       elif (xf == ORB.Array) and (x.type_.base.form == ORB.Char) or (xf == ORB.String):
-        ORG.StringRelation(rel, x, y)
+        x, y = ORG.StringRelation(rel, x, y)
       else:
         ORS.Mark("illegal comparison")
 
     elif ((xf == ORB.Array) and (x.type_.base.form == ORB.Char) and
           ((yf == ORB.String) or (yf == ORB.Array) and (y.type_.base.form == ORB.Char))
         or (yf == ORB.Array) and (y.type_.base.form == ORB.Char) and (xf == ORB.String)):
-      ORG.StringRelation(rel, x, y)
+      x, y = ORG.StringRelation(rel, x, y)
 
     elif (xf == ORB.Char) and (yf == ORB.String) and (y.b == 2):
       ORG.StrToChar(y)
-      ORG.IntRelation(rel, x, y)
+      x, y = ORG.IntRelation(rel, x, y)
 
     elif (yf == ORB.Char) and (xf == ORB.String) and (x.b == 2):
       ORG.StrToChar(x)
-      ORG.IntRelation(rel, x, y)
+      x, y = ORG.IntRelation(rel, x, y)
 
     else:
       ORS.Mark("illegal comparison")
@@ -757,7 +757,7 @@ def StatSequence():
             if (x.type_.form <= ORB.Pointer) or (x.type_.form == ORB.Proc):
               ORG.Store(x, y)
             elif y.type_.size != 0:
-              ORG.StoreStruct(x, y)
+              x, y = ORG.StoreStruct(x, y)
           elif (x.type_.form == ORB.Char) and (y.type_.form == ORB.String) and (y.b == 2):
             ORG.StrToChar(y)
             ORG.Store(x, y)
@@ -1532,7 +1532,6 @@ def Compile(T, beg=0):
 
 if __name__ == '__main__':
   print "OR Compiler  5.11.2013"
-  NEW(dummy)
+  dummy = ORB.Object()
   dummy.class_ = ORB.Var
   dummy.type_ = ORB.intType
-  expression = expression0

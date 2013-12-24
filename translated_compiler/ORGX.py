@@ -546,7 +546,7 @@ def TypeTest(x, T, varpar, isguard):
       Trap(NE, 2)
   else:
     SetCC(x, EQ)
-    if ~varpar:
+    if not varpar:
       RH -= 1
 
 
@@ -613,6 +613,7 @@ def Neg(x): # (* x = -x *)
 
 
 def AddOp(op, x, y): # (* x = x +- y *)
+  global RH
   if op == ORS.plus:
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
       x.a = x.a + y.a
@@ -651,6 +652,7 @@ def log2(m, e): # FIXME e is VAR
 
 
 def MulOp(x, y): # (* x = x * y *)
+  global RH
   if (x.mode == ORB.Const) and (y.mode == ORB.Const):
     x.a = x.a * y.a
   elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
@@ -678,6 +680,7 @@ def MulOp(x, y): # (* x = x * y *)
 
 
 def DivOp(op, x, y): # (* x = x op y *)
+  global RH
   if op == ORS.div:
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
       if y.a > 0:
@@ -736,6 +739,7 @@ def DivOp(op, x, y): # (* x = x op y *)
 # (* Code generation for REAL operators *)
 
 def RealOp(op, x, y): # (* x = x op y *)
+  global RH
   load(x)
   load(y);
   if op == ORS.plus:
@@ -762,6 +766,7 @@ def Singleton(x): # (* x = {x} *)
 
 
 def Set(x, y): #   (* x = {x .. y} *)
+  global RH
   if (x.mode == ORB.Const) and ( y.mode == ORB.Const):
     if x.a <= y.a:
       x.a = LSL(2, y.a) - LSL(1, x.a)
@@ -795,6 +800,7 @@ def Set(x, y): #   (* x = {x .. y} *)
 
 
 def In(x, y): #  (* x = x IN y *)
+  global RH
   load(y)
   if x.mode == ORB.Const:
     Put1(Ror, y.r, y.r, (x.a + 1) % 0x20)
@@ -808,6 +814,7 @@ def In(x, y): #  (* x = x IN y *)
 
 
 def SetOp(op, x, y): # (* x = x op y *)
+  global RH
   if (x.mode == ORB.Const) and (y.mode == ORB.Const):
     xset = set(x.a)
     yset = set(y.a)
@@ -852,6 +859,7 @@ def SetOp(op, x, y): # (* x = x op y *)
 # (* Code generation for relations *)
 
 def IntRelation(op, x, y): # (* x = x < y *)
+  global RH
   if (y.mode == ORB.Const) and (y.type.form != ORB.Proc):
     load(x)
     if (y.a != 0) or (op not in [ORS.eql, ORS.neq]) or (code[pc-1] / 0x40000000 != -2):
@@ -863,86 +871,140 @@ def IntRelation(op, x, y): # (* x = x < y *)
     Put0(Cmp, x.r, x.r, y.r)
     RH -= 2
   SetCC(x, relmap[op - ORS.eql])
+  return x, y
 
 
-def SetRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
-BEGIN load(x);
+def SetRelation(op, x, y): #   (* x = x < y *)
+  global RH
+  load(x)
   if (op == ORS.eql) or (op == ORS.neq):
-    if y.mode == ORB.Const: Put1a(Cmp, x.r, x.r, y.a); RH -= 1
-    else: load(y); Put0(Cmp, x.r, x.r, y.r); RH -= 2
-    END ;
+    if y.mode == ORB.Const:
+      Put1a(Cmp, x.r, x.r, y.a)
+      RH -= 1
+    else:
+      load(y)
+      Put0(Cmp, x.r, x.r, y.r)
+      RH -= 2
     SetCC(x, relmap[op - ORS.eql])
-  else: ORS.Mark("illegal relation") 
-  END
-END SetRelation;
+  else:
+    ORS.Mark("illegal relation") 
+  return x, y
 
-def RealRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
-BEGIN load(x);
-  if (y.mode == ORB.Const) and (y.a == 0): RH -= 1
-  else: load(y); Put0(Fsb, x.r, x.r, y.r); RH -= 2
-  END ;
+
+def RealRelation(op, x, y): #   (* x = x < y *)
+  global RH
+  load(x)
+  if (y.mode == ORB.Const) and (y.a == 0):
+    RH -= 1
+  else:
+    load(y)
+    Put0(Fsb, x.r, x.r, y.r)
+    RH -= 2
   SetCC(x, relmap[op - ORS.eql])
-END RealRelation;
+  return x, y
 
-def StringRelation*(op: INTEGER; VAR x, y: Item);   (* x = x < y *)
-  (*x, y are char arrays or strings*)
-BEGIN
-  if x.type.form == ORB.String: loadStringAdr(x) else: loadAdr(x) END ;
-  if y.type.form == ORB.String: loadStringAdr(y) else: loadAdr(y) END ;
-  Put2(Ldr+1, RH, x.r, 0); Put1(Add, x.r, x.r, 1);
-  Put2(Ldr+1, RH+1, y.r, 0); Put1(Add, y.r, y.r, 1);
-  Put0(Cmp, RH+2, RH, RH+1); Put3(BC, NE, 2);
-  Put1(Cmp, RH+2, RH, 0); Put3(BC, NE, -8);
-  RH -= 2; SetCC(x, relmap[op - ORS.eql])
-END StringRelation;
 
-(* Code generation of Assignments *)
+def StringRelation(op, x, y): #  (* x = x < y *)
+  global RH
+  #(*x, y are char arrays or strings*)
+  if x.type.form == ORB.String:
+    loadStringAdr(x)
+  else:
+    loadAdr(x)
+  if y.type.form == ORB.String:
+    loadStringAdr(y)
+  else:
+    loadAdr(y)
+  Put2(Ldr+1, RH, x.r, 0)
+  Put1(Add, x.r, x.r, 1)
+  Put2(Ldr+1, RH+1, y.r, 0)
+  Put1(Add, y.r, y.r, 1)
+  Put0(Cmp, RH+2, RH, RH+1)
+  Put3(BC, NE, 2)
+  Put1(Cmp, RH+2, RH, 0)
+  Put3(BC, NE, -8)
+  RH -= 2
+  SetCC(x, relmap[op - ORS.eql])
+  return x, y
 
-def StrToChar*(VAR x: Item);
-BEGIN x.type = ORB.charType; strx -= 4; x.a = ORD(str_[x.a])
-END StrToChar;
 
-def Store*(VAR x, y: Item); (* x = y *)
-  VAR op: LONGINT;
-BEGIN  load(y);
-  if x.type.size == 1: op = Str+1 else: op = Str END ;
+# (* Code generation of Assignments *)
+
+
+def StrToChar(x):
+  global strx
+  x.type = ORB.charType
+  strx -= 4
+  x.a = ORD(str_[x.a])
+
+
+def Store(x, y): # (* x = y *)
+  global RH
+  #VAR op: LONGINT;
+  load(y);
+  if x.type.size == 1:
+    op = Str+1
+  else:
+    op = Str
   if x.mode == ORB.Var:
-    if x.r > 0: (*local*) Put2(op, y.r, SP, x.a)
-    else: GetSB(x.r); Put2(op, y.r, SB, x.a)
-    END
-  elif x.mode == ORB.Par: Put2(Ldr, RH, SP, x.a); Put2(op, y.r, RH, x.b);
-  elif x.mode == RegI: Put2(op, y.r, x.r, x.a); RH -= 1;
-  else: ORS.Mark("bad mode in Store")
-  END ;
+    if x.r > 0:  # (*local*)
+      Put2(op, y.r, SP, x.a)
+    else:
+      GetSB(x.r)
+      Put2(op, y.r, SB, x.a)
+  elif x.mode == ORB.Par:
+    Put2(Ldr, RH, SP, x.a)
+    Put2(op, y.r, RH, x.b);
+  elif x.mode == RegI:
+    Put2(op, y.r, x.r, x.a)
+    RH -= 1;
+  else:
+    ORS.Mark("bad mode in Store")
   RH -= 1
-END Store;
 
-def StoreStruct*(VAR x, y: Item); (* x = y *)
-  VAR s, pc0: LONGINT;
-BEGIN loadAdr(x); loadAdr(y);
+
+def StoreStruct(x, y): # (* x = y *)
+  global RH
+  # VAR s, pc0: LONGINT;
+  loadAdr(x); loadAdr(y)
   if (x.type.form == ORB.Array) and (x.type.len_ > 0):
     if y.type.len_ >= 0: 
-      if x.type.len_ >= y.type.len_: Put1(Mov, RH, 0, (y.type.size+3) / 4)
-      else: ORS.Mark("source array too long")
-      END
-    else: (*y is open array*)
-      Put2(Ldr, RH, SP, y.a+4); s = y.type.base.size;  (*element size*)
-      pc0 = pc; Put3(BC, EQ, 0);
-      if s == 1: Put1(Add, RH, RH, 3); Put1(Asr, RH, RH, 2)
-      elif s != 4: Put1(Mul, RH, RH, s / 4)
-      END ;
+      if x.type.len_ >= y.type.len_:
+        Put1(Mov, RH, 0, (y.type.size+3) / 4)
+      else:
+        ORS.Mark("source array too long")
+    else: # (*y is open array*)
+      Put2(Ldr, RH, SP, y.a+4)
+      s = y.type.base.size #  (*element size*)
+      pc0 = pc
+      Put3(BC, EQ, 0)
+      if s == 1:
+        Put1(Add, RH, RH, 3)
+        Put1(Asr, RH, RH, 2)
+      elif s != 4:
+        Put1(Mul, RH, RH, s / 4)
+
       if check:
-        Put1(Mov, RH+1, 0, (x.type.size+3) / 4); Put0(Cmp, RH+1, RH, RH+1); Trap(GT, 3)
-      END ;
+        Put1(Mov, RH+1, 0, (x.type.size+3) / 4)
+        Put0(Cmp, RH+1, RH, RH+1)
+        Trap(GT, 3)
+
       fix(pc0, pc + 5 - pc0)
-    END
-  elif x.type.form == ORB.Record: Put1(Mov, RH, 0, x.type.size / 4)
-  else: ORS.Mark("inadmissible assignment")
-  END ;
-  Put2(Ldr, RH+1, y.r, 0); Put1(Add, y.r, y.r, 4);
-  Put2(Str, RH+1, x.r, 0); Put1(Add, x.r, x.r, 4);
-  Put1(Sub, RH, RH, 1); Put3(BC, NE, -6); RH -= 2
-END StoreStruct;
+
+  elif x.type.form == ORB.Record:
+    Put1(Mov, RH, 0, x.type.size / 4)
+  else:
+    ORS.Mark("inadmissible assignment")
+
+  Put2(Ldr, RH+1, y.r, 0)
+  Put1(Add, y.r, y.r, 4)
+  Put2(Str, RH+1, x.r, 0)
+  Put1(Add, x.r, x.r, 4)
+  Put1(Sub, RH, RH, 1)
+  Put3(BC, NE, -6)
+  RH -= 2
+  return x, y
+
 
 def CopyString*(VAR x, y: Item);  (*from x to y*)
   VAR len_: LONGINT;
