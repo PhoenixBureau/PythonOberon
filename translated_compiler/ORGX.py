@@ -1006,71 +1006,107 @@ def StoreStruct(x, y): # (* x = y *)
   return x, y
 
 
-def CopyString*(VAR x, y: Item);  (*from x to y*)
-  VAR len_: LONGINT;
-BEGIN loadAdr(y); len_ = y.type.len_;
+def CopyString(x, y): # (*from x to y*)
+  global RH
+  #VAR len_: LONGINT;
+  loadAdr(y)
+  len_ = y.type.len_
   if len_ >= 0:
-    if x.b > len_: ORS.Mark("string too long") END
-  elif check: Put2(Ldr, RH, y.r, 4);  (*array length check*)
-    Put1(Cmp, RH, RH, x.b); Trap(NE, 3)
-  END ;
-  loadStringAdr(x);
-  Put2(Ldr, RH, x.r, 0); Put1(Add, x.r, x.r, 4);
-  Put2(Str, RH, y.r, 0); Put1(Add, y.r, y.r, 4);
-  Put1(Asr, RH, RH, 24); Put3(BC, NE, -6); RH -= 2
-END CopyString;
+    if x.b > len_:
+      ORS.Mark("string too long")
+  elif check:
+    Put2(Ldr, RH, y.r, 4); # (*array length check*)
+    Put1(Cmp, RH, RH, x.b)
+    Trap(NE, 3)
 
-(* Code generation for parameters *)
+  loadStringAdr(x)
+  Put2(Ldr, RH, x.r, 0)
+  Put1(Add, x.r, x.r, 4)
+  Put2(Str, RH, y.r, 0)
+  Put1(Add, y.r, y.r, 4)
+  Put1(Asr, RH, RH, 24)
+  Put3(BC, NE, -6)
+  RH -= 2
+  return x, y
 
-def VarParam*(VAR x: Item; ftype: ORB.Type);
-  VAR xmd: INTEGER;
-BEGIN xmd = x.mode; loadAdr(x);
-  if (ftype.form == ORB.Array) and (ftype.len_ < 0): (*open array*)
-    if x.type.len_ >= 0: Put1(Mov, RH, 0, x.type.len_) else:  Put2(Ldr, RH, SP, x.a+4) END ;
+# (* Code generation for parameters *)
+
+def VarParam(x, ftype):
+  #VAR xmd: INTEGER;
+  xmd = x.mode
+  loadAdr(x);
+  if (ftype.form == ORB.Array) and (ftype.len_ < 0): # (*open array*)
+    if x.type.len_ >= 0:
+      Put1(Mov, RH, 0, x.type.len_)
+    else:
+      Put2(Ldr, RH, SP, x.a+4)
     incR()
   elif ftype.form == ORB.Record:
-    if xmd == ORB.Par: Put2(Ldr, RH, SP, x.a+4); incR() else: loadTypTagAdr(x.type) END
-  END
-END VarParam;
+    if xmd == ORB.Par:
+      Put2(Ldr, RH, SP, x.a+4);
+      incR()
+    else:
+      loadTypTagAdr(x.type)
+  return x
 
-def ValueParam*(VAR x: Item);
-BEGIN load(x)
-END ValueParam;
 
-def OpenArrayParam*(VAR x: Item);
-BEGIN loadAdr(x);
-  if x.type.len_ >= 0: Put1a(Mov, RH, 0, x.type.len_) else: Put2(Ldr, RH, SP, x.a+4) END ;
+def ValueParam(x):
+  load(x)
+
+
+def OpenArrayParam(x):
+  loadAdr(x)
+  if x.type.len_ >= 0:
+    Put1a(Mov, RH, 0, x.type.len_)
+  else:
+    Put2(Ldr, RH, SP, x.a+4)
   incR()
-END OpenArrayParam;
+  return x
 
-def StringParam*(VAR x: Item);
-BEGIN loadStringAdr(x); Put1(Mov, RH, 0, x.b); incR()  (*len_*)
-END StringParam;
 
-(*For Statements*)
+def StringParam(x):
+  loadStringAdr(x)
+  Put1(Mov, RH, 0, x.b)
+  incR() # (*len_*)
+  return x
 
-def For0*(VAR x, y: Item);
-BEGIN load(y)
-END For0;
 
-def For1*(VAR x, y, z, w: Item; VAR L):
-BEGIN 
-  if z.mode == ORB.Const: Put1a(Cmp, RH, y.r, z.a)
-  else: load(z); Put0(Cmp, RH-1, y.r, z.r); RH -= 1
-  END ;
-  L = pc;
-  if w.a > 0: Put3(BC, GT, 0)
-  elif w.a < 0: Put3(BC, LT, 0)
-  else: ORS.Mark("zero increment"); Put3(BC, MI, 0)
-  END ;
+# (*For Statements*)
+
+def For0(x, y):
+  load(y)
+
+
+def For1(x, y, z, w, L):
+  global RH
+  if z.mode == ORB.Const:
+    Put1a(Cmp, RH, y.r, z.a)
+  else:
+    load(z)
+    Put0(Cmp, RH-1, y.r, z.r)
+    RH -= 1
+
+  L = pc
+  if w.a > 0:
+    Put3(BC, GT, 0)
+  elif w.a < 0:
+    Put3(BC, LT, 0)
+  else:
+    ORS.Mark("zero increment")
+    Put3(BC, MI, 0)
+
   Store(x, y)
-END For1;
+  return x, y, z, w, L
 
-def For2*(VAR x, y, w: Item);
-BEGIN load(x); RH -= 1; Put1a(Add, x.r, x.r, w.a)
-END For2;
 
-(* Branches, procedure calls, procedure prolog and epilog *)
+def For2(x, y, w):
+  global RH
+  load(x)
+  RH -= 1
+  Put1a(Add, x.r, x.r, w.a)
+
+
+# (* Branches, procedure calls, procedure prolog and epilog *)
 
 def Here*(): LONGINT;
 BEGIN invalSB(); return pc

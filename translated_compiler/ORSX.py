@@ -132,9 +132,13 @@ def Init(text, pos=0):
   ch = TextsRead(R)
 
 
-def CopyId(ident):
+def CopyId():
   global id_
-  ident[:] = id_[:]
+  return ''.join(
+    char
+    for char in id_
+    if char and isinstance(char, basestring)
+    )
 
 
 def Pos():
@@ -144,9 +148,8 @@ def Pos():
 def Mark(msg):
   global errpos, errcnt
   p = Pos()
-##  if p > errpos and errcnt < 25:
-  if True:
-    print "pos", p, msg
+  if p > errpos and errcnt < 25:
+    print >> sys.stderr, "\npos %i %s" % (p, msg)
     raise ValueError
   errcnt += 1
   errpos = p + 4
@@ -524,3 +527,4 @@ def Get():
 
     if sym != null or R_eot:
       break
+  return sym

@@ -9,7 +9,7 @@ MODULE ORB;   (*NW 7.10.2013   in Oberon-07*)
     the symbol table (universe), and that of the pseudo-module SYSTEM are initialized. *)
 
 '''
-import ORSX, Files
+import ORSX as ORS, Files
 
 versionkey = 1; maxTypTab = 64;
 Head = 0;
@@ -68,7 +68,7 @@ def NewObj(obj, id_, class_):
     obj = x.next = new
   else:
     obj = x.next
-    ORSX.Mark("mult def")
+    ORS.Mark("mult def")
 
   return obj
 
@@ -80,7 +80,7 @@ def thisObj():
   s = topScope
   while True:
     x = s.next
-    while (x != None) and (x.name != _e(ORSX.id_)):
+    while (x != None) and (x.name != _e(ORS.id_)):
       x = x.next
     s = s.dsc
     if (x != None) or (s is None):
@@ -92,7 +92,7 @@ def thisimport(mod):
   if mod.rdo:
     if mod.name[0] != 0x0:
       obj = mod.dsc
-      while (obj != None) and (obj.name != _e(ORSX.id_)):
+      while (obj != None) and (obj.name != _e(ORS.id_)):
         obj = obj.next
     else:
       obj = None
@@ -103,7 +103,7 @@ def thisimport(mod):
 
 def thisfield(rec):
   fld = rec.dsc
-  while (fld != None) and (fld.name != _e(ORSX.id_)):
+  while (fld != None) and (fld.name != _e(ORS.id_)):
     fld = fld.next
   return fld
 
@@ -149,7 +149,7 @@ def ThisModule(name, orgname, non, key):
     obj = mod
   else: # (*module already present*)
     if non:
-      ORSX.Mark("invalid import order")
+      ORS.Mark("invalid import order")
   return obj
 
 
@@ -257,7 +257,7 @@ def InType(R, thismod):
 def Import(modid, modid1):
   global nofmod
   if modid1 == "SYSTEM":
-    thismod = ThisModule(modid, modid1, True, key)
+    thismod = ThisModule(modid, modid1, True, key=0) # FIXME I added the 0 SPF
     nofmod -= 1
     thismod.lev = 0
     thismod.dsc = system
@@ -275,7 +275,7 @@ def Import(modid, modid1):
 
       class_ = Read(R) # (*version key*)
       if class_ != versionkey:
-        ORSX.Mark("wrong version")
+        ORS.Mark("wrong version")
 
       class_ = Read(R)
       while class_ != 0:

@@ -19,29 +19,30 @@ sym = 0 #  (*last symbol read*)
 dc = 0 #: LONGINT;   # (*data counter*)
 level, exno, version = 0, 0, 0 #: INTEGER;
 newSF = False # : BOOLEAN; # (*option flag*)
-modid = None # : # ORS.Ident;
+modid = [] # : # ORS.Ident;
 pbsList = None # : # PtrBase;  # (*list of names of pointer base types*)
-dummy = None # : ORB.Object;
 
 
 def Check(s, msg):
+  global sym
   if sym == s:
-    ORS.Get(sym)
+    sym = ORS.Get()
   else:
     ORS.Mark(msg)
 
 
 def qualident(obj):
+  global sym
   obj = ORB.thisObj()
-  ORS.Get(sym);
+  sym = ORS.Get();
   if obj == None:
     ORS.Mark("undef")
     obj = dummy
   if (sym == ORS.period) and (obj.class_ == ORB.Mod):
-    ORS.Get(sym)
+    sym = ORS.Get()
     if sym == ORS.ident:
       obj = ORB.thisimport(obj)
-      ORS.Get(sym)
+      sym = ORS.Get()
       if obj == None:
         ORS.Mark("undef")
         obj = dummy
@@ -51,30 +52,35 @@ def qualident(obj):
 
 
 def CheckBool(x):
+  global sym
   if x.type_.form != ORB.Bool:
     ORS.Mark("not Boolean")
     x.type_ = ORB.boolType
 
 
 def CheckInt(x):
+  global sym
   if x.type_.form != ORB.Int:
     ORS.Mark("not Integer")
     x.type_ = ORB.intType
 
 
 def CheckReal(x):
+  global sym
   if x.type_.form != ORB.Real:
     ORS.Mark("not Real")
     x.type_ = ORB.realType
 
 
 def CheckSet(x):
+  global sym
   if x.type_.form != ORB.Set:
     ORS.Mark("not Set")
     x.type_ = ORB.setType
 
 
 def CheckSetVal(x):
+  global sym
   if x.type_.form != ORB.Int:
     ORS.Mark("not Int")
     x.type_ = ORB.setType
@@ -84,20 +90,23 @@ def CheckSetVal(x):
 
 
 def CheckConst(x):
+  global sym
   if x.mode != ORB.Const:
     ORS.Mark("not a constant")
     x.mode = ORB.Const
 
 
 def CheckReadOnly(x):
+  global sym
   if x.rdo:
     ORS.Mark("read-only")
 
 
 def CheckExport():
+  global sym
   if sym == ORS.times:
     expo = True
-    ORS.Get(sym);
+    sym = ORS.Get();
     if level != 0:
       ORS.Mark("remove asterisk")
   else:
@@ -106,6 +115,7 @@ def CheckExport():
 
 
 def IsExtension(t0, t1):
+  global sym
   # (*t1 is an extension of t0*)
   return (t0 == t1) or (t1 != None) and IsExtension(t0, t1.base)
 
@@ -113,6 +123,7 @@ def IsExtension(t0, t1):
 # (* expressions *)
 
 def TypeTest(x, T, guard):
+  global sym
   xt = x.type_
   while (xt != T) and (xt != None):
     xt = xt.base
@@ -143,12 +154,13 @@ def TypeTest(x, T, guard):
 
 
 def selector(x):
+  global sym
   while ((sym == ORS.lbrak) or (sym == ORS.period) or (sym == ORS.arrow)
          or (sym == ORS.lparen) and (x.type_.form in [ORB.Record, ORB.Pointer])):
 
     if sym == ORS.lbrak:
       while True:
-        ORS.Get(sym)
+        sym = ORS.Get()
         expression(y);
         if x.type_.form == ORB.Array:
           CheckInt(y)
@@ -162,14 +174,14 @@ def selector(x):
       Check(ORS.rbrak, "no ]")
 
     elif sym == ORS.period:
-      ORS.Get(sym);
+      sym = ORS.Get();
       if sym == ORS.ident:
         if x.type_.form == ORB.Pointer:
           ORG.DeRef(x)
           x.type_ = x.type_.base
         if x.type_.form == ORB.Record:
           obj = ORB.thisfield(x.type_)
-          ORS.Get(sym);
+          sym = ORS.Get();
           if obj != None:
             ORG.Field(x, obj)
             x.type_ = obj.type_
@@ -181,7 +193,7 @@ def selector(x):
         ORS.Mark("ident?")
 
     elif sym == ORS.arrow:
-      ORS.Get(sym)
+      sym = ORS.Get()
       if x.type_.form == ORB.Pointer:
         ORG.DeRef(x)
         x.type_ = x.type_.base
@@ -189,7 +201,7 @@ def selector(x):
         ORS.Mark("not a pointer")
 
     elif (sym == ORS.lparen) and (x.type_.form in [ORB.Record, ORB.Pointer]): # (*type_ guard*)
-      ORS.Get(sym)
+      sym = ORS.Get()
       if sym == ORS.ident:
         qualident(obj)
         if obj.class_ == ORB.Typ:
@@ -202,6 +214,7 @@ def selector(x):
 
 
 def CompTypes(t0, t1, varpar):
+  global sym
 
   def EqualSignatures(t0, t1):
     com = True;
@@ -233,6 +246,7 @@ def CompTypes(t0, t1, varpar):
 
 
 def Parameter(par):
+  global sym
 #  VAR x: ORG.Item; varpar: BOOLEAN;
   expression(x);
   if par != None:
@@ -243,7 +257,7 @@ def Parameter(par):
       else: # (*par.class_ == Par*)
         if not par.rdo:
           CheckReadOnly(x)
-        ORG.VarParam(x, par.type_)
+        x = ORG.VarParam(x, par.type_)
 
     elif not varpar and (par.type_.form == ORB.Int) and (x.type_.form == ORB.Int):
       ORG.ValueParam(x) 
@@ -254,20 +268,21 @@ def Parameter(par):
 
     elif ((x.type_.form == ORB.Array) and (par.type_.form == ORB.Array) and
         (x.type_.base.form == par.type_.base.form) and (par.type_.len_ < 0)):
-      ORG.OpenArrayParam(x);
+      x = ORG.OpenArrayParam(x)
 
     elif ((x.type_.form == ORB.String) and (par.class_ == ORB.Par) and (par.type_.form == ORB.Array) and 
         (par.type_.base.form == ORB.Char) and (par.type_.len_ < 0)):
       ORG.StringParam(x)
 
     elif (par.type_.form == ORB.Array) and (par.type_.base.form == ORB.Int) and (par.type_.size == x.type_.size):
-      ORG.VarParam(x, par.type_)
+      x = ORG.VarParam(x, par.type_)
 
     else:
       ORS.Mark("incompatible parameters")
 
 
 def ParamList(x):
+  global sym
 #  VAR n: INTEGER; par: ORB.Object;
   par = x.type_.dsc
   n = 0;
@@ -282,7 +297,7 @@ def ParamList(x):
       Parameter(par)
     Check(ORS.rparen, ") missing")
   else:
-    ORS.Get(sym);
+    sym = ORS.Get();
 
   if n < x.type_.nofpar:
     ORS.Mark("too few params")
@@ -291,6 +306,7 @@ def ParamList(x):
 
 
 def StandFunc(x, fct, restyp):
+  global sym
 #  VAR y: ORG.Item; n, npar: LONGINT;
   Check(ORS.lparen, "no (");
   npar = fct % 10
@@ -298,7 +314,7 @@ def StandFunc(x, fct, restyp):
   expression(x)
   n = 1
   while sym == ORS.comma:
-    ORS.Get(sym)
+    sym = ORS.Get()
     expression(y)
     INC(n)
   Check(ORS.rparen, "no )")
@@ -385,11 +401,12 @@ def StandFunc(x, fct, restyp):
 
 
 def element(x):
+  global sym
 #  VAR y: ORG.Item;
   expression(x)
   CheckSetVal(x);
   if sym == ORS.upto:
-    ORS.Get(sym)
+    sym = ORS.Get()
     expression(y)
     CheckSetVal(y)
     ORG.Set(x, y)
@@ -399,6 +416,7 @@ def element(x):
 
 
 def set_(x):
+  global sym
 #  VAR y: ORG.Item;
   if sym >= ORS.if_:
     if sym != ORS.rbrace:
@@ -408,7 +426,7 @@ def set_(x):
     element(x)
     while (sym < ORS.rparen) or (sym > ORS.rbrace):
       if sym == ORS.comma:
-        ORS.Get(sym)
+        sym = ORS.Get()
       elif sym != ORS.rbrace:
         ORS.Mark("missing comma")
       element(y)
@@ -416,12 +434,13 @@ def set_(x):
 
 
 def factor(x):
+  global sym
   # VAR obj: ORB.Object; rx: LONGINT;
   # (*sync*)
   if (sym < ORS.char) or (sym > ORS.ident):
     ORS.Mark("expression expected");
     while True:
-      ORS.Get(sym)
+      sym = ORS.Get()
       if (sym >= ORS.char) and (sym <= ORS.ident):
         break
 
@@ -433,7 +452,7 @@ def factor(x):
       ORG.MakeItem(x, obj, level)
       selector(x);
       if sym == ORS.lparen:
-        ORS.Get(sym)
+        sym = ORS.Get()
         ORG.PrepCall(x, rx)
         ParamList(x)
         if (x.type_.form == ORB.Proc) and (x.type_.base.form != ORB.NoTyp):
@@ -444,37 +463,37 @@ def factor(x):
 
   elif sym == ORS.int_:
     ORG.MakeConstItem(x, ORB.intType, ORS.ival)
-    ORS.Get(sym)
+    sym = ORS.Get()
   elif sym == ORS.real:
     ORG.MakeRealItem(x, ORS.rval)
-    ORS.Get(sym)
+    sym = ORS.Get()
   elif sym == ORS.char:
     ORG.MakeConstItem(x, ORB.charType, ORS.ival)
-    ORS.Get(sym)
+    sym = ORS.Get()
   elif sym == ORS.nil:
-    ORS.Get(sym)
+    sym = ORS.Get()
     ORG.MakeConstItem(x, ORB.nilType, 0)
   elif sym == ORS.string:
     ORG.MakeStringItem(x, ORS.slen)
-    ORS.Get(sym)
+    sym = ORS.Get()
   elif sym == ORS.lparen:
-    ORS.Get(sym)
+    sym = ORS.Get()
     expression(x)
     Check(ORS.rparen, "no )")
   elif sym == ORS.lbrace:
-    ORS.Get(sym)
+    sym = ORS.Get()
     set_(x)
     Check(ORS.rbrace, "no }")
   elif sym == ORS.not_:
-    ORS.Get(sym)
+    sym = ORS.Get()
     factor(x)
     CheckBool(x)
     ORG.Not(x)
   elif sym == ORS.false:
-    ORS.Get(sym)
+    sym = ORS.Get()
     ORG.MakeConstItem(x, ORB.boolType, 0)
   elif sym == ORS.true:
-    ORS.Get(sym)
+    sym = ORS.Get()
     ORG.MakeConstItem(x, ORB.boolType, 1)
   else:
     ORS.Mark("not a factor")
@@ -482,12 +501,13 @@ def factor(x):
 
 
 def term(x):
+  global sym
   # VAR y: ORG.Item; op, f: INTEGER;
   factor(x)
   f = x.type_.form;
   while (sym >= ORS.times) and (sym <= ORS.and_):
     op = sym
-    ORS.Get(sym);
+    sym = ORS.Get();
     if op == ORS.times:
       if f == ORB.Int:
         factor(y)
@@ -530,23 +550,24 @@ def term(x):
 
 
 def SimpleExpression(x):
+  global sym
   # VAR y: ORG.Item; op: INTEGER;
   if sym == ORS.minus:
-    ORS.Get(sym)
+    sym = ORS.Get()
     term(x);
     if x.type_.form in [ORB.Int, ORB.Real, ORB.Set]:
       ORG.Neg(x)
     else:
       CheckInt(x)
   elif sym == ORS.plus:
-    ORS.Get(sym)
+    sym = ORS.Get()
     term(x);
   else:
     term(x)
 
   while (sym >= ORS.plus) and (sym <= ORS.or_):
     op = sym
-    ORS.Get(sym);
+    sym = ORS.Get();
     if op == ORS.or_:
       ORG.Or1(x)
       CheckBool(x)
@@ -569,11 +590,12 @@ def SimpleExpression(x):
 
 
 def expression(x):
+  global sym
   # VAR y: ORG.Item; obj: ORB.Object; rel, xf, yf: INTEGER;
   SimpleExpression(x);
   if (sym >= ORS.eql) and (sym <= ORS.geq):
     rel = sym;
-    ORS.Get(sym)
+    sym = ORS.Get()
     SimpleExpression(y)
     xf = x.type_.form
     yf = y.type_.form;
@@ -614,7 +636,7 @@ def expression(x):
     x.type_ = ORB.boolType
 
   elif sym == ORS.in_:
-    ORS.Get(sym)
+    sym = ORS.Get()
     SimpleExpression(y);
     if (x.type_.form == ORB.Int) and (y.type_.form == ORB.Set):
       ORG.In(x, y)
@@ -624,7 +646,7 @@ def expression(x):
     x.type_ = ORB.boolType
 
   elif sym == ORS.is_:
-    ORS.Get(sym)
+    sym = ORS.Get()
     qualident(obj)
     TypeTest(x, obj.type_, False)
     x.type_ = ORB.boolType
@@ -633,6 +655,7 @@ def expression(x):
 # (* statements *)
 
 def StandProc(pno):
+  global sym
 ##  VAR nap, npar: LONGINT; (*nof actual/formal parameters*)
 ##    x, y, z: ORG.Item;
   Check(ORS.lparen, "no (");
@@ -641,12 +664,12 @@ def StandProc(pno):
   expression(x)
   nap = 1;
   if sym == ORS.comma:
-    ORS.Get(sym)
+    sym = ORS.Get()
     expression(y)
     nap = 2
     z.type_ = ORB.noType
     while sym == ORS.comma:
-      ORS.Get(sym)
+      sym = ORS.Get()
       expression(z)
       INC(nap)
   else:
@@ -713,6 +736,7 @@ def StandProc(pno):
 
 
 def StatSequence():
+  global sym
 ##  VAR obj: ORB.Object;
 ##    orgtype: ORB.Type; (*original type_ of case var*)
 ##    x, y, z, w: ORG.Item;
@@ -739,7 +763,7 @@ def StatSequence():
     if not ((sym == ORS.ident) or (sym >= ORS.if_) and (sym <= ORS.for_) or (sym >= ORS.semicolon)):
       ORS.Mark("statement expected");
       while True:
-        ORS.Get(sym)
+        sym = ORS.Get()
         if (sym == ORS.ident) or (sym >= ORS.if_):
           break
     if sym == ORS.ident:
@@ -750,7 +774,7 @@ def StatSequence():
       else:
         selector(x);
         if sym == ORS.becomes: # (*assignment*)
-          ORS.Get(sym)
+          sym = ORS.Get()
           CheckReadOnly(x)
           expression(y);
           if CompTypes(x.type_, y.type_, False) or (x.type_.form == ORB.Int) and (y.type_.form == ORB.Int):
@@ -762,15 +786,15 @@ def StatSequence():
             ORG.StrToChar(y)
             ORG.Store(x, y)
           elif (x.type_.form == ORB.Array) and (x.type_.base.form == ORB.Char) and (y.type_.form == ORB.String):
-            ORG.CopyString(y, x)
+            x, y = ORG.CopyString(y, x)
           else:
             ORS.Mark("illegal assignment")
         elif sym == ORS.eql:
           ORS.Mark("should be :=")
-          ORS.Get(sym)
+          sym = ORS.Get()
           expression(y)
         elif sym == ORS.lparen: # (*procedure call*)
-          ORS.Get(sym)
+          sym = ORS.Get()
           ORG.PrepCall(x, rx)
           ParamList(x);
           if (x.type_.form == ORB.Proc) and (x.type_.base.form == ORB.NoTyp):
@@ -792,7 +816,7 @@ def StatSequence():
           ORS.Mark("not a procedure")
 
     elif sym == ORS.if_:
-      ORS.Get(sym)
+      sym = ORS.Get()
       expression(x)
       CheckBool(x)
       ORG.CFJump(x)
@@ -800,7 +824,7 @@ def StatSequence():
       StatSequence
       L0 = 0
       while sym == ORS.elsif:
-        ORS.Get(sym)
+        sym = ORS.Get()
         ORG.FJump(L0)
         ORG.Fixup(x)
         expression(x)
@@ -810,7 +834,7 @@ def StatSequence():
         StatSequence()
 
       if sym == ORS.else_:
-        ORS.Get(sym);
+        sym = ORS.Get();
         ORG.FJump(L0);
         ORG.Fixup(x);
         StatSequence()
@@ -822,7 +846,7 @@ def StatSequence():
       Check(ORS.end, "no END")
 
     elif sym == ORS.while_:
-      ORS.Get(sym)
+      sym = ORS.Get()
       L0 = ORG.Here()
       expression(x)
       CheckBool(x)
@@ -831,7 +855,7 @@ def StatSequence():
       StatSequence()
       ORG.BJump(L0)
       while sym == ORS.elsif:
-        ORS.Get(sym)
+        sym = ORS.Get()
         ORG.Fixup(x)
         expression(x)
         CheckBool(x)
@@ -844,11 +868,11 @@ def StatSequence():
       Check(ORS.end, "no END")
 
     elif sym == ORS.repeat:
-      ORS.Get(sym)
+      sym = ORS.Get()
       L0 = ORG.Here()
       StatSequence()
       if sym == ORS.until:
-        ORS.Get(sym)
+        sym = ORS.Get()
         expression(x)
         CheckBool(x)
         ORG.CBJump(x, L0)
@@ -856,14 +880,14 @@ def StatSequence():
         ORS.Mark("missing UNTIL")
 
     elif sym == ORS.for_:
-      ORS.Get(sym)
+      sym = ORS.Get()
       if sym == ORS.ident:
         qualident(obj)
         ORG.MakeItem(x, obj, level)
         CheckInt(x)
         CheckReadOnly(x);
         if sym == ORS.becomes:
-          ORS.Get(sym)
+          sym = ORS.Get()
           expression(y)
           CheckInt(y)
           ORG.For0(x, y)
@@ -873,7 +897,7 @@ def StatSequence():
           CheckInt(z)
           obj.rdo = True;
           if sym == ORS.by:
-            ORS.Get(sym)
+            sym = ORS.Get()
             expression(w)
             CheckConst(w)
             CheckInt(w)
@@ -881,7 +905,7 @@ def StatSequence():
             ORG.MakeConstItem(w, ORB.intType, 1)
 
           Check(ORS.do, "no:")
-          ORG.For1(x, y, z, w, L1);
+          x, y, z, w, L1 = ORG.For1(x, y, z, w, L1);
           StatSequence()
           Check(ORS.end, "no END");
           ORG.For2(x, y, w)
@@ -894,7 +918,7 @@ def StatSequence():
         ORS.Mark("identifier expected")
 
     elif sym == ORS.case:
-      ORS.Get(sym);
+      sym = ORS.Get();
       if sym == ORS.ident:
         qualident(obj)
         orgtype = obj.type_;
@@ -905,7 +929,7 @@ def StatSequence():
         TypeCase(obj, x)
         L0 = 0;
         while sym == ORS.bar:
-          ORS.Get(sym)
+          sym = ORS.Get()
           ORG.FJump(L0)
           ORG.Fixup(x)
           obj.type_ = orgtype
@@ -921,7 +945,7 @@ def StatSequence():
 
     ORG.CheckRegs;
     if sym == ORS.semicolon:
-      ORS.Get(sym)
+      sym = ORS.Get()
     elif sym < ORS.semicolon:
       ORS.Mark("missing semicolon?")
 
@@ -932,22 +956,23 @@ def StatSequence():
 # (* Types and declarations *)
 
 def IdentList(class_, first):
+  global sym
   # VAR obj: ORB.Object;
   if sym == ORS.ident:
     ORB.NewObj(first, ORS.id_, class_)
-    ORS.Get(sym)
+    sym = ORS.Get()
     first.expo = CheckExport()
     while sym == ORS.comma:
-      ORS.Get(sym);
+      sym = ORS.Get();
       if sym == ORS.ident:
         ORB.NewObj(obj, ORS.id_, class_)
-        ORS.Get(sym)
+        sym = ORS.Get()
         obj.expo = CheckExport()
       else:
         ORS.Mark("ident?")
 
     if sym == ORS.colon:
-      ORS.Get(sym)
+      sym = ORS.Get()
     else:
       ORS.Mark(":?")
   else:
@@ -956,6 +981,7 @@ def IdentList(class_, first):
 
 
 def ArrayType(type_):
+  global sym
   # VAR x: ORG.Item; typ: ORB.Type; len_: LONGINT;
   NEW(typ)
   typ.form = ORB.NoTyp
@@ -970,12 +996,12 @@ def ArrayType(type_):
       ORS.Mark("not a valid length")
 
   if sym == ORS.of:
-    ORS.Get(sym)
+    sym = ORS.Get()
     typ.base = Type(typ.base)
     if (typ.base.form == ORB.Array) and (typ.base.len_ < 0):
       ORS.Mark("dyn array not allowed")
   elif sym == ORS.comma:
-    ORS.Get(sym)
+    sym = ORS.Get()
     typ.base = ArrayType(typ.base)
   else:
     ORS.Mark("missing OF")
@@ -992,6 +1018,7 @@ def ArrayType(type_):
 
 
 def RecordType(type_):
+  global sym
 ##  VAR obj, obj0, new, bot, base: ORB.Object;
 ##    typ, tp: ORB.Type;
 ##    offset, off, n: LONGINT;
@@ -1003,7 +1030,7 @@ def RecordType(type_):
   offset = 0
   bot = None;
   if sym == ORS.lparen:
-    ORS.Get(sym) # (*record extension*)
+    sym = ORS.Get() # (*record extension*)
     if sym == ORS.ident:
       qualident(base)
       if base.class_ == ORB.Typ:
@@ -1033,17 +1060,17 @@ def RecordType(type_):
       if obj0 != None:
         ORS.Mark("mult def")
       NEW(new)
-      ORS.CopyId(new.name)
+      new.name = ORS.CopyId()
       new.class_ = ORB.Fld
       new.next = obj
       obj = new
       INC(n);
-      ORS.Get(sym)
+      sym = ORS.Get()
       new.expo = CheckExport()
       if (sym != ORS.comma) and (sym != ORS.colon):
         ORS.Mark("comma expected")
       elif sym == ORS.comma:
-        ORS.Get(sym)
+        sym = ORS.Get()
 
     Check(ORS.colon, "colon expected")
     tp = Type(tp)
@@ -1062,7 +1089,7 @@ def RecordType(type_):
       obj0 = obj0.next
     bot = obj
     if sym == ORS.semicolon:
-      ORS.Get(sym)
+      sym = ORS.Get()
     elif sym != ORS.end:
       ORS.Mark(" ; or END")
 
@@ -1074,10 +1101,11 @@ def RecordType(type_):
 
 
 def FPSection(adr, nofpar):
+  global sym
 ##  VAR obj, first: ORB.Object; tp: ORB.Type;
 ##    parsize: LONGINT; cl: INTEGER; rdo: BOOLEAN;
   if sym == ORS.var:
-    ORS.Get(sym)
+    sym = ORS.Get()
     cl = ORB.Par
   else:
     cl = ORB.Var
@@ -1110,26 +1138,27 @@ def FPSection(adr, nofpar):
   return adr, nofpar
 
 def ProcedureType(ptype, parblksize):
+  global sym
   # VAR obj: ORB.Object; size: LONGINT; nofpar: INTEGER;
   ptype.base = ORB.noType
   size = parblksize
   nofpar = 0
   ptype.dsc = None
   if sym == ORS.lparen:
-    ORS.Get(sym)
+    sym = ORS.Get()
     if sym == ORS.rparen:
-      ORS.Get(sym)
+      sym = ORS.Get()
     else:
       size, nofpar = FPSection(size, nofpar)
       while sym == ORS.semicolon:
-        ORS.Get(sym)
+        sym = ORS.Get()
         size, nofpar = FPSection(size, nofpar)
       Check(ORS.rparen, "no )")
 
     ptype.nofpar = nofpar
     parblksize = size
     if sym == ORS.colon: # (*function*)
-      ORS.Get(sym)
+      sym = ORS.Get()
       if sym == ORS.ident:
         qualident(obj)
         if (obj.class_ == ORB.Typ) and (obj.type_.form in (
@@ -1146,6 +1175,7 @@ def ProcedureType(ptype, parblksize):
 
 
 def FormalType(typ, dim):
+  global sym
   # VAR obj: ORB.Object; dmy: LONGINT;
   if sym == ORS.ident:
     qualident(obj);
@@ -1155,7 +1185,7 @@ def FormalType(typ, dim):
       ORS.Mark("not a type_")
       typ = ORB.intType
   elif sym == ORS.array:
-    ORS.Get(sym)
+    sym = ORS.Get()
     Check(ORS.of, "OF ?");
     if dim >= 1:
       ORS.Mark("multi-dimensional open arrays not implemented")
@@ -1165,7 +1195,7 @@ def FormalType(typ, dim):
     typ.size = 2*ORG.WordSize; 
     typ.base = FormalType(typ.base, dim+1)
   elif sym == ORS.procedure:
-    ORS.Get(sym)
+    sym = ORS.Get()
     ORB.OpenScope()
     NEW(typ)
     typ.form = ORB.Proc
@@ -1180,12 +1210,13 @@ def FormalType(typ, dim):
 
 
 def Type(type_):
+  global sym
   # VAR dmy: LONGINT; obj: ORB.Object; ptbase: PtrBase;
   type_ = ORB.intType # (*sync*)
   if (sym != ORS.ident) and (sym < ORS.array):
     ORS.Mark("not a type_")
     while True:
-      ORS.Get(sym)
+      sym = ORS.Get()
       if (sym == ORS.ident) or (sym >= ORS.array):
         break
 
@@ -1198,14 +1229,14 @@ def Type(type_):
       ORS.Mark("not a type_ or undefined")
 
   elif sym == ORS.array:
-    ORS.Get(sym)
+    sym = ORS.Get()
     type_ = ArrayType(type_)
   elif sym == ORS.record:
-    ORS.Get(sym)
+    sym = ORS.Get()
     type_ = RecordType(type_)
     Check(ORS.end, "no END")
   elif sym == ORS.pointer:
-    ORS.Get(sym)
+    sym = ORS.Get()
     Check(ORS.to, "no TO");
     NEW(type_)
     type_.form = ORB.Pointer
@@ -1213,7 +1244,7 @@ def Type(type_):
     type_.base = ORB.intType;
     if sym == ORS.ident:
       obj = ORB.thisObj()
-      ORS.Get(sym);
+      sym = ORS.Get();
       if obj != None:
         if (obj.class_ == ORB.Typ) and (obj.type_.form in [ORB.Record, ORB.NoTyp]):
           type_.base = obj.type_
@@ -1221,7 +1252,7 @@ def Type(type_):
           ORS.Mark("no valid base type_")
 
       NEW(ptbase)
-      ORS.CopyId(ptbase.name)
+      ptbase.name = ORS.CopyId()
       ptbase.type_ = type_
       ptbase.next = pbsList
       pbsList = ptbase
@@ -1231,7 +1262,7 @@ def Type(type_):
         ORS.Mark("must point to record")
 
   elif sym == ORS.procedure:
-    ORS.Get(sym)
+    sym = ORS.Get()
     ORB.OpenScope()
     NEW(type_)
     type_.form = ORB.Proc
@@ -1245,6 +1276,7 @@ def Type(type_):
 
 
 def Declarations(varsize):
+  global sym, id_
 ##  VAR obj, first: ORB.Object;
 ##    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
 ##    expo: BOOLEAN; id_: ORS.Ident;
@@ -1253,18 +1285,18 @@ def Declarations(varsize):
   if (sym < ORS.const) and (sym != ORS.end):
     ORS.Mark("declaration?");
     while True:
-      ORS.Get(sym)
+      sym = ORS.Get()
       if (sym >= ORS.const) or (sym == ORS.end):
         break
 
   if sym == ORS.const:
-    ORS.Get(sym);
+    sym = ORS.Get();
     while sym == ORS.ident:
-      ORS.CopyId(id_)
-      ORS.Get(sym)
+      id_ = ORS.CopyId()
+      sym = ORS.Get()
       expo = CheckExport()
       if sym == ORS.eql:
-        ORS.Get(sym)
+        sym = ORS.Get()
       else:
         ORS.Mark("= ?")
       expression(x)
@@ -1283,13 +1315,13 @@ def Declarations(varsize):
       Check(ORS.semicolon, "; missing")
 
   if sym == ORS.type_:
-    ORS.Get(sym)
+    sym = ORS.Get()
     while sym == ORS.ident:
-      ORS.CopyId(id_)
-      ORS.Get(sym)
+      id_ = ORS.CopyId()
+      sym = ORS.Get()
       expo = CheckExport()
       if sym == ORS.eql:
-        ORS.Get(sym)
+        sym = ORS.Get()
       else:
         ORS.Mark("=?")
       tp = Type(tp)
@@ -1321,7 +1353,7 @@ def Declarations(varsize):
       Check(ORS.semicolon, "; missing")
 
   if sym == ORS.var:
-    ORS.Get(sym)
+    sym = ORS.Get()
     while sym == ORS.ident:
       first = IdentList(ORB.Var, first)
       tp = Type(tp)
@@ -1353,6 +1385,7 @@ def Declarations(varsize):
 
 
 def ProcedureDecl():
+  global sym, procid
 ##  VAR proc: ORB.Object;
 ##    type_: ORB.Type;
 ##    procid: ORS.Ident;
@@ -1361,13 +1394,13 @@ def ProcedureDecl():
 ##    int_: BOOLEAN;
 
   int_ = False
-  ORS.Get(sym)
+  sym = ORS.Get()
   if sym == ORS.times:
-    ORS.Get(sym)
+    sym = ORS.Get()
     int_ = True
   if sym == ORS.ident:
-    ORS.CopyId(procid)
-    ORS.Get(sym);
+    procid = ORS.CopyId()
+    sym = ORS.Get();
     # (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
     ORB.NewObj(proc, ORS.id_, ORB.Const)
     parblksize = 4;
@@ -1403,11 +1436,11 @@ def ProcedureDecl():
 
     ORG.Enter(parblksize, locblksize, int_);
     if sym == ORS.begin:
-      ORS.Get(sym)
+      sym = ORS.Get()
       StatSequence()
 
     if sym == ORS.return_:
-      ORS.Get(sym)
+      sym = ORS.Get()
       expression(x);
       if type_.base == ORB.noType:
         ORS.Mark("this is not a function")
@@ -1424,7 +1457,7 @@ def ProcedureDecl():
     if sym == ORS.ident:
       if ORS.id_ != procid:
         ORS.Mark("no match")
-      ORS.Get(sym)
+      sym = ORS.Get()
     else:
       ORS.Mark("no proc id_")
 
@@ -1432,24 +1465,25 @@ def ProcedureDecl():
 
 
 def Module():
+  global sym, modid
 ##  VAR key: LONGINT;
 ##    obj: ORB.Object;
 ##    impid, impid1: ORS.Ident;
   print "  compiling ",
-  ORS.Get(sym);
+  sym = ORS.Get();
   if sym == ORS.module:
-    ORS.Get(sym);
+    sym = ORS.Get();
     if sym == ORS.times:
       version = 0
       print "*",
-      ORS.Get(sym)
+      sym = ORS.Get()
     else:
       version = 1
     ORB.Init()
     ORB.OpenScope()
     if sym == ORS.ident:
-      ORS.CopyId(modid)
-      ORS.Get(sym);
+      modid = ORS.CopyId()
+      sym = ORS.Get();
       print modid,
     else:
       ORS.Mark("identifier expected")
@@ -1460,24 +1494,25 @@ def Module():
     exno = 1
     key = 0;
     if sym == ORS.import_:
-      ORS.Get(sym)
+      sym = ORS.Get()
       while sym == ORS.ident:
-        ORS.CopyId(impid)
-        ORS.Get(sym);
+        impid = ORS.CopyId()
+        sym = ORS.Get();
         if sym == ORS.becomes:
-          ORS.Get(sym);
+          sym = ORS.Get();
           if sym == ORS.ident:
-            ORS.CopyId(impid1)
-            ORS.Get(sym)
+            impid1 = ORS.CopyId()
+            sym = ORS.Get()
           else:
             ORS.Mark("id_ expected")
 
         else:
           impid1 = impid
 
-        ORB.Import(impid, impid1);
+        ORB.Import(impid, impid1)
+
         if sym == ORS.comma:
-          ORS.Get(sym)
+          sym = ORS.Get()
         elif sym == ORS.ident:
           ORS.Mark("comma missing")
 
@@ -1492,13 +1527,13 @@ def Module():
       Check(ORS.semicolon, "no ;")
     ORG.Header()
     if sym == ORS.begin:
-      ORS.Get(sym)
+      sym = ORS.Get()
       StatSequence()
     Check(ORS.end, "no END")
     if sym == ORS.ident:
       if ORS.id_ != modid:
         ORS.Mark("no match")
-      ORS.Get(sym)
+      sym = ORS.Get()
     else:
       ORS.Mark("identifier missing")
 
@@ -1530,8 +1565,7 @@ def Compile(T, beg=0):
   Module()
 
 
-if __name__ == '__main__':
-  print "OR Compiler  5.11.2013"
-  dummy = ORB.Object()
-  dummy.class_ = ORB.Var
-  dummy.type_ = ORB.intType
+print "OR Compiler  5.11.2013"
+dummy = ORB.Object()
+dummy.class_ = ORB.Var
+dummy.type_ = ORB.intType
