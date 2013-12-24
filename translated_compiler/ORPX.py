@@ -19,9 +19,6 @@ sym = 0 #  (*last symbol read*)
 dc = 0 #: LONGINT;   # (*data counter*)
 level, exno, version = 0, 0, 0 #: INTEGER;
 newSF = False # : BOOLEAN; # (*option flag*)
-expression = None # def (x); # (*to avoid forward reference*)
-Type = None # : # def (VAR type_: ORB.Type);
-FormalType = None # : # def (VAR typ: ORB.Type; dim: INTEGER);
 modid = None # : # ORS.Ident;
 pbsList = None # : # PtrBase;  # (*list of names of pointer base types*)
 dummy = None # : ORB.Object;
@@ -108,14 +105,14 @@ def CheckExport():
   return expo
 
 
-def IsExtension(t0, t1: ORB.Type):
+def IsExtension(t0, t1):
   # (*t1 is an extension of t0*)
   return (t0 == t1) or (t1 != None) and IsExtension(t0, t1.base)
 
 
 # (* expressions *)
 
-def TypeTest(VAR x: ORG.Item; T: ORB.Type; guard: BOOLEAN);
+def TypeTest(x, T, guard):
   xt = x.type_
   while (xt != T) and (xt != None):
     xt = xt.base
@@ -204,9 +201,9 @@ def selector(x):
       Check(ORS.rparen, " ) missing")
 
 
-def CompTypes(t0, t1: ORB.Type; varpar: BOOLEAN): BOOLEAN;
+def CompTypes(t0, t1, varpar):
 
-  def EqualSignatures(t0, t1: ORB.Type): BOOLEAN;
+  def EqualSignatures(t0, t1):
     com = True;
     if (t0.base == t1.base) and (t0.nofpar == t1.nofpar):
       p0 = t0.dsc
@@ -235,7 +232,7 @@ def CompTypes(t0, t1: ORB.Type; varpar: BOOLEAN): BOOLEAN;
     or not varpar and (t0.form == ORB.Int) and (t1.form == ORB.Int))
 
 
-def Parameter(par: ORB.Object);
+def Parameter(par):
 #  VAR x: ORG.Item; varpar: BOOLEAN;
   expression(x);
   if par != None:
@@ -293,7 +290,7 @@ def ParamList(x):
     ORS.Mark("too many params")
 
 
-def StandFunc(VAR x: ORG.Item; fct: LONGINT; restyp: ORB.Type);
+def StandFunc(x, fct, restyp):
 #  VAR y: ORG.Item; n, npar: LONGINT;
   Check(ORS.lparen, "no (");
   npar = fct % 10
@@ -337,7 +334,7 @@ def StandFunc(VAR x: ORG.Item; fct: LONGINT; restyp: ORB.Type);
           ORG.Len(x)
         else:
           ORS.Mark("not an array")
-    elif fct IN {7, 8, 9}: #(*LSL, ASR, ROR*) CheckInt(y);
+    elif fct in {7, 8, 9}: #(*LSL, ASR, ROR*) CheckInt(y);
       if x.type_.form in [ORB.Int, ORB.Set]:
         ORG.Shift(fct-7, x, y)
         restyp = x.type_
@@ -358,7 +355,7 @@ def StandFunc(VAR x: ORG.Item; fct: LONGINT; restyp: ORB.Type);
       CheckInt(x)
       ORG.Register(x)
     elif fct == 16: #(*VAL*)
-      if (x.mode= ORB.Typ) and (x.type_.size <= y.type_.size):
+      if (x.mode == ORB.Typ) and (x.type_.size <= y.type_.size):
         restyp = x.type_
         x = y
       else:
@@ -384,6 +381,7 @@ def StandFunc(VAR x: ORG.Item; fct: LONGINT; restyp: ORB.Type);
     x.type_ = restyp
   else:
     ORS.Mark("wrong nof params")
+  return x
 
 
 def element(x):
@@ -430,7 +428,7 @@ def factor(x):
   if sym == ORS.ident:
     qualident(obj);  
     if obj.class_ == ORB.SFunc:
-      StandFunc(x, obj.val, obj.type_)
+      x = StandFunc(x, obj.val, obj.type_)
     else:
       ORG.MakeItem(x, obj, level)
       selector(x);
@@ -487,7 +485,7 @@ def term(x):
   # VAR y: ORG.Item; op, f: INTEGER;
   factor(x)
   f = x.type_.form;
-  while (sym >= ORS.times) and (sym <= ORS.and):
+  while (sym >= ORS.times) and (sym <= ORS.and_):
     op = sym
     ORS.Get(sym);
     if op == ORS.times:
@@ -546,7 +544,7 @@ def SimpleExpression(x):
   else:
     term(x)
 
-  while (sym >= ORS.plus) and (sym <= ORS.or):
+  while (sym >= ORS.plus) and (sym <= ORS.or_):
     op = sym
     ORS.Get(sym);
     if op == ORS.or_:
@@ -634,7 +632,7 @@ def expression0(x):
 
 # (* statements *)
 
-def StandProc(pno: LONGINT);
+def StandProc(pno):
 ##  VAR nap, npar: LONGINT; (*nof actual/formal parameters*)
 ##    x, y, z: ORG.Item;
   Check(ORS.lparen, "no (");
@@ -714,13 +712,13 @@ def StandProc(pno: LONGINT);
     ORS.Mark("wrong nof parameters")
 
 
-def StatSequence();
+def StatSequence():
 ##  VAR obj: ORB.Object;
 ##    orgtype: ORB.Type; (*original type_ of case var*)
 ##    x, y, z, w: ORG.Item;
 ##    L0, L1, rx: LONGINT;
 
-  def TypeCase(obj: ORB.Object; VAR x: ORG.Item);
+  def TypeCase(obj, x):
   #  VAR typobj: ORB.Object;
     if sym == ORS.ident:
       qualident(typobj)
@@ -857,7 +855,7 @@ def StatSequence();
       else:
         ORS.Mark("missing UNTIL")
 
-    elif sym == ORS.for:
+    elif sym == ORS.for_:
       ORS.Get(sym)
       if sym == ORS.ident:
         qualident(obj)
@@ -933,7 +931,7 @@ def StatSequence();
 
 # (* Types and declarations *)
 
-def IdentList(class_: INTEGER; VAR first: ORB.Object):
+def IdentList(class_, first):
   # VAR obj: ORB.Object;
   if sym == ORS.ident:
     ORB.NewObj(first, ORS.id_, class_)
@@ -954,9 +952,10 @@ def IdentList(class_: INTEGER; VAR first: ORB.Object):
       ORS.Mark(":?")
   else:
     first = None
+  return first
 
 
-def ArrayType(VAR type_: ORB.Type);
+def ArrayType(type_):
   # VAR x: ORG.Item; typ: ORB.Type; len_: LONGINT;
   NEW(typ)
   typ.form = ORB.NoTyp
@@ -972,12 +971,12 @@ def ArrayType(VAR type_: ORB.Type);
 
   if sym == ORS.of:
     ORS.Get(sym)
-    Type(typ.base)
+    typ.base = Type(typ.base)
     if (typ.base.form == ORB.Array) and (typ.base.len_ < 0):
       ORS.Mark("dyn array not allowed")
   elif sym == ORS.comma:
     ORS.Get(sym)
-    ArrayType(typ.base)
+    typ.base = ArrayType(typ.base)
   else:
     ORS.Mark("missing OF")
     typ.base = ORB.intType
@@ -989,9 +988,10 @@ def ArrayType(VAR type_: ORB.Type);
   typ.form = ORB.Array
   typ.len_ = len_
   type_ = typ
+  return type_
 
 
-def RecordType(VAR type_: ORB.Type);
+def RecordType(type_):
 ##  VAR obj, obj0, new, bot, base: ORB.Object;
 ##    typ, tp: ORB.Type;
 ##    offset, off, n: LONGINT;
@@ -1046,11 +1046,11 @@ def RecordType(VAR type_: ORB.Type);
         ORS.Get(sym)
 
     Check(ORS.colon, "colon expected")
-    Type(tp);
+    tp = Type(tp)
     if (tp.form == ORB.Array) and (tp.len_ < 0):
       ORS.Mark("dyn array not allowed")
     if tp.size > 1:
-      offset = (offset+3) DIV 4 * 4
+      offset = (offset+3) / 4 * 4
     offset = offset + n * tp.size
     off = offset
     obj0 = obj
@@ -1070,9 +1070,10 @@ def RecordType(VAR type_: ORB.Type);
   typ.dsc = bot
   typ.size = offset
   type_ = typ
+  return type_
 
 
-def FPSection(VAR adr: LONGINT; VAR nofpar: INTEGER);
+def FPSection(adr, nofpar):
 ##  VAR obj, first: ORB.Object; tp: ORB.Type;
 ##    parsize: LONGINT; cl: INTEGER; rdo: BOOLEAN;
   if sym == ORS.var:
@@ -1080,8 +1081,8 @@ def FPSection(VAR adr: LONGINT; VAR nofpar: INTEGER);
     cl = ORB.Par
   else:
     cl = ORB.Var
-  IdentList(cl, first)
-  FormalType(tp, 0)
+  first = IdentList(cl, first)
+  tp = FormalType(tp, 0)
   rdo = False;
   if (cl == ORB.Var) and (tp.form >= ORB.Array):
     cl = ORB.Par
@@ -1106,8 +1107,9 @@ def FPSection(VAR adr: LONGINT; VAR nofpar: INTEGER);
   if adr >= 52:
     ORS.Mark("too many parameters")
 
+  return adr, nofpar
 
-def ProcedureType(ptype: ORB.Type; VAR parblksize: LONGINT);
+def ProcedureType(ptype, parblksize):
   # VAR obj: ORB.Object; size: LONGINT; nofpar: INTEGER;
   ptype.base = ORB.noType
   size = parblksize
@@ -1118,10 +1120,10 @@ def ProcedureType(ptype: ORB.Type; VAR parblksize: LONGINT);
     if sym == ORS.rparen:
       ORS.Get(sym)
     else:
-      FPSection(size, nofpar)
+      size, nofpar = FPSection(size, nofpar)
       while sym == ORS.semicolon:
         ORS.Get(sym)
-        FPSection(size, nofpar)
+        size, nofpar = FPSection(size, nofpar)
       Check(ORS.rparen, "no )")
 
     ptype.nofpar = nofpar
@@ -1140,9 +1142,10 @@ def ProcedureType(ptype: ORB.Type; VAR parblksize: LONGINT);
 
       else:
         ORS.Mark("type_ identifier expected")
+  return parblksize
 
 
-def FormalType0(VAR typ: ORB.Type; dim: INTEGER);
+def FormalType(typ, dim):
   # VAR obj: ORB.Object; dmy: LONGINT;
   if sym == ORS.ident:
     qualident(obj);
@@ -1160,23 +1163,23 @@ def FormalType0(VAR typ: ORB.Type; dim: INTEGER);
     typ.form = ORB.Array
     typ.len_ = -1
     typ.size = 2*ORG.WordSize; 
-    FormalType(typ.base, dim+1)
+    typ.base = FormalType(typ.base, dim+1)
   elif sym == ORS.procedure:
     ORS.Get(sym)
     ORB.OpenScope()
     NEW(typ)
     typ.form = ORB.Proc
     typ.size = ORG.WordSize
-    dmy = 0
-    ProcedureType(typ, dmy);
+    ProcedureType(typ, 0)
     typ.dsc = ORB.topScope.next
     ORB.CloseScope()
   else:
     ORS.Mark("identifier expected")
     typ = ORB.noType
+  return typ
 
 
-def Type0(VAR type_: ORB.Type);
+def Type(type_):
   # VAR dmy: LONGINT; obj: ORB.Object; ptbase: PtrBase;
   type_ = ORB.intType # (*sync*)
   if (sym != ORS.ident) and (sym < ORS.array):
@@ -1196,10 +1199,10 @@ def Type0(VAR type_: ORB.Type);
 
   elif sym == ORS.array:
     ORS.Get(sym)
-    ArrayType(type_)
+    type_ = ArrayType(type_)
   elif sym == ORS.record:
     ORS.Get(sym)
-    RecordType(type_)
+    type_ = RecordType(type_)
     Check(ORS.end, "no END")
   elif sym == ORS.pointer:
     ORS.Get(sym)
@@ -1223,7 +1226,7 @@ def Type0(VAR type_: ORB.Type);
       ptbase.next = pbsList
       pbsList = ptbase
     else:
-      Type(type_.base);
+      type_.base = Type(type_.base)
       if type_.base.form != ORB.Record:
         ORS.Mark("must point to record")
 
@@ -1233,15 +1236,15 @@ def Type0(VAR type_: ORB.Type);
     NEW(type_)
     type_.form = ORB.Proc
     type_.size = ORG.WordSize
-    dmy = 0;
-    ProcedureType(type_, dmy)
+    ProcedureType(type_, 0)
     type_.dsc = ORB.topScope.next
     ORB.CloseScope()
   else:
     ORS.Mark("illegal type_")
+  return type_
 
 
-def Declarations(VAR varsize: LONGINT);
+def Declarations(varsize):
 ##  VAR obj, first: ORB.Object;
 ##    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
 ##    expo: BOOLEAN; id_: ORS.Ident;
@@ -1289,7 +1292,7 @@ def Declarations(VAR varsize: LONGINT);
         ORS.Get(sym)
       else:
         ORS.Mark("=?")
-      Type(tp);
+      tp = Type(tp)
       ORB.NewObj(obj, id_, ORB.Typ)
       obj.type_ = tp
       obj.expo = expo
@@ -1320,8 +1323,8 @@ def Declarations(VAR varsize: LONGINT);
   if sym == ORS.var:
     ORS.Get(sym)
     while sym == ORS.ident:
-      IdentList(ORB.Var, first)
-      Type(tp)
+      first = IdentList(ORB.Var, first)
+      tp = Type(tp)
       obj = first
       while obj != None:
         obj.type_ = tp
@@ -1346,9 +1349,10 @@ def Declarations(VAR varsize: LONGINT);
 
   if (sym >= ORS.const) and (sym <= ORS.var):
     ORS.Mark("declaration in bad order")
+  return varsize
 
 
-def ProcedureDecl;
+def ProcedureDecl():
 ##  VAR proc: ORB.Object;
 ##    type_: ORB.Type;
 ##    procid: ORS.Ident;
@@ -1379,10 +1383,10 @@ def ProcedureDecl;
     INC(level)
     proc.val = -1
     type_.base = ORB.noType;
-    ProcedureType(type_, parblksize) # (*formal parameter list*)
+    parblksize = ProcedureType(type_, parblksize) # (*formal parameter list*)
     Check(ORS.semicolon, "no ;")
     locblksize = parblksize; 
-    Declarations(locblksize);
+    locblksize = Declarations(locblksize)
     proc.val = ORG.Here() * 4
     proc.type_.dsc = ORB.topScope.next
     if sym == ORS.procedure:
@@ -1427,7 +1431,7 @@ def ProcedureDecl;
   int_ = False
 
 
-def Module;
+def Module():
 ##  VAR key: LONGINT;
 ##    obj: ORB.Object;
 ##    impid, impid1: ORS.Ident;
@@ -1481,7 +1485,7 @@ def Module;
 
     obj = ORB.topScope.next;
     ORG.Open(version)
-    Declarations(dc)
+    dc = Declarations(dc)
     ORG.SetDataSize((dc + 3) / 4 * 4);
     while sym == ORS.procedure:
       ProcedureDecl()
@@ -1532,5 +1536,3 @@ if __name__ == '__main__':
   dummy.class_ = ORB.Var
   dummy.type_ = ORB.intType
   expression = expression0
-  Type = Type0
-  FormalType = FormalType0

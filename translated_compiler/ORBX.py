@@ -253,6 +253,7 @@ def InType(R, thismod):
       typtab[ref] = T
   return T
 
+
 def Import(modid, modid1):
   global nofmod
   if modid1 == "SYSTEM":
