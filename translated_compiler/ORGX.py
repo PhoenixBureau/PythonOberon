@@ -1228,7 +1228,7 @@ def Return(form, x, size, int_):
 
 # (*In-line code procedures*)
 
-def Increment(upordown, VAR x, y):
+def Increment(upordown, x, y):
   global RH
   # VAR op, zr, v: LONGINT;
   if upordown == 0:
@@ -1266,10 +1266,10 @@ def Increment(upordown, VAR x, y):
       Put0(op, zr, zr, y.r)
       RH -= 1
     Put2(Str+v, zr, x.r, 0)
-    RH, 2 -= 1
+    RH -= 2
 
 
-def Include*(inorex, x, y):
+def Include(inorex, x, y):
   global RH
   # VAR zr: LONGINT;
   loadAdr(x)
@@ -1451,7 +1451,7 @@ def Float(x):
 
 
 def Ord(x):
-  if x.mode IN {ORB.Var, ORB.Par, RegI}:
+  if x.mode in {ORB.Var, ORB.Par, RegI}:
     load(x)
 
 
@@ -1616,7 +1616,7 @@ def FindPtrs(R, typ, adr):
       FindPtrs(R, typ.base, i*s + adr)
 
 
-def Close*(VAR modid: ORS.Ident; key, nofent):
+def Close(modid, key, nofent):
 ##  VAR obj: ORB.Object;
 ##    i, comsize, nofimps, nofptrs, size: LONGINT;
 ##    name: ORS.Ident;
@@ -1674,7 +1674,7 @@ def Close*(VAR modid: ORS.Ident; key, nofent):
       Files.WriteInt(R, obj.val)
     obj = obj.next
 
-  Files.Write(R, 0X);
+  Files.Write(R, 0x0);
   Files.WriteInt(R, tdx*4);
 
   i = 0;
@@ -1705,7 +1705,7 @@ def Close*(VAR modid: ORS.Ident; key, nofent):
       Files.WriteInt(R, obj.val)
     obj = obj.next
 
-  Files.Write(R, 0X);
+  Files.Write(R, 0x0)
   Files.WriteInt(R, nofent)
   Files.WriteInt(R, entry)
 
