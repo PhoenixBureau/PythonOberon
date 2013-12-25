@@ -31,4 +31,13 @@ later on, but for now this is enough to test and play with the RISC
 emulator.
 
 
+The compiler can be exercised by running the test\_parser.py script which
+compiles the Amodule.Mod.txt demo Oberon source into binary.  As a side
+effect it will create two files: Amodule.smb and Amodule.rsc, which you
+must delete in order to run the compiler again without it complaining
+about overwriting them.  This is by design.
 
+There are bound to be more bugs in the Python compiler code as I doubt
+the demo Oberon source exercises all the code paths.  It has been very
+entertaining and educational going through the Oberon source for the
+Oberon compiler line-by-line.
