@@ -256,6 +256,7 @@ def CompTypes(t0, t1, varpar):
 def Parameter(par):
   global sym
 #  VAR x: ORG.Item; varpar: BOOLEAN;
+  x = ORG.Item()
   expression(x);
   if par != None:
     varpar = par.class_ == ORB.Par;
@@ -301,7 +302,7 @@ def ParamList(x):
       Check(sym, "comma?")
       if par != None:
         par = par.next
-      INC(n)
+      n += 1
       Parameter(par)
     Check(ORS.rparen, ") missing")
   else:

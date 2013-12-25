@@ -385,6 +385,7 @@ def Field(x, y): # (* x = x.y *)
 
 
 def Index(x, y): # (* x = x[y] *)
+  global RH
   s = x.type_.base.size
   lim = x.type_.len_
   if (y.mode == ORB.Const) and (lim >= 0):
@@ -1162,6 +1163,7 @@ def PrepCall(x):
 
 
 def Call(x, r):
+  global RH, inhibitCalls
   if inhibitCalls and (x.r != 11):
     ORS.Mark("inadmissible call")
   else:
