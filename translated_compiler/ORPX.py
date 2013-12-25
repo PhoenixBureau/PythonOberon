@@ -6,7 +6,7 @@
 ##!=!=    ORG to produce binary code. ORP performs type_ checking and data allocation.
 ##!=!=    Parser is target-independent, except for part of the handling of allocations.*)
 ##!=!=
-
+from copy import copy
 import ORSX as ORS, ORBX as ORB, ORGX as ORG
 ##TYPE PtrBase == POINTER TO PtrBaseDesc;
 ##  PtrBaseDesc == RECORD  (*list of names of pointer base types*)
@@ -69,7 +69,7 @@ def CheckInt(x):
   global sym
   if x.type_.form != ORB.Int:
     ORS.Mark("not Integer")
-    x.type_ = ORB.intType
+    x.type_ = copy(ORB.intType)
 
 
 def CheckReal(x):
@@ -1221,7 +1221,7 @@ def FormalType(typ, dim):
 def Type(type_):
   global sym, pbsList
   # VAR dmy: LONGINT; obj: ORB.Object; ptbase: PtrBase;
-  type_ = ORB.intType # (*sync*)
+  type_ = copy(ORB.intType) # (*sync*)
   obj = ORB.Object()
   if (sym != ORS.ident) and (sym < ORS.array):
     ORS.Mark("not a type_")
@@ -1256,7 +1256,7 @@ def Type(type_):
       obj = ORB.thisObj()
       sym = ORS.Get();
       if obj != None:
-        if (obj.class_ == ORB.Typ) and (obj.type_.form in [ORB.Record, ORB.NoTyp]):
+        if (obj.class_ == ORB.Typ) and (obj.type_.form in {ORB.Record, ORB.NoTyp}):
           type_.base = obj.type_
         else:
           ORS.Mark("no valid base type_")
@@ -1582,4 +1582,4 @@ def Compile(T, beg=0):
 print "OR Compiler  5.11.2013"
 dummy = ORB.Object()
 dummy.class_ = ORB.Var
-dummy.type_ = ORB.intType
+dummy.type_ = copy(ORB.intType)
