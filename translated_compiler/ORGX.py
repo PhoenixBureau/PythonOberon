@@ -329,6 +329,7 @@ def MakeRealItem(x, val):
 
 
 def MakeStringItem(x, len_): # (*copies string from ORS-buffer to ORG-string array*)
+  global strx
   x.mode = ORB.Const
   x.type_ = ORB.strType
   x.a = strx

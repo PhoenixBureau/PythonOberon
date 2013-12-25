@@ -670,6 +670,9 @@ def StandProc(pno):
   Check(ORS.lparen, "no (");
   npar = pno % 10
   pno = pno / 10
+  x = ORG.Item()
+  y = ORG.Item()
+  z = ORG.Item()
   expression(x)
   nap = 1;
   if sym == ORS.comma:
@@ -831,8 +834,8 @@ def StatSequence():
       expression(x)
       CheckBool(x)
       ORG.CFJump(x)
-      Check(ORS.then, "no:")
-      StatSequence
+      Check(ORS.then, "no then")
+      StatSequence()
       L0 = 0
       while sym == ORS.elsif:
         sym = ORS.Get()
@@ -841,7 +844,7 @@ def StatSequence():
         expression(x)
         CheckBool(x)
         ORG.CFJump(x)
-        Check(ORS.then, "no:")
+        Check(ORS.then, "no then")
         StatSequence()
 
       if sym == ORS.else_:
