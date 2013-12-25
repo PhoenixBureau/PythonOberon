@@ -56,7 +56,7 @@ MODULE Amodule;   (* Just a comment*)
     VAR s, x: Object;
   BEGIN s := topScope;
     REPEAT x := s.next;
-      WHILE (x # NIL) & (x.name # NIL) DO x := x.next END ;
+      WHILE (x # NIL) & (x.name # x.name) DO x := x.next END ;
       s := s.dsc
     UNTIL (x # NIL) OR (s = NIL);
     RETURN x
@@ -68,7 +68,7 @@ MODULE Amodule;   (* Just a comment*)
     IF mod.rdo THEN
       IF mod.name[0] # 0X THEN
         obj := mod.dsc;
-        WHILE (obj # NIL) & (obj.name # NIL) DO obj := obj.next END
+        WHILE (obj # NIL) & (obj.name # obj.name) DO obj := obj.next END
       ELSE obj := NIL
       END
     ELSE obj := NIL
@@ -79,7 +79,7 @@ MODULE Amodule;   (* Just a comment*)
   PROCEDURE thisfield*(rec: Type): Object;
     VAR fld: Object;
   BEGIN fld := rec.dsc;
-    WHILE (fld # NIL) & (fld.name # NIL) DO fld := fld.next END ;
+    WHILE (fld # NIL) & (fld.name # fld.name) DO fld := fld.next END ;
     RETURN fld
   END thisfield;
 
