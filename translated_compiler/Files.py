@@ -20,7 +20,7 @@ ReadString = ReadByte = ReadInt = ReadNum
 
 def WriteNum(r, item):
   pickle.dump(item, r)
-WriteString = WriteByte = WriteInt = WriteNum
+Write = WriteString = WriteByte = WriteInt = WriteNum
 
 
 if __name__ == '__main__':

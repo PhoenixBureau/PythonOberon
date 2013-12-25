@@ -145,7 +145,7 @@ def ThisModule(name, orgname, non, key):
     mod.val = key
     mod.lev = nofmod
     nofmod += 1
-    mod.type = noType
+    mod.type_ = noType
     obj1.next = mod
     obj = mod
   else: # (*module already present*)
@@ -181,7 +181,7 @@ def InType(R, thismod):
 
     elif form == Array:
       t.base = InType(R, thismod)
-      t.len = Files.ReadNum(R, )
+      t.len_ = Files.ReadNum(R, )
       t.size = Files.ReadNum(R, )
 
     elif form == Record:
@@ -191,7 +191,7 @@ def InType(R, thismod):
         obj = None
       else:
         obj = t.base.dsc
-      t.len = Files.ReadNum(R) # (*TD adr/exno*)
+      t.len_ = Files.ReadNum(R) # (*TD adr/exno*)
       t.nofpar = Files.ReadNum(R) #  (*ext level*)
       t.size = Files.ReadNum(R)
       Read(R, class_);
@@ -201,10 +201,10 @@ def InType(R, thismod):
         fld.name = Files.ReadString(R);
         if fld.name[0] != 0x0:
           fld.expo = True
-          fld.type = InType(R, thismod)
+          fld.type_ = InType(R, thismod)
         else:
           fld.expo = False
-          fld.type = nilType
+          fld.type_ = nilType
         fld.val = Files.ReadNum(R)
         fld.next = obj
         obj = fld
@@ -221,7 +221,7 @@ def InType(R, thismod):
         par.class_ = class_
         readonly = Read(R)
         par.rdo = readonly == 1 
-        par.type = InType(R, thismod)
+        par.type_ = InType(R, thismod)
         par.next = obj
         obj = par
         np += 1
@@ -240,14 +240,14 @@ def InType(R, thismod):
       while (obj != None) and (obj.name != name):
         obj = obj.next
       if obj != None:
-        T = obj.type # (*type object found in object list of mod*)
+        T = obj.type_ # (*type object found in object list of mod*)
       else:           # (*insert new type object in object list of mod*)
         obj = Object()
         obj.name = name
         obj.class_ = Typ
         obj.next = mod.dsc
         mod.dsc = obj
-        obj.type = t
+        obj.type_ = t
         t.mno = mod.lev
         T = t
 
@@ -286,7 +286,7 @@ def Import(modid, modid1):
         obj.typ = eInType(R, thismod)
         obj.lev = -thismod.lev;
         if class_ == Typ:
-          t = obj.type
+          t = obj.type_
           t.typobj = obj
           k = Read(R) # (*fixup bases of previously declared pointer types*)
           while k != 0:
@@ -294,7 +294,7 @@ def Import(modid, modid1):
             k = Read(R)
         else:
           if class_ == Const:
-            if obj.type.form == Real:
+            if obj.type_.form == Real:
               obj.val = Files.ReadInt(R)
             else:
               obj.val = Files.ReadNum(R)
@@ -316,6 +316,7 @@ def Write(R, x):
 
 
 def OutType(R, t):
+  global Ref
 
   def OutPar(R, par, n):
     if n > 0:
@@ -326,7 +327,7 @@ def OutType(R, t):
         Write(R, 1)
       else:
         Write(R, 0)
-      OutType(R, par.type)
+      OutType(R, par.type_)
 
   def FindHiddenPointers(R, typ, offset):
     if (typ.form == Pointer) or (typ.form == NilTyp):
@@ -336,11 +337,11 @@ def OutType(R, t):
     elif typ.form == Record:
       fld = typ.dsc
       while fld != None:
-        FindHiddenPointers(R, fld.type, fld.val + offset)
+        FindHiddenPointers(R, fld.type_, fld.val + offset)
         fld = fld.next
     elif typ.form == Array:
       i = 0
-      n = typ.len
+      n = typ.len_
       while i < n:
         FindHiddenPointers(R, typ.base, typ.base.size * i + offset)
         i += 1
@@ -367,7 +368,7 @@ def OutType(R, t):
 
     elif t.form == Array:
       OutType(R, t.base)
-      Files.WriteNum(R, t.len)
+      Files.WriteNum(R, t.len_)
       Files.WriteNum(R, t.size)
 
     elif t.form == Record:
@@ -387,10 +388,10 @@ def OutType(R, t):
         if fld.expo:
           Write(R, Fld)
           Files.WriteString(R, fld.name)
-          OutType(R, fld.type)
+          OutType(R, fld.type_)
           Files.WriteNum(R, fld.val)
         else:
-          FindHiddenPointers(R, fld.type, fld.val)
+          FindHiddenPointers(R, fld.type_, fld.val)
 
         fld = fld.next
 
@@ -431,28 +432,28 @@ def Export(modid, newSF, key):
     if obj.expo:
       Write(R, obj.class_)
       Files.WriteString(R, obj.name)
-      OutType(R, obj.type)
+      OutType(R, obj.type_)
       if obj.class_ == Typ:
-        if obj.type.form == Record:
+        if obj.type_.form == Record:
           obj0 = topScope.next # (*check whether this is base of previously declared pointer types*)
           while obj0 != obj:
-            if (obj0.type.form == Pointer) and (obj0.type.base == obj.type) and (obj0.type.ref > 0):
-              Write(R, obj0.type.ref)
+            if (obj0.type_.form == Pointer) and (obj0.type_.base == obj.type_) and (obj0.type_.ref > 0):
+              Write(R, obj0.type_.ref)
             obj0 = obj0.next
 
         Write(R, 0)
 
       elif obj.class_ == Const:
-        if obj.type.form == Proc:
+        if obj.type_.form == Proc:
           Files.WriteNum(R, obj.exno)
-        elif obj.type.form == Real:
+        elif obj.type_.form == Real:
           Files.WriteInt(R, obj.val)
         else:
           Files.WriteNum(R, obj.val)
 
       elif obj.class_ == Var:
         Files.WriteNum(R, obj.exno)
-        if obj.type.form == String:
+        if obj.type_.form == String:
           Files.WriteNum(R, obj.val / 0x10000)
           obj.val = obj.val % 0x10000
 

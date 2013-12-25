@@ -1651,9 +1651,9 @@ def Close(modid, key, nofent):
       (obj.type_.nofpar == 0) and
       (obj.type_.base == ORB.noType)
       ):
-      i = 0 # (*count commands*)
-      while obj.name[i] != 0x0:
-        i += 1
+      i = len(obj.name) # (*count commands*)
+##      while obj.name[i] != 0x0:
+##        i += 1
       i = (i+4) / 4 * 4
       comsize += i+4
     elif obj.class_ == ORB.Var:
@@ -1663,10 +1663,10 @@ def Close(modid, key, nofent):
 
   size = varsize + strx + comsize + (pc + nofimps + nofent + nofptrs + 1)*4 # (*varsize includes type_ descriptors*)
 
-  ORB.MakeFileName(name, modid, ".rsc") # (*write code file*)
+  name = ORB.MakeFileName(modid, ".rsc") # (*write code file*)
 
-  F = Files.New(name)
-  Files.Set(R, F, 0)
+  R = Files.New(name)
+##  Files.Set(R, F, 0)
   Files.WriteString(R, modid)
   Files.WriteInt(R, key)
   Files.WriteByte(R, version);
@@ -1675,7 +1675,7 @@ def Close(modid, key, nofent):
   obj = ORB.topScope.next;
   while (obj != None) and (obj.class_ == ORB.Mod): # (*imports*)
     if obj.dsc != ORB.system:
-      Files.WriteString(R, obj(ORB.Module).orgname)
+      Files.WriteString(R, obj.orgname) # removed cast : (ORB.Module)
       Files.WriteInt(R, obj.val)
     obj = obj.next
 
@@ -1740,5 +1740,5 @@ def Close(modid, key, nofent):
   Files.WriteInt(R, entry)
   Files.Write(R, "O")
 
-  Files.Register(F)
+##  Files.Register(F)
 

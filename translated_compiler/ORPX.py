@@ -1560,7 +1560,7 @@ def Module():
       StatSequence()
     Check(ORS.end, "no END")
     if sym == ORS.ident:
-      if ORS.id_ != modid:
+      if ''.join(ORS.id_) != modid:
         ORS.Mark("no match")
       sym = ORS.Get()
     else:
