@@ -61,7 +61,7 @@ MODULE Amodule;   (* Just a comment*)
     nofmod, Ref: INTEGER;
     typtab: ARRAY maxTypTab OF Type;
 
-  PROCEDURE NewObj*(VAR obj: Object; id: ORS.Ident; class: INTEGER);  (*insert new Object with name id*)
+  PROCEDURE NewObj*(VAR obj: Object; id (* ORS.Ident *), class: INTEGER);  (*insert new Object with name id*)
     VAR new, x: Object;
   BEGIN x := topScope;
     WHILE (x.next # NIL) & (x.next.name # id) DO x := x.next END ;
