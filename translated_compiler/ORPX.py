@@ -1473,11 +1473,13 @@ def ProcedureDecl():
       ORS.Mark("function without result")
       type_.base = ORB.noType
 
+    x = ORG.Item()
     ORG.Return(type_.base.form, x, locblksize, int_);
-    ORB.CloseScope; DEC(level)
+    ORB.CloseScope()
+    level -= 1
     Check(ORS.end, "no END");
     if sym == ORS.ident:
-      if ORS.id_ != procid:
+      if ''.join(ORS.id_) != procid:
         ORS.Mark("no match")
       sym = ORS.Get()
     else:
