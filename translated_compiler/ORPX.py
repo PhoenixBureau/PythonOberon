@@ -962,7 +962,7 @@ def StatSequence():
 
 # (* Types and declarations *)
 
-def IdentList(class_, first):
+def IdentList(class_):
   global sym
   # VAR obj: ORB.Object;
   if sym == ORS.ident:
@@ -1118,8 +1118,8 @@ def FPSection(adr, nofpar):
     cl = ORB.Par
   else:
     cl = ORB.Var
-  first = IdentList(cl, first)
-  tp = FormalType(tp, 0)
+  first = IdentList(cl)
+  tp = FormalType(0)
   rdo = False;
   if (cl == ORB.Var) and (tp.form >= ORB.Array):
     cl = ORB.Par
@@ -1132,7 +1132,7 @@ def FPSection(adr, nofpar):
 
   obj = first;
   while obj != None:
-    INC(nofpar)
+    nofpar += 1
     obj.class_ = cl
     obj.type_ = tp
     obj.rdo = rdo
@@ -1183,7 +1183,7 @@ def ProcedureType(ptype, parblksize):
   return parblksize
 
 
-def FormalType(typ, dim):
+def FormalType(dim):
   global sym
   # VAR obj: ORB.Object; dmy: LONGINT;
   if sym == ORS.ident:
@@ -1198,15 +1198,15 @@ def FormalType(typ, dim):
     Check(ORS.of, "OF ?");
     if dim >= 1:
       ORS.Mark("multi-dimensional open arrays not implemented")
-    NEW(typ)
+    typ = ORB.Type()
     typ.form = ORB.Array
     typ.len_ = -1
     typ.size = 2*ORG.WordSize; 
-    typ.base = FormalType(typ.base, dim+1)
+    typ.base = FormalType(dim+1)
   elif sym == ORS.procedure:
     sym = ORS.Get()
     ORB.OpenScope()
-    NEW(typ)
+    typ = ORB.Type()
     typ.form = ORB.Proc
     typ.size = ORG.WordSize
     ProcedureType(typ, 0)
@@ -1369,7 +1369,7 @@ def Declarations(varsize):
   if sym == ORS.var:
     sym = ORS.Get()
     while sym == ORS.ident:
-      first = IdentList(ORB.Var, ORB.Object())
+      first = IdentList(ORB.Var)
       tp = Type(tp)
       obj = first
       while obj != None:
@@ -1399,7 +1399,7 @@ def Declarations(varsize):
 
 
 def ProcedureDecl():
-  global sym, procid
+  global sym, procid, exno, level
 ##  VAR proc: ORB.Object;
 ##    type_: ORB.Type;
 ##    procid: ORS.Ident;
@@ -1418,7 +1418,7 @@ def ProcedureDecl():
     # (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
     proc = ORB.NewObj(''.join(ORS.id_), ORB.Const)
     parblksize = 4;
-    NEW(type_)
+    type_ = ORB.Type()
     type_.form = ORB.Proc
     type_.size = ORG.WordSize
     proc.type_ = type_;
@@ -1427,12 +1427,12 @@ def ProcedureDecl():
       proc.exno = exno
       exno += 1
     ORB.OpenScope()
-    INC(level)
+    level += 1
     proc.val = -1
-    type_.base = ORB.noType;
+    type_.base = ORB.noType
     parblksize = ProcedureType(type_, parblksize) # (*formal parameter list*)
     Check(ORS.semicolon, "no ;")
-    locblksize = parblksize; 
+    locblksize = parblksize
     locblksize = Declarations(locblksize)
     proc.val = ORG.Here() * 4
     proc.type_.dsc = ORB.topScope.next
