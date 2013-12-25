@@ -20,7 +20,7 @@ MODULE Amodule;   (* Just a comment*)
       expo*, rdo*: BOOLEAN;   (*exported / read-only*)
       next*, dsc*: Object;
       type*: Type;
-      name*: INTEGER; (* ORS_Ident *)
+      name*: ARRAY 23 OF CHAR; (* ORS_Ident *)
       val*: LONGINT
     END ;
 
