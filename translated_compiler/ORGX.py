@@ -93,6 +93,7 @@ def Put3(op, cond, off):
   code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
 
 def incR():
+  global RH
   if RH < MT:
     RH += 1
   else:

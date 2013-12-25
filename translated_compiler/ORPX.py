@@ -775,6 +775,7 @@ def StatSequence():
           break
     if sym == ORS.ident:
       obj = qualident()
+      x = ORG.Item()
       ORG.MakeItem(x, obj, level);
       if x.mode == ORB.SProc:
         StandProc(obj.val)
@@ -783,6 +784,7 @@ def StatSequence():
         if sym == ORS.becomes: # (*assignment*)
           sym = ORS.Get()
           CheckReadOnly(x)
+          y = ORG.Item()
           expression(y);
           if CompTypes(x.type_, y.type_, False) or (x.type_.form == ORB.Int) and (y.type_.form == ORB.Int):
             if (x.type_.form <= ORB.Pointer) or (x.type_.form == ORB.Proc):
@@ -1241,14 +1243,16 @@ def Type(type_):
   elif sym == ORS.array:
     sym = ORS.Get()
     type_ = ArrayType(type_)
+
   elif sym == ORS.record:
     sym = ORS.Get()
     type_ = RecordType(type_)
     Check(ORS.end, "no END")
+
   elif sym == ORS.pointer:
     sym = ORS.Get()
     Check(ORS.to, "no TO");
-   # NEW(type_)
+    type_ = ORB.Type()
     type_.form = ORB.Pointer
     type_.size = ORG.WordSize
     type_.base = ORB.intType;
@@ -1261,7 +1265,6 @@ def Type(type_):
         else:
           ORS.Mark("no valid base type_")
 
-     # NEW(ptbase)
       ptbase = PtrBase()
       ptbase.name = ORS.CopyId()
       ptbase.type_ = type_
@@ -1275,7 +1278,7 @@ def Type(type_):
   elif sym == ORS.procedure:
     sym = ORS.Get()
     ORB.OpenScope()
-    NEW(type_)
+    type_ = ORB.Type()
     type_.form = ORB.Proc
     type_.size = ORG.WordSize
     ProcedureType(type_, 0)
@@ -1287,7 +1290,7 @@ def Type(type_):
 
 
 def Declarations(varsize):
-  global sym, id_, exno
+  global sym, id_, exno, pbsList
 ##  VAR obj, first: ORB.Object;
 ##    x: ORG.Item; tp: ORB.Type; ptbase: PtrBase;
 ##    expo: BOOLEAN; id_: ORS.Ident;

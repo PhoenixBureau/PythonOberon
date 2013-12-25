@@ -78,9 +78,10 @@ def _e(l):
 
 def thisObj():
   s = topScope
+  name = ''.join(ORS.id_)
   while True:
     x = s.next
-    while (x != None) and (x.name != _e(ORS.id_)):
+    while (x != None) and (x.name != name):
       x = x.next
     s = s.dsc
     if (x != None) or (s is None):
