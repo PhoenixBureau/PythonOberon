@@ -35,26 +35,6 @@ MODULE Amodule;   (* Just a comment*)
       size*: LONGINT;  (*in bytes; always multiple of 4, except for Byte, Bool and Char*)
     END ;
 
-  (* Object classes and the meaning of "val":
-    class    val
-    ----------
-    Var      address
-    Par      address
-    Const    value
-    Fld      offset
-    Typ      type descriptor (TD) address
-    SProc    inline code number
-    SFunc    inline code number
-    Mod      key
-
-  Type forms and the meaning of "dsc" and "base":
-    form     dsc      base
-    ------------------------
-    Pointer  -        type of dereferenced object
-    Proc     params   result type
-    Array    -        type of elements
-    Record   fields   extension *)
-
   VAR topScope*, universe, system*: Object;
     byteType*, boolType*, charType*: Type;
     intType*, realType*, setType*, nilType*, noType*, strType*: Type;
