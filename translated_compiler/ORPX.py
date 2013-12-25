@@ -1416,7 +1416,7 @@ def ProcedureDecl():
     procid = ORS.CopyId()
     sym = ORS.Get();
     # (*Texts.WriteLn(W); Texts.WriteString(W, procid); Texts.WriteInt(W, ORG.Here(), 7);*)
-    proc = ORB.NewObj(ORS.id_, ORB.Const)
+    proc = ORB.NewObj(''.join(ORS.id_), ORB.Const)
     parblksize = 4;
     NEW(type_)
     type_.form = ORB.Proc
