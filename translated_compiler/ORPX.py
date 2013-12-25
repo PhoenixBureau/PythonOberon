@@ -551,6 +551,7 @@ def term(x):
     else: # (*op == and*)
       CheckBool(x)
       ORG.And1(x)
+      y = ORG.Item()
       factor(y)
       CheckBool(y)
       ORG.And2(x, y)
@@ -603,6 +604,7 @@ def expression(x):
   if (sym >= ORS.eql) and (sym <= ORS.geq):
     rel = sym;
     sym = ORS.Get()
+    y = ORG.Item()
     SimpleExpression(y)
     xf = x.type_.form
     yf = y.type_.form;

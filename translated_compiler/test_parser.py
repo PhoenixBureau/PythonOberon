@@ -1,5 +1,5 @@
 import sys
-import ORPX, ORSX, ORBX
+import ORPX, ORSX, ORBX, ORGX
 
 
 text = open('Amodule.Mod.txt').read()
@@ -17,3 +17,8 @@ except:
   print >> sys.stderr, text[ORSX._pos:ORSX._pos + 20]
   print >> sys.stderr, '-' * 40
   raise
+
+for k in sorted(ORGX.code):
+  s = bin(ORGX.code[k])[2:]
+  s = '0' * (32 - len(s)) + s
+  print s
