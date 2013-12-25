@@ -168,7 +168,8 @@ def selector(x):
     if sym == ORS.lbrak:
       while True:
         sym = ORS.Get()
-        expression(y);
+        y = ORG.Item()
+        expression(y)
         if x.type_.form == ORB.Array:
           CheckInt(y)
           ORG.Index(x, y)
@@ -560,6 +561,7 @@ def term(x):
 def SimpleExpression(x):
   global sym
   # VAR y: ORG.Item; op: INTEGER;
+  y = ORG.Item()
   if sym == ORS.minus:
     sym = ORS.Get()
     term(x);
@@ -753,6 +755,10 @@ def StatSequence():
 ##    orgtype: ORB.Type; (*original type_ of case var*)
 ##    x, y, z, w: ORG.Item;
 ##    L0, L1, rx: LONGINT;
+  x = ORG.Item()
+  y = ORG.Item()
+  z = ORG.Item()
+  w = ORG.Item()
 
   def TypeCase(obj, x):
   #  VAR typobj: ORB.Object;
@@ -771,7 +777,7 @@ def StatSequence():
       ORS.Mark("type_ id_ expected")
 
   while True: # (*sync*)
-    obj = None;
+    obj = None
     if not ((sym == ORS.ident) or (sym >= ORS.if_) and (sym <= ORS.for_) or (sym >= ORS.semicolon)):
       ORS.Mark("statement expected");
       while True:
@@ -780,7 +786,6 @@ def StatSequence():
           break
     if sym == ORS.ident:
       obj = qualident()
-      x = ORG.Item()
       ORG.MakeItem(x, obj, level);
       if x.mode == ORB.SProc:
         StandProc(obj.val)
@@ -789,7 +794,6 @@ def StatSequence():
         if sym == ORS.becomes: # (*assignment*)
           sym = ORS.Get()
           CheckReadOnly(x)
-          y = ORG.Item()
           expression(y);
           if CompTypes(x.type_, y.type_, False) or (x.type_.form == ORB.Int) and (y.type_.form == ORB.Int):
             if (x.type_.form <= ORB.Pointer) or (x.type_.form == ORB.Proc):
@@ -957,7 +961,7 @@ def StatSequence():
 
       Check(ORS.end, "no END")
 
-    ORG.CheckRegs;
+    ORG.CheckRegs()
     if sym == ORS.semicolon:
       sym = ORS.Get()
     elif sym < ORS.semicolon:
@@ -1416,6 +1420,7 @@ def ProcedureDecl():
 ##    int_: BOOLEAN;
 
   int_ = False
+  x = ORG.Item()
   sym = ORS.Get()
   if sym == ORS.times:
     sym = ORS.Get()
@@ -1463,7 +1468,7 @@ def ProcedureDecl():
 
     if sym == ORS.return_:
       sym = ORS.Get()
-      expression(x);
+      expression(x)
       if type_.base == ORB.noType:
         ORS.Mark("this is not a function")
       elif not CompTypes(type_.base, x.type_, False):
@@ -1473,7 +1478,6 @@ def ProcedureDecl():
       ORS.Mark("function without result")
       type_.base = ORB.noType
 
-    x = ORG.Item()
     ORG.Return(type_.base.form, x, locblksize, int_);
     ORB.CloseScope()
     level -= 1
