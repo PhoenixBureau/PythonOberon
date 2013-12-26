@@ -1,9 +1,7 @@
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
+from util import ibv
 from assembler import bits2signed_int, signed
 from ram import sparseMemory
-
-
-ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 
 
 clk = ibv(1)
