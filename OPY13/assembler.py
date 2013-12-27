@@ -1,26 +1,12 @@
+'''
+A very simple "assembler".
+
+Really just a collection of routines to generate order codes for
+debugging.
+
+'''
 from myhdl import intbv, concat
-from util import ops
-
-
-word = lambda n: intbv(n, min=0, max=2**32)
-
-
-def signed(n, bits=16):
-  limit = 2**bits
-  if -limit < n < limit:
-    q = ((n < 0) << (bits - 1)) + abs(n)
-    return intbv(q)[bits:]
-  raise ValueError
-
-
-def bits2signed_int(i):
-  if not isinstance(i, intbv):
-    raise ValueError("Must be intbv object. %r" % (i,))
-  n = len(i)
-  if not n:
-    raise ValueError("Must have non-zero length. %r" % (i,))
-  n -= 1
-  return (-1 if i[n] else 1) * i[n:]
+from util import ops, word, signed
 
 
 def make_F0(u, op, a, b, c):

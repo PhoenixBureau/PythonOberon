@@ -1,11 +1,5 @@
 from myhdl import intbv, concat
-
-ops = dict(
-  Mov = 0, Lsl = 1, Asr = 2, Ror= 3, And = 4, Ann = 5, Ior = 6, Xor = 7,
-  Add = 8, Sub = 9, Mul = 10, Div = 11,
-  )
-word = lambda n: intbv(n, min=0, max=2**32)
-
+from util import ops, word
 
 
 def make_F0(u, op, a, b, c):

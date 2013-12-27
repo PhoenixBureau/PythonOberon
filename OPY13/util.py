@@ -7,6 +7,9 @@ ops = dict(
 ops_rev = dict((v, k) for k, v in ops.iteritems())
 
 
+word = lambda n: intbv(n, min=0, max=2**32)
+
+
 ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
 
 
@@ -37,4 +40,22 @@ cmps = {
   (7, 0): 'T',
   (7, 1): 'F',
 }
+
+
+def signed(n, bits=16):
+  limit = 2**bits
+  if -limit < n < limit:
+    q = ((n < 0) << (bits - 1)) + abs(n)
+    return intbv(q)[bits:]
+  raise ValueError
+
+
+def bits2signed_int(i):
+  if not isinstance(i, intbv):
+    raise ValueError("Must be intbv object. %r" % (i,))
+  n = len(i)
+  if not n:
+    raise ValueError("Must have non-zero length. %r" % (i,))
+  n -= 1
+  return (-1 if i[n] else 1) * i[n:]
 

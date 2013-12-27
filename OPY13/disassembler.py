@@ -1,3 +1,12 @@
+'''
+A simple disassembler for Wirth RISC binary.
+
+Currently only the crudest decoding is performed on a single instruction,
+no extra information is used, in particular symbols are not supported.
+
+This module provides one function dis(n) which takes an integer and
+returns a human-readable string description of the order code.
+'''
 from myhdl import intbv
 from util import ops_rev, cmps
 

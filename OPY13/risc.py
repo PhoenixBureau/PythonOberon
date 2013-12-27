@@ -1,6 +1,5 @@
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
-from util import ibv
-from assembler import bits2signed_int, signed
+from util import ibv, bits2signed_int, signed
 from ram import sparseMemory
 
 
