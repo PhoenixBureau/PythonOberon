@@ -991,6 +991,7 @@ data = [int(n, 2) for n in '''\
 11000111000000000000000000001111'''.split()]
 
 
-for i, n in enumerate(data):
-##  print '0x%08x' % i, dis(n)
-  print dis(n)
+if __name__ == '__main__':
+  for i, n in enumerate(data):
+  ##  print '0x%08x' % i, dis(n)
+    print dis(n)

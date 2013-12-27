@@ -114,7 +114,8 @@ def TextsRead(r):
   try:
     _pos += 1
     c = r[_pos]
-##    sys.stderr.write(c)
+#    sys.stderr.write(c)
+    sys.stdout.write(c)
     return c
   except IndexError:
     global R_eot

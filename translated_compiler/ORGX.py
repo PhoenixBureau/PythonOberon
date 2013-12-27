@@ -5,8 +5,10 @@ IMPORT SYSTEM, Files, ORS, ORB;
    Procedural interface to Parser OSAP; result in array "code".
    Procedure Close writes code-files*)
 '''
-
+import sys
+from disassembler import dis
 import Files, ORSX as ORS, ORBX as ORB
+
 
 WordSize = 4;
 StkOrg0 = -64; VarOrg0 = 0; # (*for RISC-0 only*)
@@ -63,14 +65,16 @@ str_ = {} # : ARRAY maxStrx OF 0xCAR;
 def Put0(op, a, b, c):
   # (*emit format-0 instruction*)
   global pc
-  code[pc] = ((a*0x10 + b) * 0x10 + op) * 0x10000 + c; pc += 1
+  n = code[pc] = ((a*0x10 + b) * 0x10 + op) * 0x10000 + c; pc += 1
+  print >> sys.stderr, dis(n)
 
 def Put1(op, a, b, im):
   # (*emit format-1 instruction,  -0x10000 <= im < 0x10000*)
   global pc
   if im < 0:
     op += 0x1000 # (*set v-bit*)
-  code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im % 0x10000); pc += 1
+  n = code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im % 0x10000); pc += 1
+  print >> sys.stderr, dis(n)
 
 def Put1a(op, a, b, im):
   # (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
@@ -85,12 +89,14 @@ def Put1a(op, a, b, im):
 def Put2(op, a, b, off):
   # (*emit load/store instruction*)
   global pc
-  code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off % 0x100000); pc += 1
+  n = code[pc] = ((op * 0x10 + a) * 0x10 + b) * 0x100000 + (off % 0x100000); pc += 1
+  print >> sys.stderr, dis(n)
 
 def Put3(op, cond, off):
   # (*emit bran0xc instruction*)
   global pc
-  code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
+  n = code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
+  print >> sys.stderr, dis(n)
 
 def incR():
   global RH
