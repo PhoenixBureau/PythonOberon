@@ -5,6 +5,7 @@ IMPORT SYSTEM, Files, ORS, ORB;
    Procedural interface to Parser OSAP; result in array "code".
    Procedure Close writes code-files*)
 '''
+from math import e
 import sys
 from disassembler import dis
 import Files, ORSX as ORS, ORBX as ORB
@@ -655,7 +656,7 @@ def AddOp(op, x, y): # (* x = x +- y *)
 
 def log2(m, e): # FIXME e is VAR
   e = 0
-  while not ODD(m):
+  while m % 2: # not ODD(m)
     m = m / 2
     e += 1
   return m

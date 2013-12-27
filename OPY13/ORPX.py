@@ -317,6 +317,7 @@ def ParamList(x):
 def StandFunc(x, fct, restyp):
   global sym
 #  VAR y: ORG.Item; n, npar: LONGINT;
+  y = ORG.Item()
   Check(ORS.lparen, "no (");
   npar = fct % 10
   fct = fct / 10
@@ -325,7 +326,7 @@ def StandFunc(x, fct, restyp):
   while sym == ORS.comma:
     sym = ORS.Get()
     expression(y)
-    INC(n)
+    n +=1
   Check(ORS.rparen, "no )")
   if n == npar:
     if fct == 0: # (*ABS*)
@@ -512,6 +513,7 @@ def factor(x):
 def term(x):
   global sym
   # VAR y: ORG.Item; op, f: INTEGER;
+  y = ORG.Item()
   factor(x)
   f = x.type_.form;
   while (sym >= ORS.times) and (sym <= ORS.and_):
@@ -553,7 +555,6 @@ def term(x):
     else: # (*op == and*)
       CheckBool(x)
       ORG.And1(x)
-      y = ORG.Item()
       factor(y)
       CheckBool(y)
       ORG.And2(x, y)
