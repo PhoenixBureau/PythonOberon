@@ -7,6 +7,7 @@ IMPORT SYSTEM, Files, ORS, ORB;
 '''
 from math import e
 import sys
+from util import encode_float, encode_set, decode_set
 from disassembler import dis
 import Files, ORSX as ORS, ORBX as ORB
 
@@ -332,7 +333,7 @@ def MakeConstItem(x, typ, val):
 
 
 def MakeRealItem(x, val):
-  x.mode = ORB.Const; x.type_ = ORB.realType; x.a = SYSTEM.VAL(LONGINT, val)
+  x.mode = ORB.Const; x.type_ = ORB.realType; x.a = encode_float(val) # FIXME SYSTEM.VAL(LONGINT, val)
 
 
 def MakeStringItem(x, len_): # (*copies string from ORS-buffer to ORG-string array*)
@@ -827,18 +828,18 @@ def In(x, y): #  (* x = x IN y *)
 def SetOp(op, x, y): # (* x = x op y *)
   global RH
   if (x.mode == ORB.Const) and (y.mode == ORB.Const):
-    xset = set(x.a)
-    yset = set(y.a)
+    xset = decode_set(x.a)
+    yset = decode_set(y.a)
     if op == ORS.plus:
-      xset = xset + yset
+      xset = xset | yset
     elif op == ORS.minus:
       xset = xset - yset
     elif op == ORS.times:
-      xset = xset & yset # FIXME I'm guessing; look it up
+      xset = xset & yset
     elif op == ORS.rdiv:
       xset = xset ^ yset
 
-    x.a = SYSTEM.VAL(LONGINT, xset) # FIXME explode!
+    x.a = encode_set(xset) # SYSTEM.VAL(LONGINT, xset) # FIXME explode!
 
   elif y.mode == ORB.Const:
     load(x);

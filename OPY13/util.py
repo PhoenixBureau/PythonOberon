@@ -1,4 +1,6 @@
+from struct import pack, unpack
 from myhdl import Signal, intbv
+
 
 ops = dict(
   Mov = 0, Lsl = 1, Asr = 2, Ror= 3, And = 4, Ann = 5, Ior = 6, Xor = 7,
@@ -59,3 +61,22 @@ def bits2signed_int(i):
   n -= 1
   return (-1 if i[n] else 1) * i[n:]
 
+
+def encode_float(f):
+  return bits2signed_int(word(unpack('>I', pack('>f', f))[0]))
+
+def decode_float(f):
+  return unpack('>f', pack('>I', signed(f, 32)))[0]
+
+def encode_set(s, size=32):
+  return sum(1 << n for n in range(size) if n in s)
+
+def decode_set(i, size=32):
+  w = word(i)
+  return {n for n in range(size) if w[n]}
+
+
+
+if __name__ == '__main__':
+  for n in xrange(2**32):
+    print n, decode_set(n)
