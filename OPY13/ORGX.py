@@ -770,7 +770,7 @@ def RealOp(op, x, y): # (* x = x op y *)
 
 def Singleton(x): # (* x = {x} *)
   if x.mode == ORB.Const:
-    x.a = x.a << 1
+    x.a = 1 << x.a
   else:
     load(x)
     Put1(Mov, RH, 0, 1)
@@ -781,7 +781,7 @@ def Set(x, y): #   (* x = {x .. y} *)
   global RH
   if (x.mode == ORB.Const) and ( y.mode == ORB.Const):
     if x.a <= y.a:
-      x.a = (y.a << 2) - (x.a << 1)
+      x.a = (2 << y.a) - (1 << x.a)
     else:
       x.a = 0
   else:
