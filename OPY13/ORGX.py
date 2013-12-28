@@ -94,7 +94,7 @@ def Put2(op, a, b, off):
   print >> sys.stderr, dis(n)
 
 def Put3(op, cond, off):
-  # (*emit bran0xc instruction*)
+  # (*emit branch instruction*)
   global pc
   n = code[pc] = ((op+12) * 0x10 + cond) * 0x1000000 + (off % 0x1000000); pc += 1
   print >> sys.stderr, dis(n)
@@ -769,7 +769,7 @@ def RealOp(op, x, y): # (* x = x op y *)
 
 def Singleton(x): # (* x = {x} *)
   if x.mode == ORB.Const:
-    x.a = LSL(1, x.a)
+    x.a = x.a << 1
   else:
     load(x)
     Put1(Mov, RH, 0, 1)
@@ -780,7 +780,7 @@ def Set(x, y): #   (* x = {x .. y} *)
   global RH
   if (x.mode == ORB.Const) and ( y.mode == ORB.Const):
     if x.a <= y.a:
-      x.a = LSL(2, y.a) - LSL(1, x.a)
+      x.a = (y.a << 2) - (x.a << 1)
     else:
       x.a = 0
   else:
@@ -946,7 +946,7 @@ def StrToChar(x):
   global strx
   x.type_ = ORB.charType
   strx -= 4
-  x.a = ORD(str_[x.a])
+  x.a = ord(str_[x.a])
 
 
 def Store(x, y): # (* x = y *)

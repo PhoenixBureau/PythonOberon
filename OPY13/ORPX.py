@@ -230,7 +230,7 @@ def CompTypes(t0, t1, varpar):
       p0 = t0.dsc
       p1 = t1.dsc;
       while p0 != None:
-        if (p0.class_ == p1.class_) and CompTypes(p0.type_, p1.type_, True) and (ORD(p0.rdo) == ORD(p1.rdo)):
+        if (p0.class_ == p1.class_) and CompTypes(p0.type_, p1.type_, True) and (ord(p0.rdo) == ord(p1.rdo)):
           if p0.type_.form >= ORB.Array:
             com = CompTypes(p0.type_, p1.type_, (p0.class_ == ORB.Par))
           p0 = p0.next
@@ -427,12 +427,12 @@ def element(x):
 
 def set_(x):
   global sym
-#  VAR y: ORG.Item;
   if sym >= ORS.if_:
     if sym != ORS.rbrace:
       ORS.Mark(" } missing")
     ORG.MakeConstItem(x, ORB.setType, 0) # (*empty set*)
   else:
+    y = ORG.Item()
     element(x)
     while (sym < ORS.rparen) or (sym > ORS.rbrace):
       if sym == ORS.comma:
