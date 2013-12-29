@@ -1,3 +1,4 @@
+from math import log, floor
 from struct import pack, unpack
 from myhdl import Signal, intbv
 
@@ -76,6 +77,17 @@ def decode_set(i, size=32):
   w = word(i)
   return {n for n in range(size) if w[n]}
 
+
+##def log2(x):
+##  y = 0
+##  while x > 1:
+##    x /= 2
+##    y += 1
+##  return y
+
+
+def log2(x):
+  return int(floor(log(x, 2)))
 
 
 if __name__ == '__main__':

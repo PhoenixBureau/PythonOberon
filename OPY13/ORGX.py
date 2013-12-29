@@ -7,7 +7,7 @@ IMPORT SYSTEM, Files, ORS, ORB;
 '''
 from math import e
 import sys
-from util import encode_float, encode_set, decode_set
+from util import encode_float, encode_set, decode_set, log2
 from disassembler import dis
 import Files, ORSX as ORS, ORBX as ORB
 
@@ -655,27 +655,19 @@ def AddOp(op, x, y): # (* x = x +- y *)
       x.r = RH-1
 
 
-def log2(m, e): # FIXME e is VAR
-  e = 0
-  while m % 2: # not ODD(m)
-    m = m / 2
-    e += 1
-  return m
-
-
 def MulOp(x, y): # (* x = x * y *)
   global RH
   if (x.mode == ORB.Const) and (y.mode == ORB.Const):
     x.a = x.a * y.a
-  elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
+  elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a) == 1):
     load(x)
-    Put1(Lsl, x.r, x.r, e)
+    Put1(Lsl, x.r, x.r, log2(y.a))
   elif y.mode == ORB.Const:
     load(x)
     Put1a(Mul, x.r, x.r, y.a)
-  elif (x.mode == ORB.Const) and (x.a >= 2) and (log2(x.a, e) == 1):
+  elif (x.mode == ORB.Const) and (x.a >= 2) and (log2(x.a) == 1):
     load(y)
-    Put1(Lsl, y.r, y.r, e)
+    Put1(Lsl, y.r, y.r, log2(x.a))
     x.mode = Reg
     x.r = y.r
   elif x.mode == ORB.Const:
@@ -693,13 +685,14 @@ def MulOp(x, y): # (* x = x * y *)
 
 def DivOp(op, x, y): # (* x = x op y *)
   global RH
+  e = log2(y.a) # note: shadows math.e
   if op == ORS.div:
     if (x.mode == ORB.Const) and (y.mode == ORB.Const):
       if y.a > 0:
         x.a = x.a / y.a
       else:
         ORS.Mark("bad divisor")
-    elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
+    elif (y.mode == ORB.Const) and (y.a >= 2) and (e == 1):
       load(x)
       Put1(Asr, x.r, x.r, e)
     elif y.mode == ORB.Const:
@@ -723,7 +716,7 @@ def DivOp(op, x, y): # (* x = x op y *)
         x.a = x.a % y.a
       else:
         ORS.Mark("bad modulus")
-    elif (y.mode == ORB.Const) and (y.a >= 2) and (log2(y.a, e) == 1):
+    elif (y.mode == ORB.Const) and (y.a >= 2) and (e == 1):
       load(x);
       if e <= 16:
         Put1(And, x.r, x.r, y.a-1)
