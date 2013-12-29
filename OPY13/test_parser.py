@@ -1,8 +1,10 @@
 import sys
-import ORPX, ORSX, ORBX, ORGX
+import ORPX, ORSX, ORBX, ORGX, disassembler
 
+#fn = '/home/sforman/Desktop/Oberon/PO/Kernel.Mod.txt'
+fn = 'Pattern2.Mod.txt'
 
-text = open('Amodule.Mod.txt').read()
+text = open(fn).read()
 try:
   ORPX.Compile(text)
 except:
@@ -19,6 +21,7 @@ except:
   raise
 
 for k in sorted(ORGX.code):
-  s = bin(ORGX.code[k])[2:]
+  I = ORGX.code[k]
+  s = bin(I)[2:]
   s = '0' * (32 - len(s)) + s
-  print s
+  print s, '%08x' % (I,), disassembler.dis(I)
