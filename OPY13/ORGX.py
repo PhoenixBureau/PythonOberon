@@ -79,7 +79,7 @@ def Put1(op, a, b, im):
   print >> sys.stderr, dis(n)
 
 def Put1a(op, a, b, im):
-  # (*same as Pu1, but with range test  -0x10000 <= im < 0x10000*)
+  # (*same as Put1, but with range test  -0x10000 <= im < 0x10000*)
   if (im >= -0x10000) and (im <= 0x0FFFF):
     Put1(op, a, b, im)
   else:
