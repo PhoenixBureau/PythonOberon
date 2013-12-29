@@ -1,5 +1,6 @@
 from myhdl import Signal, delay, always, now, Simulation, intbv, concat
 from util import ibv, bits2signed_int, signed
+from disassembler import dis
 from ram import sparseMemory
 
 
@@ -104,11 +105,11 @@ def risc_cpu():
     res = B ^ C1
   elif ADD:
     x = B + C1 + (u & C)
-    print B, C1, x
+##    print B, C1, x
     res = signed(x, 32)
   elif SUB:
     res = B - C1 - (u & C)
-    print B, C1, res
+##    print B, C1, res
     res = signed(res, 32)
   elif MUL:
     res = product[32:0]
@@ -124,7 +125,7 @@ def risc_cpu():
   nxpc = PC + 1
 
   if (LDR & (not ioenb)):
-    regmux = dmout
+    regmux = pmout.val
   elif (LDR & ioenb):
     regmux = inbus
   elif (BR & v):
@@ -191,13 +192,14 @@ def ClkDriver(clk, period=10):
   return driveClk
 
 
-def iii(clk):
+def iii(clk, mem):
   @always(clk.negedge)
   def jjj():
-    print '0x%04x: 0x%08x -> 0x%08x' % (
+    print '0x%04x: 0x%08x -> 0x%08x %s' % (
       PC,
-      memory[int(PC)],
+      mem[int(PC)],
       IR,
+      dis(int(IR)),
       )
     for i, reg in enumerate(R):
       if reg:
@@ -226,7 +228,7 @@ if __name__ == '__main__':
     ClkDriver(clk),
     sparseMemory(memory, pmout, outbus, PC, iowr, stall1, clk),
     always(clk.posedge)(risc_cpu),
-    iii(clk),
+    iii(clk, memory),
     )
   print "PC    : RAM[PC]     ->  IR"
   print "0x%04x: 0x%08x" % (PC, memory[0])

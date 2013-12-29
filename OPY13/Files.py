@@ -31,10 +31,23 @@ def Read(r):
 ##      x = ((y + b) >> 7) >> (n-7)
 ##  return x
 
-def ReadInt(r):
+
+def ReadCode(r):
   data = r.read(4)
   i = unpack('>L', data)[0]
-  return bits2signed_int(word(i))
+  i = word(i)
+  return i
+
+def ReadInt(r):
+  i = ReadCode(r)
+  i = bits2signed_int(i)
+  return i
+
+def WriteInt(r, item):
+  item = int(signed(item, 32))
+  val = pack('>L', item)
+  r.write(val)
+
 
 def ReadByte(r):
   return ord(r.read(1))
@@ -71,11 +84,6 @@ def Write(r, item): pass
 
 @write_it('B')
 def WriteByte(r, item): pass
-
-def WriteInt(r, item):
-  item = int(signed(item, 32))
-  val = pack('>L', item)
-  r.write(val)
 
 def WriteString(r, item):
   for ch in item:

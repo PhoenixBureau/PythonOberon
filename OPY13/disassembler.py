@@ -55,7 +55,7 @@ def dis_Mov(IR):
       imm = concat(*([v] * 16 + [imm]))
     return 'Mov R%i <- 0x%08x' % (ira, imm)
   if not u:
-    return 'Mov R%i <- R%i' % (ira, irc)
+    return 'Mov R%i <- R%i' % (ira, IR[4:0])
   if IR[0]: # i.e. irc[0]
     return 'Mov R%i <- (N,Z,C,OV, 0..01010000)' % (ira,)
   return 'Mov R%i <- H' % (ira,)

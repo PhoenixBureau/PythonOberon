@@ -1692,7 +1692,7 @@ def Close(modid, key, nofent):
   Files.WriteInt(R, strx)
 
   for i in range(strx):
-    Files.Write(R, str_[i]) # (*strings*)
+    Files.WriteString(R, str_[i]) # (*strings*)
 
   Files.WriteInt(R, pc) # (*code len_*)
   for i in range(pc):
