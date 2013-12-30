@@ -10,6 +10,7 @@ _RAM = None # Used for debugging, set to actual ram dict!
 def risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus):
 
   PC = adr
+  pcbuffer = Signal(intbv(0)[len(adr):])
 
   IR = pmout = inbus
   p, q, u, v, w = IR(31), IR(30), IR(29), IR(28), IR(16)
@@ -141,8 +142,10 @@ def risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus):
       )
 
     stall = stallL[0]
-    stallL[0] = LDR and not stall1
+    stallL[0] = (LDR|STR) and not stall1
     stall1.next = stallL[0]
+
+    iowr.next = STR and not stall1
 
     regwr = (not p) & (not stall) | (LDR & stall1) | (BR & cond & v)
 
@@ -160,7 +163,15 @@ def risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus):
     else:
       pcmux = nxpc
 
-    PC.next = pcmux;
+    if STR | LDR:
+      if not stall:
+        # Stash the current pcmux
+        pcbuffer.next = pcmux
+      else:
+        # Restore that saved PC
+        pcmux = pcbuffer
+
+    PC.next = intbv(B + off)[len(PC):] if stallL[0] else pcmux
 
     sa = aluRes[31]
     sb = B[31]
@@ -188,6 +199,11 @@ def debug_it(kw):
   global _RAM
   kw['dis'] = dis(int(kw['IR']))
   R = kw['R']
+  if kw['iowr']:
+    print 'Storing', '[0x%(PC)04x] <- 0x%(outbus)08x' % kw
+    print
+    return
+    
   print '0x%(PC)04x: 0x%(IR)08x : %(dis)s' % kw
   for i in range(0, 16, 2):
     reg0, reg1 = R[i], R[i + 1]
@@ -240,7 +256,7 @@ if __name__ == '__main__':
 
   sim = Simulation(
     ClkDriver(clk),
-    sparseMemory(memory, inbus, outbus, adr, iowr, stall1, clk),
+    sparseMemory(memory, inbus, outbus, adr, iowr, clk),
     risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus),
     )
   sim.run(120)

@@ -430,7 +430,7 @@ if __name__ == '__main__':
 
   sim = Simulation(
     ClkDriver(clk),
-    sparseMemory(Kernel.memory, inbus, outbus, adr, iowr, stall1, clk),
+    sparseMemory(Kernel.memory, inbus, outbus, adr, iowr, clk),
     risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus),
     Breaker(clk, adr),
     )

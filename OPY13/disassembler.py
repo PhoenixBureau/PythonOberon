@@ -79,8 +79,9 @@ def dis_F2(IR):
   arrow = '->' if IR[29] else '<-'
   width = ' byte' if IR[28] else ''
   ira = IR[28:24]
+  irb = IR[24:20]
   off = IR[20:0]
-  return '%s R%i %s [0x%08x]%s' % (op, ira, arrow, off, width)
+  return '%s R%i %s [R%i + 0x%08x]%s' % (op, ira, arrow, irb, off, width)
 
 
 def dis_F3(IR):
