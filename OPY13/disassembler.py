@@ -20,7 +20,7 @@ def dis(n):
     return dis_F1(IR)
   if not q:
     return dis_F2(IR)
-  if IR[29]:
+  if not IR[29]:
     return dis_F3(IR)
   return dis_F3imm(IR)
 

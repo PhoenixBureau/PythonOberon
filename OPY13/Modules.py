@@ -1,13 +1,14 @@
 #MODULE  Modules;  (*NW 16.2.86 / 22.9.92*)
 
 #	IMPORT SYSTEM, Kernel,
+from collections import defaultdict
 from util import word
 import Files
 
 
 class Kernel(object):
   ModList = None
-  memory = {}
+  memory = {} # defaultdict(int)
 
   @classmethod
   def AllocBlock(class_, size):
@@ -368,22 +369,34 @@ def ThisMod(name):
 
 
 if __name__ == '__main__':
+  from myhdl import StopSimulation
   from disassembler import dis
+  import risc # Gotta do it to set _RAM below.
   from risc import (
+    ibv,
     Simulation,
     ClkDriver,
-    clk,
     sparseMemory,
-    pmout,
-    outbus,
-    PC,
-    iowr,
-    stall1,
     always,
     risc_cpu,
-    iii,
     )
+
+  # Set the debug reference so we can view (low) RAM.
+  risc._RAM = Kernel.memory
+
+  # Our signals.
+  clk = ibv(1)
+  rst = ibv(1, 1)
+  inbus = ibv(32)
+  outbus = ibv(32)
+  adr = ibv(18)
+  iowr = ibv(1)
+  stall1 = ibv(1)
+
+  # Load the module binary.
   m = ThisMod('Pattern2')
+
+  # Display the RAM contents after loading.
   print
   for address in sorted(Kernel.memory):
     instruction = Kernel.memory[address]
@@ -393,14 +406,33 @@ if __name__ == '__main__':
   print
   print
 
-  PC.val[len(PC):] = m.PB
+  # Set PC to start of module code.
+  adr.val[len(adr):] = m.PB
+
+  # "Initialize" the module's variable data so we can see it.
+  for n in range(16):
+    Kernel.memory[n] = n + 1
+
+  # Write a 'nop' at the end to let the RAM load it
+  # Just before the 'BR T 0x0000000f' instruction at
+  # the end of the module's code.
+  Kernel.memory[max(Kernel.memory) + 1] = 0
+
+  # When that instruction loads 0x0 from R15 and jumps to it
+  # we are essentially done.  Arrange to stop the simulation.
+  def Breaker(clk, adr):
+    @always(clk.posedge)
+    def check_break():
+      if adr == 0:
+        print 'Done.'
+        raise StopSimulation
+    return check_break
 
   sim = Simulation(
     ClkDriver(clk),
-    sparseMemory(Kernel.memory, pmout, outbus, PC, iowr, stall1, clk),
-    always(clk.posedge)(risc_cpu),
-    iii(clk, Kernel.memory),
+    sparseMemory(Kernel.memory, inbus, outbus, adr, iowr, stall1, clk),
+    risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus),
+    Breaker(clk, adr),
     )
-  print "PC    : RAM[PC]     ->  IR"
-  print "0x%04x: 0x%08x" % (PC, Kernel.memory[m.PB])
-  sim.run(120)
+
+  sim.run()
