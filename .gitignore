@@ -1,4 +1,5 @@
-translated_compiler/OR*X.Mod.txt
+*.rsc
+*.smb
 
 *.py[cod]
 
