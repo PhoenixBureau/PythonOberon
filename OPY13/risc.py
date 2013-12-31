@@ -144,7 +144,8 @@ def risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus):
     stall = stallL[0]
     stallL[0] = (LDR|STR) and not stall1
     stall1.next = stallL[0]
-
+    print now(), 'stall:', stall, 'stallL:', stallL, 'stall1:', stall1, 'LDR' if LDR else 'STR' if STR else ''
+    print
     iowr.next = STR and not stall1
 
     regwr = (not p) & (not stall) | (LDR & stall1) | (BR & cond & v)
@@ -199,19 +200,22 @@ def debug_it(kw):
   global _RAM
   kw['dis'] = dis(int(kw['IR']))
   R = kw['R']
+
+  print 'Fetch 0x%(PC)04x' % kw, dis(int(_RAM[int(kw['PC'])]))
+  print 'Execute: 0x%(IR)08x = %(dis)s' % kw
+
   if kw['iowr']:
     print 'Storing', '[0x%(PC)04x] <- 0x%(outbus)08x' % kw
     print
     return
     
-  print '0x%(PC)04x: 0x%(IR)08x : %(dis)s' % kw
   for i in range(0, 16, 2):
     reg0, reg1 = R[i], R[i + 1]
-    print 'R%-2i = 0x%08x == %i' % (i + 1, reg1, reg1),
-    print 'R%-2i = 0x%08x == %i' % (i, reg0, reg0)
+    print 'R%-2i = 0x%-8x' % (i + 1, reg1),
+    print 'R%-2i = 0x%-8x' % (i, reg0)
   print
   for i in range(0, 16):
-    print '[%-2x]: 0x%08x' % (i, _RAM[i])
+    print '[%x]: 0x%x' % (i, _RAM[i])
   print
 
 
