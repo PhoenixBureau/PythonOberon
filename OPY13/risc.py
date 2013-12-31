@@ -148,7 +148,7 @@ def risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus):
     print
     iowr.next = STR and not stall1
 
-    regwr = (not p) & (not stall) | (LDR & stall1) | (BR & cond & v)
+    regwr = (not p) & (not stall) | (LDR and not stall1) | (BR & cond & v)
 
     if not rst:
       pcmux = 0
