@@ -1,0 +1,13 @@
+MODULE Pattern2;
+  VAR i, j, k, n: INTEGER;
+    x, y: REAL;
+    s, t, u: SET;
+  BEGIN i := (i + 1) * (i - 1);
+    k := k DIV 17;
+    k := 8*n;
+    k := n DIV 2;
+    k := n MOD 16;
+    x := -y / (x - 1.0);
+    s := s + t * u
+  END Pattern2.
+

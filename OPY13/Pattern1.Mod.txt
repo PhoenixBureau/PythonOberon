@@ -1,0 +1,12 @@
+MODULE Pattern1;
+  VAR ch: CHAR;
+    k: INTEGER;
+    x: REAL;
+    s: SET;
+  BEGIN
+    ch := "0";
+    k := 10;
+    x := 1.0;
+    s := {0, 4, 8}
+  END Pattern1.
+
