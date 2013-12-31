@@ -8,7 +8,7 @@ import Files
 
 class Kernel(object):
   ModList = None
-  memory = {} # defaultdict(int)
+  memory = defaultdict(int)
 
   @classmethod
   def AllocBlock(class_, size):
@@ -369,29 +369,8 @@ def ThisMod(name):
 
 
 if __name__ == '__main__':
-  from myhdl import StopSimulation
   from disassembler import dis
-  import risc # Gotta do it to set _RAM below.
-  from risc import (
-    ibv,
-    Simulation,
-    ClkDriver,
-    sparseMemory,
-    always,
-    risc_cpu,
-    )
-
-  # Set the debug reference so we can view (low) RAM.
-  risc._RAM = Kernel.memory
-
-  # Our signals.
-  clk = ibv(1)
-  rst = ibv(1, 1)
-  inbus = ibv(32)
-  outbus = ibv(32)
-  adr = ibv(18)
-  iowr = ibv(1)
-  stall1 = ibv(1)
+  from risc import RISC
 
   # Load the module binary.
   m = ThisMod('Pattern2')
@@ -406,33 +385,11 @@ if __name__ == '__main__':
   print
   print
 
-  # Set PC to start of module code.
-  adr.val[len(adr):] = m.PB
-
   # "Initialize" the module's variable data so we can see it.
   for n in range(16):
     Kernel.memory[n] = n + 1
 
-  # Write a 'nop' at the end to let the RAM load it
-  # Just before the 'BR T 0x0000000f' instruction at
-  # the end of the module's code.
-  Kernel.memory[max(Kernel.memory) + 1] = 0
-
-  # When that instruction loads 0x0 from R15 and jumps to it
-  # we are essentially done.  Arrange to stop the simulation.
-  def Breaker(clk, adr):
-    @always(clk.posedge)
-    def check_break():
-      if adr == 0:
-        print 'Done.'
-        raise StopSimulation
-    return check_break
-
-  sim = Simulation(
-    ClkDriver(clk),
-    sparseMemory(Kernel.memory, inbus, outbus, adr, iowr, clk),
-    risc_cpu(clk, rst, inbus, adr, iowr, stall1, outbus),
-    Breaker(clk, adr),
-    )
-
-  sim.run()
+  risc_cpu = RISC(Kernel.memory, m.PB)
+  while risc_cpu.pcnext:
+    risc_cpu.cycle()
+    risc_cpu.view()
