@@ -2,7 +2,7 @@ import sys
 import ORPX, ORSX, ORBX, ORGX, disassembler
 
 #fn = '/home/sforman/Desktop/Oberon/PO/Kernel.Mod.txt'
-fn = 'Pattern2.Mod.txt'
+fn = 'Pattern1.Mod.txt'
 
 text = open(fn).read()
 try:

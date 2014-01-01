@@ -19,8 +19,7 @@ class Kernel(object):
     assert p not in class_.memory
     class_.memory[p] = word(val)
 
-SYSTEM = Kernel
-
+SYSTEM = Kernel # Temporary, for convenience.
 
 ModNameLen = 24; ObjMark = 0xF5; maximps = 32; headersize = 64;
 
@@ -155,6 +154,9 @@ def ThisMod(name):
 
       p = Kernel.AllocBlock(size)
       p += headersize
+
+      mod.RB = p
+
       q = p + varsize
       while p < q:
         SYSTEM.PUT(p, 0)
@@ -168,7 +170,37 @@ def ThisMod(name):
         SYSTEM.PUT(p, code[i])
         p += 1; i += 1
 
-      return mod
+  return mod
+
+MT = 12
+
+def fixD(mem, mod, fixorgD):
+  adr = mod.PB + fixorgD
+  while adr != mod.PB:
+    i = mem[adr]
+    mno = i[24:20]
+    offs = i[20:]
+    i[24:20] = MT
+    i[20:] = mno # FIXME look up actual module addr in Module Table
+    mem[adr] = i
+    adr -= offs
+  
+
+
+'''
+adr := mod.code + fixorgP*4;
+WHILE adr # mod.code DO
+  SYSTEM.GET(adr, inst);
+  mno := inst DIV 100000H MOD 10H; (*decompose*)
+  pno := inst DIV 1000H MOD 100H;
+  disp := inst MOD 1000H;
+  SYSTEM.GET(mod.imp + (mno-1)*4, impmod);
+  SYSTEM.GET(impmod.ent + pno*4, dest); dest := dest + impmod.code;
+  offset := (dest - adr - 4) DIV 4;
+  SYSTEM.PUT(adr, (offset MOD 1000000H) + 0F7000000H); (*compose*)
+  adr := adr - disp*4
+
+'''
 
 
 ##
@@ -373,7 +405,9 @@ if __name__ == '__main__':
   from risc import RISC
 
   # Load the module binary.
-  m = ThisMod('Pattern2')
+  m = ThisMod('Pattern1')
+
+  fixD(Kernel.memory, m, 3)
 
   # Display the RAM contents after loading.
   print
@@ -390,6 +424,11 @@ if __name__ == '__main__':
     Kernel.memory[n] = n + 1
 
   risc_cpu = RISC(Kernel.memory, m.PB)
+
+  Kernel.memory[risc_cpu.R[MT]] = m.RB # Set up the Module Table (sort of).
+
+##  risc_cpu.R[13] = 0x0044 # Set Static Base pointer SB.
+  risc_cpu.R[14] = 0x0040 # Set Stack pointer SP.
   while risc_cpu.pcnext:
     risc_cpu.cycle()
     risc_cpu.view()
