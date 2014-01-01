@@ -90,6 +90,11 @@ def log2(x):
   return int(floor(log(x, 2)))
 
 
+def word_print(it):
+  b = bin(it)[2:]
+  print (32 - len(b)) * '0' + b
+
+
 if __name__ == '__main__':
   for n in xrange(2**32):
     print n, decode_set(n)
