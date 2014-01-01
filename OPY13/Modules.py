@@ -6,6 +6,9 @@ from util import word
 import Files
 
 
+MT = 12 # Module Table register.
+
+
 class Kernel(object):
   ModList = None
   memory = defaultdict(int)
@@ -170,9 +173,10 @@ def ThisMod(name):
         SYSTEM.PUT(p, code[i])
         p += 1; i += 1
 
+      fixD(Kernel.memory, mod, fixorgD)
+
   return mod
 
-MT = 12
 
 def fixD(mem, mod, fixorgD):
   adr = mod.PB + fixorgD
@@ -406,8 +410,6 @@ if __name__ == '__main__':
 
   # Load the module binary.
   m = ThisMod('Pattern1')
-
-  fixD(Kernel.memory, m, 3)
 
   # Display the RAM contents after loading.
   print
