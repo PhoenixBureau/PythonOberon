@@ -1,8 +1,14 @@
+#!/usr/bin/env python
 import sys
 import ORPX, ORSX, ORBX, ORGX, disassembler
 
+if len(sys.argv) > 1:
+  modname = sys.argv[-1].partition('.')[0]
+else:
+  modname = 'Pattern1'
+
 #fn = '/home/sforman/Desktop/Oberon/PO/Kernel.Mod.txt'
-fn = 'Pattern2.Mod.txt'
+fn = modname + '.Mod.txt'
 
 text = open(fn).read()
 try:

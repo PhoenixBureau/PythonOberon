@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #MODULE  Modules;  (*NW 16.2.86 / 22.9.92*)
 
 #	IMPORT SYSTEM, Kernel,
@@ -406,11 +407,17 @@ WHILE adr # mod.code DO
 
 
 if __name__ == '__main__':
+  import sys
   from disassembler import dis
   from risc import RISC
 
+  if len(sys.argv) > 1:
+    modname = sys.argv[-1].partition('.')[0]
+  else:
+    modname = 'Pattern2'
+
   # Load the module binary.
-  m = ThisMod('Pattern2')
+  m = ThisMod(modname)
 
   # Display the RAM contents after loading.
   print
