@@ -1,7 +1,7 @@
 #MODULE  Modules;  (*NW 16.2.86 / 22.9.92*)
 
 #	IMPORT SYSTEM, Kernel,
-from collections import defaultdict
+from ram import ByteAddressed32BitRAM
 from util import word
 import Files
 
@@ -11,7 +11,7 @@ MT = 12 # Module Table register.
 
 class Kernel(object):
   ModList = None
-  memory = defaultdict(int)
+  memory = ByteAddressed32BitRAM()
 
   @classmethod
   def AllocBlock(class_, size):
@@ -19,7 +19,8 @@ class Kernel(object):
 
   @classmethod
   def PUT(class_, p, val):
-    assert p not in class_.memory
+    assert p == (p / 4 * 4), repr(p)
+    assert p not in class_.memory.store
     class_.memory[p] = word(val)
 
 SYSTEM = Kernel # Temporary, for convenience.
@@ -152,8 +153,8 @@ def ThisMod(name):
       mod.name = modname
 
       codesize = len(code)
-      size = (headersize + nofent * 2 + len(imports)*4 + len(commands)*4
-              + varsize + codesize*4)
+      size = (headersize + nofent * 2 + len(imports) * 4 + len(commands) * 4
+              + varsize + codesize * 4)
 
       p = Kernel.AllocBlock(size)
       p += headersize
@@ -163,15 +164,15 @@ def ThisMod(name):
       q = p + varsize
       while p < q:
         SYSTEM.PUT(p, 0)
-        p += 1
+        p += 4
 
       mod.PB = p
 
-      q = p + codesize
+      q = p + codesize * 4
       i = 0
       while p < q:
         SYSTEM.PUT(p, code[i])
-        p += 1; i += 1
+        p += 4; i += 1
 
       fixD(Kernel.memory, mod, fixorgD)
 
@@ -179,7 +180,7 @@ def ThisMod(name):
 
 
 def fixD(mem, mod, fixorgD):
-  adr = mod.PB + fixorgD
+  adr = mod.PB + fixorgD * 4
   while adr != mod.PB:
     i = mem[adr]
     mno = i[24:20]
@@ -187,7 +188,7 @@ def fixD(mem, mod, fixorgD):
     i[24:20] = MT
     i[20:] = mno # FIXME look up actual module addr in Module Table
     mem[adr] = i
-    adr -= offs
+    adr -= offs * 4
   
 
 
@@ -413,7 +414,7 @@ if __name__ == '__main__':
 
   # Display the RAM contents after loading.
   print
-  for address in sorted(Kernel.memory):
+  for address in range(m.PB, len(Kernel.memory)+1, 4):
     instruction = Kernel.memory[address]
     b = bin(instruction)[2:]
     b = '0' * (32 - len(b)) + b
@@ -423,7 +424,7 @@ if __name__ == '__main__':
 
   # "Initialize" the module's variable data so we can see it.
   for n in range(16):
-    Kernel.memory[n] = n + 1
+    Kernel.memory[n * 4] = n + 1
 
   risc_cpu = RISC(Kernel.memory, m.PB)
 

@@ -13,11 +13,15 @@ class ByteAddressed32BitRAM(object):
     assert not byte_offset, repr(addr)
     return self.store[word_addr]
 
+  __getitem__ = get
+
   def put(self, addr, word):
     assert 0 <= word < 2**32, repr(word)
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     self.store[word_addr] = word
+
+  __setitem__ = put
 
   def get_byte(self, addr):
     word_addr, byte_offset = divmod(addr, 4)
@@ -35,6 +39,9 @@ class ByteAddressed32BitRAM(object):
       mask = F ^ (255 << n)
       word = self.store[word_addr]
       self.store[word_addr] = word & mask | byte
+
+  def __len__(self):
+    return 4 * max(self.store or [0])
 
   def __repr__(self):
     import pprint

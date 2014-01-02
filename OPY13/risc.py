@@ -14,7 +14,8 @@ class RISC(object):
 
   def cycle(self):
     self.PC = self.pcnext
-    instruction = self.ram[self.PC]
+    instruction = self.ram.get(self.PC)
+    print self.PC, repr(instruction)
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
@@ -109,7 +110,7 @@ class RISC(object):
     return res if isinstance(res, intbv) else intbv(res)[32:0]
 
   def register_instruction(self):
-    self.pcnext = self.PC + 1
+    self.pcnext = self.PC + 4
     self.R[self.ira] = regmux = self.Arithmetic_Logical_Unit()
     self.N = regmux[31]
     self.Z = (regmux[31:0] == 0)
@@ -133,14 +134,14 @@ class RISC(object):
        (self.cc == 7)
        )
       ):
-      self.pcnext = self.PC + 1
+      self.pcnext = self.PC + 4
       return
 
     if self.v: # Save link
       self.R[15] = self.PC + 1
 
     if self.u:
-      self.pcnext = int(self.jmp + self.PC + 1)
+      self.pcnext = int(self.jmp + self.PC + 4)
     elif self.IR[5]:
       self.pcnext = int(self.irc)
     else:
@@ -149,10 +150,13 @@ class RISC(object):
   def ram_instruction(self):
     self.addr = addr = int(self.R[self.irb] + self.off)
     if self.LDR:
-      self.R[self.ira] = self.ram[addr]
+      self.R[self.ira] = (self.ram.get_byte(addr) if self.v
+                          else self.ram[addr])
+    elif self.v:
+      self.ram.put_byte(addr, self.R[self.ira] & 255)
     else:
       self.ram[addr] = self.R[self.ira]
-    self.pcnext = self.PC + 1
+    self.pcnext = self.PC + 4
 
   def view(self):
     kw = self.__dict__.copy()
@@ -179,20 +183,18 @@ class RISC(object):
 
 
 if __name__ == '__main__':
-  from collections import defaultdict
+  from ram import ByteAddressed32BitRAM
   from assembler import Mov_imm, Add, Lsl_imm, T_link
 
-  memory = defaultdict(int)
-  memory.update({
-    0: Mov_imm(8, 1),
-    1: Mov_imm(1, 1),
-    2: Add(1, 1, 8),
-    3: Lsl_imm(1, 1, 2),
-    4: T_link(1),
-    5: 0,
-    6: 0,
-    9: 0,
-    })
+  memory = ByteAddressed32BitRAM()
+  for addr, instruction in enumerate((
+    Mov_imm(8, 1),
+    Mov_imm(1, 1),
+    Add(1, 1, 8),
+    Lsl_imm(1, 1, 2),
+    T_link(1),
+    )):
+    memory.put(addr * 4, int(instruction))
 
   risc_cpu = RISC(memory)
   for _ in range(10):
