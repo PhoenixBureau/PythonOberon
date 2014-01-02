@@ -410,7 +410,7 @@ if __name__ == '__main__':
   from risc import RISC
 
   # Load the module binary.
-  m = ThisMod('Pattern1')
+  m = ThisMod('Pattern2')
 
   # Display the RAM contents after loading.
   print

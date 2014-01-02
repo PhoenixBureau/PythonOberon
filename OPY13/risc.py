@@ -14,8 +14,7 @@ class RISC(object):
 
   def cycle(self):
     self.PC = self.pcnext
-    instruction = self.ram.get(self.PC)
-    print self.PC, repr(instruction)
+    instruction = self.ram[self.PC]
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
@@ -85,9 +84,9 @@ class RISC(object):
     elif self.ASR or self.ROR:
       res = B >> C1 # FIXME not quite right is it?
     elif self.AND:
-      res = B and C1
+      res = B & C1
     elif self.ANN:
-      res = B and not C1
+      res = B & ((2**32-1) ^ C1)
     elif self.IOR:
       res = B | C1
     elif self.XOR:
@@ -104,6 +103,7 @@ class RISC(object):
     elif self.DIV:
       res = intbv(B / C1)
       self.remainder = B % C1
+##      res, self.remainder = divmod(B, C1)
     else:
       res = 0
 
@@ -138,7 +138,7 @@ class RISC(object):
       return
 
     if self.v: # Save link
-      self.R[15] = self.PC + 1
+      self.R[15] = self.PC + 4
 
     if self.u:
       self.pcnext = int(self.jmp + self.PC + 4)
