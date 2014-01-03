@@ -163,6 +163,7 @@ def Read(R):
     x = b - 0x100
   return x
  
+ 
 def InType(R, thismod):
   ref = Read(R)
   if ref < 0:
@@ -312,6 +313,8 @@ def Import(modid, modid1):
 #  (*-------------------------------- Export ---------------------------------*)
 
 def Write(R, x):
+  if x < 0:
+    x += 0x100
   Files.WriteByte(R, x) # (* -128 <= x < 128 *)
 
 

@@ -414,7 +414,7 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     modname = sys.argv[-1].partition('.')[0]
   else:
-    modname = 'Pattern2'
+    modname = 'Kernel'
 
   # Load the module binary.
   m = ThisMod(modname)
@@ -429,16 +429,17 @@ if __name__ == '__main__':
   print
   print
 
-  # "Initialize" the module's variable data so we can see it.
-  for n in range(16):
-    Kernel.memory[n * 4] = n + 1
+  if '-r' in sys.argv:
+    # "Initialize" the module's variable data so we can see it.
+    for n in range(16):
+      Kernel.memory[n * 4] = n + 1
 
-  risc_cpu = RISC(Kernel.memory, m.PB)
+    risc_cpu = RISC(Kernel.memory, m.PB)
 
-  Kernel.memory[risc_cpu.R[MT]] = m.RB # Set up the Module Table (sort of).
+    Kernel.memory[risc_cpu.R[MT]] = m.RB # Set up the Module Table (sort of).
 
-##  risc_cpu.R[13] = 0x0044 # Set Static Base pointer SB.
-  risc_cpu.R[14] = 0x0040 # Set Stack pointer SP.
-  while risc_cpu.pcnext:
-    risc_cpu.cycle()
-    risc_cpu.view()
+  ##  risc_cpu.R[13] = 0x0044 # Set Static Base pointer SB.
+    risc_cpu.R[14] = 0x0040 # Set Stack pointer SP.
+    while risc_cpu.pcnext:
+      risc_cpu.cycle()
+      risc_cpu.view()

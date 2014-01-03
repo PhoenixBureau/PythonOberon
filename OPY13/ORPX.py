@@ -412,11 +412,11 @@ def StandFunc(x, fct, restyp):
 
 def element(x):
   global sym
-#  VAR y: ORG.Item;
   expression(x)
   CheckSetVal(x);
   if sym == ORS.upto:
     sym = ORS.Get()
+    y = ORG.Item()
     expression(y)
     CheckSetVal(y)
     ORG.Set(x, y)
@@ -604,11 +604,11 @@ def SimpleExpression(x):
 def expression(x):
   global sym
   # VAR y: ORG.Item; obj: ORB.Object; rel, xf, yf: INTEGER;
+  y = ORG.Item()
   SimpleExpression(x);
   if (sym >= ORS.eql) and (sym <= ORS.geq):
     rel = sym;
     sym = ORS.Get()
-    y = ORG.Item()
     SimpleExpression(y)
     xf = x.type_.form
     yf = y.type_.form;
@@ -925,7 +925,7 @@ def StatSequence():
             ORG.MakeConstItem(w, ORB.intType, 1)
 
           Check(ORS.do, "no:")
-          x, y, z, w, L1 = ORG.For1(x, y, z, w, L1);
+          x, y, z, w, L1 = ORG.For1(x, y, z, w);
           StatSequence()
           Check(ORS.end, "no END");
           ORG.For2(x, y, w)

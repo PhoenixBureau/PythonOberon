@@ -1083,7 +1083,7 @@ def For0(x, y):
   load(y)
 
 
-def For1(x, y, z, w, L):
+def For1(x, y, z, w):
   global RH
   if z.mode == ORB.Const:
     Put1a(Cmp, RH, y.r, z.a)
