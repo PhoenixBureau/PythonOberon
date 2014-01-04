@@ -8,6 +8,7 @@ import Files
 
 
 MT = 12 # Module Table register.
+SB = 14 # Stack
 
 
 class Kernel(object):
@@ -29,9 +30,10 @@ class Kernel(object):
   @classmethod
   def entable_module(class_, mod):
     mt_entry = class_.ModuleTable + class_.mt_offset
-    class_.memory[mt_entry] = mod.RB
+    class_.memory[mt_entry] = mod.data
+    mod.num = class_.mt_offset / 4
     class_.mt_offset +=4
-    return class_.mt_offset
+##    print 'setting module %s to num %i' % (mod.name, mod.num)
 
 
 SYSTEM = Kernel # Temporary, for convenience.
@@ -39,11 +41,12 @@ SYSTEM = Kernel # Temporary, for convenience.
 ModNameLen = 24; ObjMark = 0xF5; maximps = 32; headersize = 64;
 
 class Module(object):
-  def __init__(self,):
-    self.Command = None
-    self.ModuleName = []
+  def __init__(self, name):
+    self.name = name
     self.next = None
-    self.size, self.IB, self.EB, self.RB, self.CB, self.PB, self.refcnt, self.key = (0 for _ in range(8))
+    (self.size, self.num, self.refcnt, self.key,
+     self.data, self.code, self.imp, self.ent, self.ptr
+     )= (0 for _ in range(9))
 
 
 ##VAR res*: INTEGER;
@@ -169,8 +172,7 @@ def ThisMod(name):
         import_.append(impmod)
         impmod.refcnt += 1
 
-      mod = Module()
-      mod.name = modname
+      mod = Module(modname)
 
       codesize = len(code)
       size = (headersize + nofent * 2 + len(imports) * 4 + len(commands) * 4
@@ -179,14 +181,14 @@ def ThisMod(name):
       p = Kernel.AllocBlock(size)
       p += headersize
 
-      mod.RB = p
+      mod.data = p
 
       q = p + varsize
       while p < q:
         SYSTEM.PUT(p, 0)
         p += 4
 
-      mod.PB = p
+      mod.code = p
 
       q = p + codesize * 4
       i = 0
@@ -194,22 +196,26 @@ def ThisMod(name):
         SYSTEM.PUT(p, code[i])
         p += 4; i += 1
 
+      Kernel.entable_module(mod)
+
       fixD(Kernel.memory, mod, fixorgD, import_)
 
-      mod.IB = Kernel.entable_module(mod)
   return mod
 
 
 def fixD(mem, mod, fixorgD, imported_modules):
-  adr = mod.PB + fixorgD * 4
-  while adr != mod.PB:
+  adr = mod.code + fixorgD * 4
+  while adr != mod.code:
     i = mem[adr]
     mno = i[24:20]
-    print 'llllllllllll', mno
-##    impmod = imported_modules[mno]
+    if not mno:
+      m = mod
+    else:
+      m = imported_modules[mno - 1]
+    offset = m.num * 4
     offs = i[20:]
     i[24:20] = MT
-    i[20:] = mno # FIXME look up actual module addr in Module Table
+    i[20:] = offset
     mem[adr] = i
     adr -= offs * 4
   
@@ -452,7 +458,7 @@ if __name__ == '__main__':
 
   # Display the RAM contents after loading.
   print
-  for address in range(m.PB, len(Kernel.memory)+1, 4):
+  for address in range(m.code, len(Kernel.memory)+1, 4):
     instruction = Kernel.memory[address]
     b = bin(instruction)[2:]
     b = '0' * (32 - len(b)) + b
@@ -461,16 +467,9 @@ if __name__ == '__main__':
   print
 
   if '-r' in sys.argv:
-    # "Initialize" the module's variable data so we can see it.
-    for n in range(16):
-      Kernel.memory[n * 4] = n + 1
-
-    risc_cpu = RISC(Kernel.memory, m.PB)
-
-    Kernel.memory[risc_cpu.R[MT]] = m.RB # Set up the Module Table (sort of).
-
-  ##  risc_cpu.R[13] = 0x0044 # Set Static Base pointer SB.
-    risc_cpu.R[14] = 0x0040 # Set Stack pointer SP.
+    risc_cpu = RISC(Kernel.memory, m.code)
+    risc_cpu.R[MT] = Kernel.ModuleTable
+    risc_cpu.R[SB] = 0x1000 # Set Stack pointer SP.
     while risc_cpu.pcnext:
       risc_cpu.cycle()
       risc_cpu.view()
