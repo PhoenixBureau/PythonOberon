@@ -13,6 +13,8 @@ MT = 12 # Module Table register.
 class Kernel(object):
   ModList = None
   memory = ByteAddressed32BitRAM()
+  ModuleTable=0x10
+  mt_offset=0x0
 
   @classmethod
   def AllocBlock(class_, size):
@@ -23,6 +25,14 @@ class Kernel(object):
     assert p == (p / 4 * 4), repr(p)
     assert p not in class_.memory.store
     class_.memory[p] = word(val)
+
+  @classmethod
+  def entable_module(class_, mod):
+    mt_entry = class_.ModuleTable + class_.mt_offset
+    class_.memory[mt_entry] = mod.RB
+    class_.mt_offset +=4
+    return class_.mt_offset
+
 
 SYSTEM = Kernel # Temporary, for convenience.
 
@@ -76,10 +86,12 @@ def ThisMod(name):
 ##  END err;
 
   res = 0
+  import_ = []
   mod = Kernel.ModList
   while mod is not None and mod.name != name:
     mod = mod.next
   if mod == None: # (*load*)
+    print 'loading:', name
     R = OpenFile(name)
     if R:
 ##      Files.Set(R, F, 0)
@@ -89,11 +101,11 @@ def ThisMod(name):
       size = Files.ReadInt(R)
       print 'Module', modname, key, version, size
 
-      imports = {}
+      imports = []
       impname = Files.ReadString(R)
       while impname:
         modnum = Files.ReadInt(R)
-        imports[impname] = modnum
+        imports.append((impname, modnum))
         impname = Files.ReadString(R)
       print 'Imports', imports
 
@@ -149,6 +161,13 @@ def ThisMod(name):
       print 'fixorgD', fixorgD
       print 'fixorgT', fixorgT
       print 'entry', entry
+      print
+
+
+      for m, n in imports:
+        impmod = ThisMod(m)
+        import_.append(impmod)
+        impmod.refcnt += 1
 
       mod = Module()
       mod.name = modname
@@ -175,22 +194,27 @@ def ThisMod(name):
         SYSTEM.PUT(p, code[i])
         p += 4; i += 1
 
-      fixD(Kernel.memory, mod, fixorgD)
+      fixD(Kernel.memory, mod, fixorgD, import_)
 
+      mod.IB = Kernel.entable_module(mod)
   return mod
 
 
-def fixD(mem, mod, fixorgD):
+def fixD(mem, mod, fixorgD, imported_modules):
   adr = mod.PB + fixorgD * 4
   while adr != mod.PB:
     i = mem[adr]
     mno = i[24:20]
+    print 'llllllllllll', mno
+##    impmod = imported_modules[mno]
     offs = i[20:]
     i[24:20] = MT
     i[20:] = mno # FIXME look up actual module addr in Module Table
     mem[adr] = i
     adr -= offs * 4
   
+
+
 
 
 '''
@@ -207,6 +231,13 @@ WHILE adr # mod.code DO
   adr := adr - disp*4
 
 '''
+
+def do_imports():
+  # (*imports*)
+  res = 0; i = 0;
+
+  
+
 
 
 ##
@@ -414,7 +445,7 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     modname = sys.argv[-1].partition('.')[0]
   else:
-    modname = 'Kernel'
+    modname = 'Pattern12c'
 
   # Load the module binary.
   m = ThisMod(modname)

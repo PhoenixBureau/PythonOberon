@@ -233,7 +233,7 @@ def InType(R, thismod):
 
     modname = Files.ReadString(R)
 
-    if modname[0] != 0x0: # (*re-import*)
+    if modname: # [0] != 0x0: # (*re-import*)
       key = Files.ReadInt(R)
       name = Files.ReadString(R)
       mod = ThisModule(modname, modname, False, key);
@@ -284,7 +284,7 @@ def Import(modid, modid1):
         obj = Object()
         obj.class_ = class_
         obj.name = Files.ReadString(R)
-        obj.typ = eInType(R, thismod)
+        obj.type_ = InType(R, thismod)
         obj.lev = -thismod.lev;
         if class_ == Typ:
           t = obj.type_
@@ -462,6 +462,7 @@ def Export(modid, newSF, key):
 
     obj = obj.next
 
+  Write(R, 0)
 ##  while True:
 ##    Write(R, 0)
 ##    if Files.Length(F) % 4 == 0:
