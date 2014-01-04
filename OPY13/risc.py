@@ -3,7 +3,12 @@ from util import ibv, bits2signed_int, signed
 from disassembler import dis
 
 
+class Trap(Exception): pass
+
+
 class RISC(object):
+
+  MT = 12 # Module Table register.
 
   def __init__(self, ram, PC=0):
     self.ram = ram
@@ -52,6 +57,8 @@ class RISC(object):
       self.register_instruction()
     elif self.q:
       self.branch_instruction()
+      if self.pcnext == self.R[self.MT]:
+        raise Trap(self.IR[8:4])
     else:
       self.ram_instruction()
 
