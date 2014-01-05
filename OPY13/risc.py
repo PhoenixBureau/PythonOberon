@@ -3,6 +3,9 @@ from util import ibv, bits2signed_int, signed
 from disassembler import dis
 
 
+IO_RANGE = 0x0FFFFFFC0
+
+
 class Trap(Exception): pass
 
 
@@ -16,6 +19,7 @@ class RISC(object):
     self.R = [0 for i in range(16)]
     self.H = 0
     self.N = self.Z = self.C = self.OV = 0
+    self.io_ports = {}
 
   def cycle(self):
     self.PC = self.pcnext
@@ -156,7 +160,9 @@ class RISC(object):
 
   def ram_instruction(self):
     self.addr = addr = int(self.R[self.irb] + self.off)
-    if self.LDR:
+    if addr >= IO_RANGE:
+      self.io(self, addr - IO_RANGE)
+    elif self.LDR:
       self.R[self.ira] = (self.ram.get_byte(addr) if self.v
                           else self.ram[addr])
     elif self.v:
@@ -164,6 +170,15 @@ class RISC(object):
     else:
       self.ram[addr] = self.R[self.ira]
     self.pcnext = self.PC + 4
+
+  def io(self, port):
+    device = self.io_ports.get(port)
+    if not device:
+      raise Trap('no device at port 0x%x (aka %i)' % (port, port))
+    if self.LDR:
+      self.R[self.ira] = device.read()
+    else:
+      device.write(self.R[self.ira])
 
   def view(self):
     kw = self.__dict__.copy()
