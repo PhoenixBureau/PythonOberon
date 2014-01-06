@@ -3,6 +3,7 @@ MODULE Kernel;  (*NW/PR  11.4.86 / 27.12.95 / 20.10.2013*)
   CONST SectorLength* = 1024;
     timer = -64; spiData = -48; spiCtrl = -44;
     CARD0 = 1; SPIFAST = 4;
+    dmiCtrl = -32; dmiRead = 0; dmiWrite = 1;
     FSoffset = 10000000H; (*256M bytes*)
     mapsize = 10000H; (*sectors, 65MB*)
 
@@ -186,6 +187,20 @@ MODULE Kernel;  (*NW/PR  11.4.86 / 27.12.95 / 20.10.2013*)
     ASSERT(data MOD 32 = 5); SPIIdle(1) (*deselect card*)
   END WriteSD;
 
+  PROCEDURE ReadDMI(src, dst: INTEGER);
+  BEGIN
+    SYSTEM.PUT(dmiCtrl, dmiRead);
+    SYSTEM.PUT(dmiCtrl, src);
+    SYSTEM.PUT(dmiCtrl, dst);
+  END ReadDMI;
+
+  PROCEDURE WriteDMI(dst, src: INTEGER);
+  BEGIN
+    SYSTEM.PUT(dmiCtrl, dmiWrite);
+    SYSTEM.PUT(dmiCtrl, src);
+    SYSTEM.PUT(dmiCtrl, dst);
+  END WriteDMI;
+
   PROCEDURE InitSecMap*;  (*actuall: init sector map*)
     VAR i: INTEGER;
   BEGIN NofSectors := 0; sectorMap[0] := {0 .. 31}; sectorMap[1] := {0 .. 31};
@@ -215,13 +230,13 @@ MODULE Kernel;  (*NW/PR  11.4.86 / 27.12.95 / 20.10.2013*)
   PROCEDURE GetSector*(src: INTEGER; VAR dst: Sector);
   BEGIN src := src DIV 29; ASSERT(SYSTEM.H(0) = 0);
     src := src * SectorLength + FSoffset;
-    ReadSD(src, SYSTEM.ADR(dst)); ReadSD(src+512, SYSTEM.ADR(dst)+512) 
+    ReadDMI(src, SYSTEM.ADR(dst));
   END GetSector;
   
   PROCEDURE PutSector*(dst: INTEGER; VAR src: Sector);
   BEGIN dst := dst DIV 29; ASSERT(SYSTEM.H(0) =  0);
     dst := dst * SectorLength + FSoffset;
-    WriteSD(dst, SYSTEM.ADR(src)); WriteSD(dst+512, SYSTEM.ADR(src)+512)
+    WriteDMI(dst, SYSTEM.ADR(src));
   END PutSector;
 
 (*-------- Miscellaneous procedures----------*)
