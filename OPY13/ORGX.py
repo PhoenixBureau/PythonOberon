@@ -75,7 +75,7 @@ def Put1(op, a, b, im):
   global pc
   if im < 0:
     op += 0x1000 # (*set v-bit*)
-    im = abs(im)
+##    im = abs(im)
   n = code[pc] = (((a+0x40) * 0x10 + b) * 0x10 + op) * 0x10000 + (im % 0x10000); pc += 1
   print >> sys.stderr, dis(n)
 
