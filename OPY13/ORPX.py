@@ -567,7 +567,7 @@ def SimpleExpression(x):
   if sym == ORS.minus:
     sym = ORS.Get()
     term(x);
-    if x.type_.form in [ORB.Int, ORB.Real, ORB.Set]:
+    if x.type_.form in {ORB.Int, ORB.Real, ORB.Set}:
       ORG.Neg(x)
     else:
       CheckInt(x)
@@ -687,19 +687,19 @@ def StandProc(pno):
     while sym == ORS.comma:
       sym = ORS.Get()
       expression(z)
-      INC(nap)
+      nap += 1
   else:
     y.type_ = ORB.noType
 
   Check(ORS.rparen, "no )");
   if (npar == nap) or (pno in [0, 1]): 
-    if pno in [0, 1]: # (*INC, DEC*)
+    if pno in {0, 1}: # (*INC, DEC*)
       CheckInt(x)
       CheckReadOnly(x);
       if y.type_ != ORB.noType:
         CheckInt(y)
       ORG.Increment(pno, x, y)
-    elif pno in [2, 3]: # (*INCL, EXCL*)
+    elif pno in {2, 3}: # (*INCL, EXCL*)
       CheckSet(x)
       CheckReadOnly(x)
       CheckInt(y)

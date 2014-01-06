@@ -16,7 +16,7 @@ class ByteAddressed32BitRAM(object):
   __getitem__ = get
 
   def put(self, addr, word):
-    assert 0 <= word < 2**32, repr(word)
+    assert 0 <= word <= F, repr(word)
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     self.store[word_addr] = word
@@ -33,12 +33,14 @@ class ByteAddressed32BitRAM(object):
     word_addr, byte_offset = divmod(addr, 4)
     n = 8 * byte_offset
     byte <<= n
-    if word_addr not in self.store:
-      self.store[word_addr] = byte
-    else:
-      mask = F ^ (255 << n)
+    try:
       word = self.store[word_addr]
-      self.store[word_addr] = word & mask | byte
+    except KeyError:
+      pass # just store shifted byte or
+    else: # merge word and shifted byte.
+      mask = F ^ (255 << n)
+      byte |= word & mask
+    self.store[word_addr] = byte
 
   def __len__(self):
     return 4 * max(self.store or [0])
