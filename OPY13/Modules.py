@@ -446,6 +446,7 @@ def do_imports():
 if __name__ == '__main__':
   import sys
   from disassembler import dis
+  from devices import BlockDeviceWithDMI
   from risc import RISC
 
   if len(sys.argv) > 1:
@@ -470,6 +471,9 @@ if __name__ == '__main__':
     risc_cpu = RISC(Kernel.memory, m.code)
     risc_cpu.R[MT] = Kernel.ModuleTable
     risc_cpu.R[SB] = 0x1000 # Set Stack pointer SP.
+
+    store = risc_cpu.io_ports[32] = BlockDeviceWithDMI(Kernel.memory)
+
     while risc_cpu.pcnext:
       risc_cpu.cycle()
       risc_cpu.view()
