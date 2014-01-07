@@ -29,6 +29,9 @@ class ByteAddressed32BitRAM(object):
     return (word >> (8 * byte_offset)) & 255
 
   def put_byte(self, addr, byte):
+    if isinstance(byte, str):
+      assert len(byte) == 1, repr(byte)
+      byte = ord(byte)
     assert 0 <= byte < 256, repr(byte)
     word_addr, byte_offset = divmod(addr, 4)
     n = 8 * byte_offset

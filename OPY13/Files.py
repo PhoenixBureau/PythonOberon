@@ -34,6 +34,7 @@ def Read(r):
 
 def ReadCode(r):
   data = r.read(4)
+  assert len(data) == 4, repr(data)
   i = unpack('>L', data)[0]
   i = word(i)
   return i

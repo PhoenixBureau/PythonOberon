@@ -9,10 +9,15 @@ import Files
 
 MT = 12 # Module Table register.
 SB = 14 # Stack
+DescSize = 80
+
+
+root = None # Global module list.
+MTOrg = 0x100 # Why not?
+AllocPtr = 0
 
 
 class Kernel(object):
-  ModList = None
   memory = ByteAddressed32BitRAM()
   ModuleTable=0x10
   mt_offset=0x0
@@ -24,8 +29,16 @@ class Kernel(object):
   @classmethod
   def PUT(class_, p, val):
     assert p == (p / 4 * 4), repr(p)
-    assert p not in class_.memory.store
-    class_.memory[p] = word(val)
+    class_.memory[p] = val
+
+  @classmethod
+  def PUTBYTE(class_, p, val):
+    class_.memory.put_byte(p, val)
+
+  @classmethod
+  def GET(class_, p):
+    assert p == (p / 4 * 4), repr(p)
+    return class_.memory[p]
 
   @classmethod
   def entable_module(class_, mod):
@@ -71,26 +84,11 @@ def OpenFile(name):
 ##END disp;
 
 def ThisMod(name):
-##  (*search module in list; if not found, load module*)
-##
-##  VAR
-##          mod, impmod, desc: Module;
-##          ch: CHAR; k: SHORTINT;
-##          i, j, offset, align, tdsize, tdadr: INTEGER;
-##          nofimps, nofentries, nofptrs, comsize, constsize, codesize, nofrecs: INTEGER;
-##          size, varsize, key, impkey, p, q, pb, eb: LONGINT;
-##          init: Command;
-##          F: Files.File; R: Files.Rider;
-##          impname, modname: ModuleName;
-##          import: ARRAY maximps OF Module;
-##
-##  PROCEDURE err(n: INTEGER);
-##  BEGIN res := n; COPY(name, importing)
-##  END err;
-
+  global root, AllocPtr
   res = 0
-  import_ = []
-  mod = Kernel.ModList
+  nofimps = 0
+  import_ = [None] * 16
+  mod = root
   while mod is not None and mod.name != name:
     mod = mod.next
   if mod == None: # (*load*)
@@ -104,58 +102,111 @@ def ThisMod(name):
       size = Files.ReadInt(R)
       print 'Module', modname, key, version, size
 
-      imports = []
       impname = Files.ReadString(R)
       while impname:
-        modnum = Files.ReadInt(R)
-        imports.append((impname, modnum))
+        impkey = Files.ReadInt(R)
+        impmod = ThisMod(impname)
+        import_[nofimps] = impmod
+        impmod.refcnt += 1
+        nofimps += 1
         impname = Files.ReadString(R)
-      print 'Imports', imports
+      print 'Imports', import_
 
-      tdx = Files.ReadInt(R) / 4
-      type_descriptors = [
-        Files.ReadInt(R)
-        for _ in range(tdx)
-        ]
-      print 'type_descriptors', type_descriptors
+      mod = Module(modname)
+      mod.data = p = AllocPtr
+      AllocPtr = (p + size + 0x10) / 0x20 * 0x20
+      mod.size = AllocPtr - p
+      mod.num = 1 if root is None else (root.num + 1)
+      mod.next = root
+      root = mod
+
+      p += DescSize
+      mod.key = key
+      SYSTEM.PUT(mod.num * 4 + MTOrg, p) # (*module table entry*)
+
+      n = Files.ReadInt(R)
+      print 'type_descriptors', n
+      for _ in range(0, n, 4):
+        w = Files.ReadInt(R)
+        SYSTEM.PUT(p, w)
+        p += 4
 
       varsize = Files.ReadInt(R)
+      assert varsize == (varsize / 4 * 4), repr(varsize)
       print 'varsize', varsize
+      q = p + varsize
+      while p < q:
+        SYSTEM.PUT(p, 0)
+        p += 4
 
       strx = Files.ReadInt(R)
-      strings = [
-        Files.ReadString(R)
-        for _ in range(tdx)
-        ]
-      print 'strings', strings
+      print 'strings', strx
+      for _ in range(strx):
+        ch = Files.Read(R)
+        SYSTEM.PUTBYTE(p, ch)
+        p += 1
+      while p % 4:
+        SYSTEM.PUTBYTE(p, 0)
+        p += 1
+
+      mod.code = p
 
       code_length = Files.ReadInt(R)
-      code = [
-        Files.ReadCode(R) # Foul hackery!
-        for _ in range(code_length)
-        ]
       print 'code length', code_length
+      for _ in range(0, code_length, 4):
+        instruction = Files.ReadCode(R) # Foul hackery!
+        SYSTEM.PUT(p, instruction)
+        p += 4
 
-      commands = {}
-      command_name = Files.ReadString(R)
-      while command_name:
-        num = Files.ReadInt(R)
-        commands[command_name] = num
-        command_name = Files.ReadString(R)
-      print 'commands', commands
+      mod.imp = p # (*copy imports*)
+
+      for i, impmod in enumerate(import_):
+        if impmod is not None:
+          SYSTEM.PUT(p, impmod.data)
+          p += 4
+
+      mod.cmd = p # (*commands*)
+      ch = Files.Read(R)
+      while ch:
+        while ch:
+          SYSTEM.PUTBYTE(p, ch)
+          p += 1
+          ch = Files.Read(R)
+        while p % 4:
+          SYSTEM.PUTBYTE(p, 0)
+          p += 1
+        n = Files.ReadInt(R)
+        SYSTEM.PUT(p, n)
+        p += 4
+        ch = Files.Read(R)
+      while p % 4:
+        SYSTEM.PUTBYTE(p, 0)
+        p += 1
+
+      mod.ent = p # (*entries*)
 
       nofent = Files.ReadInt(R)
-      entry = Files.ReadInt(R)
-      entries_and_pointers = []
-      while entry != -1:
-        entries_and_pointers.append(entry)
-        entry = Files.ReadInt(R)
-      print 'entries and pointer', entries_and_pointers
+      for _ in range(nofent):
+        w = Files.ReadInt(R)
+        SYSTEM.PUT(p, w)
+        p += 4
+
+      mod.ptr = p # (*pointer references*)
+
+      w = Files.ReadInt(R)
+      while w >= 0:
+        SYSTEM.PUT(p, mod.data + w)
+        p += 4
+        w = Files.ReadInt(R)
+      SYSTEM.PUT(p, 0)
+      p += 4
 
       fixorgP = Files.ReadInt(R)
       fixorgD = Files.ReadInt(R)
       fixorgT = Files.ReadInt(R)
-      entry = Files.ReadInt(R)
+
+      w = Files.ReadInt(R)
+      body = mod.code + w
 
       if Files.Read(R) != "O":
         raise ValueError
@@ -163,285 +214,92 @@ def ThisMod(name):
       print 'fixorgP', fixorgP
       print 'fixorgD', fixorgD
       print 'fixorgT', fixorgT
-      print 'entry', entry
       print
 
+      # (*fixup of BL*)
+      adr = mod.code + fixorgP * 4
+      while adr != mod.code:
+        inst = SYSTEM.GET(adr)
+        mno = inst / 0x100000 % 0x10
+        pno = inst / 0x1000 % 0x100
+        disp = inst % 0x1000
+        impmod_data_addr = SYSTEM.GET(mod.imp + (mno - 1) * 4)
+        impmod = look_up_module_by_data_addr(impmod_data_addr)
+        dest = SYSTEM.GET(impmod.ent + pno * 4)
+        dest = dest + impmod.code
+        offset = (dest - adr - 4) / 4
+        SYSTEM.PUT(adr, (offset % 0x1000000) + 0x0F7000000)
+        adr = adr - disp * 4
 
-      for m, n in imports:
-        impmod = ThisMod(m)
-        import_.append(impmod)
-        impmod.refcnt += 1
+      # (*fixup of LDR/STR/ADD*)
+      adr = mod.code + fixorgD * 4
+      while adr != mod.code:
+        inst = SYSTEM.GET(adr)
+        mno = inst / 0x100000 % 0x10
+        disp = inst % 0x1000
+        if not mno: # (*global*)
+          SYSTEM.PUT(adr, (inst / 0x1000000 * 0x10 + MT) * 0x100000 + mod.num * 4)
 
-      mod = Module(modname)
+        else: # (*import*)
+          impmod_data_addr = SYSTEM.GET(mod.imp + (mno - 1) * 4)
+          impmod = look_up_module_by_data_addr(impmod_data_addr)
+          v = impmod.num
+          SYSTEM.PUT(adr, (inst / 0x1000000 * 0x10 + MT) * 0x100000 + v*4)
 
-      codesize = len(code)
-      size = (headersize + nofent * 2 + len(imports) * 4 + len(commands) * 4
-              + varsize + codesize * 4)
+          inst = SYSTEM.GET(adr + 4)
+          vno = inst % 0x100
+          offset = SYSTEM.GET(impmod.ent + vno * 4)
+          if (inst / 0x100) % 2:
+            offset = offset + impmod.code - impmod.data
+          SYSTEM.PUT(adr+4, inst / 0x10000 * 0x10000 + offset)
 
-      p = Kernel.AllocBlock(size)
-      p += headersize
+        adr = adr - disp * 4
 
-      mod.data = p
+      # (*fixup of type descriptors*)
+      adr = mod.data + fixorgT * 4
+      while adr != mod.data:
+        inst = SYSTEM.GET(adr)
+        mno = inst / 0x1000000 % 0x10
+        vno = inst / 0x1000 % 0x1000
+        disp = inst % 0x1000
+        if not mno: # (*global*)
+          inst = mod.data + vno
+        else: # (*import*)
+          impmod_data_addr = SYSTEM.GET(mod.imp + (mno - 1) * 4)
+          impmod = look_up_module_by_data_addr(impmod_data_addr)
+          offset = SYSTEM.GET(impmod.ent + vno * 4)
+          inst = impmod.data + offset
 
-      q = p + varsize
-      while p < q:
-        SYSTEM.PUT(p, 0)
-        p += 4
-
-      mod.code = p
-
-      q = p + codesize * 4
-      i = 0
-      while p < q:
-        SYSTEM.PUT(p, code[i])
-        p += 4; i += 1
-
-      Kernel.entable_module(mod)
-
-      fixD(Kernel.memory, mod, fixorgD, import_)
+        SYSTEM.PUT(adr, inst)
+        adr = adr - disp * 4
 
   return mod
 
 
-def fixD(mem, mod, fixorgD, imported_modules):
-  adr = mod.code + fixorgD * 4
-  while adr != mod.code:
-    i = mem[adr]
-    mno = i[24:20]
-    if not mno:
-      m = mod
-    else:
-      m = imported_modules[mno - 1]
-    offset = m.num * 4
-    offs = i[20:]
-    i[24:20] = MT
-    i[20:] = offset
-    mem[adr] = i
-    adr -= offs * 4
+def look_up_module_by_data_addr(impmod_data_addr):
+  global root
+  mod = root
+  while mod is not None and mod.data != impmod_data_addr:
+    mod = mod.next
+  return mod
+
+      
+##def fixD(mem, mod, fixorgD, imported_modules):
+##  adr = mod.code + fixorgD * 4
+##  while adr != mod.code:
+##    i = mem[adr]
+##    mno = i[24:20]
+##    if not mno:
+##      m = mod
+##    else:
+##      m = imported_modules[mno - 1]
+##    offset = m.num * 4
+##    offs = i[20:]
+##    i[24:20] = MT
+##    i[20:] = offset
+##    mem[adr] = i
+##    adr -= offs * 4
   
-
-
-
-
-'''
-adr := mod.code + fixorgP*4;
-WHILE adr # mod.code DO
-  SYSTEM.GET(adr, inst);
-  mno := inst DIV 100000H MOD 10H; (*decompose*)
-  pno := inst DIV 1000H MOD 100H;
-  disp := inst MOD 1000H;
-  SYSTEM.GET(mod.imp + (mno-1)*4, impmod);
-  SYSTEM.GET(impmod.ent + pno*4, dest); dest := dest + impmod.code;
-  offset := (dest - adr - 4) DIV 4;
-  SYSTEM.PUT(adr, (offset MOD 1000000H) + 0F7000000H); (*compose*)
-  adr := adr - disp*4
-
-'''
-
-def do_imports():
-  # (*imports*)
-  res = 0; i = 0;
-
-  
-
-
-
-##
-##      p := mod.IB; i := 0;
-##      WHILE i < nofimps DO SYSTEM.PUT(p, import[i]); INC(p, 4); INC(i) END ;
-##
-##      (*entries*) q :=  nofentries*2 + p;
-##      WHILE p < q DO Files.ReadBytes(R, i, 2); SYSTEM.PUT(p, i); INC(p, 2) END ;
-##
-##      (*pointer references*) q := nofptrs*2 + p;
-##      WHILE p < q DO
-##              Files.ReadBytes(R, i, 2); SYSTEM.PUT(p, i); INC(p, 2)
-##      END ;
-##
-##      (*commands*) q := p + comsize;
-##      WHILE p < q DO Files.Read(R, ch); SYSTEM.PUT(p, ch); INC(p) END ;
-##      p := p + align;
-##
-##      (*constants*) q := p + constsize;
-##      WHILE p < q DO Files.Read(R, ch); SYSTEM.PUT(p, ch); INC(p) END ;
-##
-##      (*variables*) q := p + varsize;
-##      WHILE p < q DO SYSTEM.PUT(p, 0); INC(p) END ;
-##
-##      (*code*) q := p + codesize;
-##      WHILE p < q DO Files.Read(R, ch); SYSTEM.PUT(p, ch); INC(p) END ;
-
-
-
-##      IF ch # ObjMark THEN err(2); RETURN NIL END ;
-##      Files.Read(R, ch); Files.ReadBytes(R, varsize, 4);  (*skip*)
-##      Files.ReadBytes(R, nofimps, 2); Files.ReadBytes(R, nofentries, 2);
-##      Files.ReadBytes(R, nofptrs, 2); Files.ReadBytes(R, comsize, 2);
-##      Files.ReadBytes(R, constsize, 2); Files.ReadBytes(R, varsize, 4);
-##      Files.ReadBytes(R, codesize, 2); Files.ReadBytes(R, nofrecs, 2);
-##      Files.ReadBytes(R, key, 4); ReadName(R, modname);
-##      align := (-((nofentries + nofptrs)*2 + comsize)) MOD 4;
-##
-##      (*imports*) res := 0; i := 0;
-##      WHILE (i < nofimps) & (res = 0) DO
-##              Files.ReadBytes(R, impkey, 4); ReadName(R, impname);
-##              impmod := ThisMod(impname);
-##              IF res = 0 THEN
-##                      IF impmod.key = impkey THEN import[i] := impmod; INC(i); INC(impmod.refcnt)
-##                      ELSE err(3); imported := impname
-##                      END
-##              END
-##      END ;
-##      IF res # 0 THEN (*undo*)
-##              WHILE i > 0 DO DEC(i); DEC(import[i].refcnt) END ;
-##              RETURN NIL
-##      END ;
-##
-##      size := headersize + (nofentries +  nofptrs)*2 + nofimps*4 + comsize + 
-##              varsize + codesize + constsize + align;
-##      Kernel.AllocBlock(p, size); mod := SYSTEM.VAL(Module, p);
-##      IF p = 0 THEN err(7); RETURN NIL END ;
-##      mod.size := size;
-##      mod.IB := p + headersize;
-##      mod.EB := mod.IB + nofimps*4;
-##      mod.RB := mod.EB + nofentries*2;
-##      mod.CB := mod.RB + nofptrs*2;
-##      mod.PB := mod.CB + comsize + align + constsize + varsize;
-##      mod.refcnt := 0; mod.key := key;
-##      COPY(modname, mod.name);
-##
-##      p := mod.IB; i := 0;
-##      WHILE i < nofimps DO SYSTEM.PUT(p, import[i]); INC(p, 4); INC(i) END ;
-##
-##      (*entries*) q :=  nofentries*2 + p;
-##      WHILE p < q DO Files.ReadBytes(R, i, 2); SYSTEM.PUT(p, i); INC(p, 2) END ;
-##
-##      (*pointer references*) q := nofptrs*2 + p;
-##      WHILE p < q DO
-##              Files.ReadBytes(R, i, 2); SYSTEM.PUT(p, i); INC(p, 2)
-##      END ;
-##
-##      (*commands*) q := p + comsize;
-##      WHILE p < q DO Files.Read(R, ch); SYSTEM.PUT(p, ch); INC(p) END ;
-##      p := p + align;
-##
-##      (*constants*) q := p + constsize;
-##      WHILE p < q DO Files.Read(R, ch); SYSTEM.PUT(p, ch); INC(p) END ;
-##
-##      (*variables*) q := p + varsize;
-##      WHILE p < q DO SYSTEM.PUT(p, 0); INC(p) END ;
-##
-##      (*code*) q := p + codesize;
-##      WHILE p < q DO Files.Read(R, ch); SYSTEM.PUT(p, ch); INC(p) END ;
-##
-##      (*link*) i := 0;
-##      WHILE i < nofimps DO
-##              pb := import[i].PB; eb := import[i].EB;
-##              Files.ReadBytes(R, offset, 2); p := offset;
-##              WHILE p # 0 DO  (*abs chain*)
-##                      INC(p, mod.PB); SYSTEM.GET(p, q);
-##                      SYSTEM.GET((q DIV 100H) MOD 100H * 2 + eb, offset);
-##                      SYSTEM.PUT(p, disp(pb + offset)); p := q DIV 10000H
-##              END ;
-##              Files.ReadBytes(R, offset, 2); p := offset;
-##              WHILE p # 0 DO  (*pc-rel chain*)
-##                      INC(p, mod.PB); SYSTEM.GET(p, q);
-##                      SYSTEM.GET((q DIV 100H) MOD 100H * 2 + eb, offset);
-##                      SYSTEM.PUT(p, disp((pb + offset) - (p - 1))); p := q DIV 10000H
-##              END ;
-##              INC(i)
-##      END ;
-##
-##      (*type descriptors*) i := 0;
-##      WHILE i < nofrecs DO
-##              Files.ReadBytes(R, tdsize, 2); Files.ReadBytes(R, tdadr, 2);
-##              SYSTEM.NEW(desc, tdsize); SYSTEM.PUT(mod.PB + tdadr, desc);
-##              p := SYSTEM.VAL(LONGINT, desc);
-##              Files.ReadBytes(R, size, 4); SYSTEM.PUT(p, size); INC(p, 4);   (*header*)
-##              Files.Read(R, k); j := 0;
-##              WHILE j < k DO (*base tags*)
-##                      Files.Read(R, ch); Files.ReadBytes(R, q, 4); (*offset or eno*)
-##                      IF ch = 0X THEN INC(q, mod.PB)
-##                      ELSE SYSTEM.GET(import[ORD(ch)-1].EB + q*2, offset);
-##                              q := import[ORD(ch)-1].PB + offset
-##                      END ;
-##                      SYSTEM.GET(q, q); SYSTEM.PUT(p, q); INC(p, 4); INC(j)
-##              END ;
-##              WHILE j < 7 DO q := 0; SYSTEM.PUT(p, q); INC(p, 4); INC(j) END ;
-##              Files.Read(R, k); j := 0;
-##              WHILE j < k DO (*offsets*)
-##                      Files.ReadBytes(R, offset, 2); SYSTEM.PUT(p, offset); INC(p, 2); INC(j)
-##              END ;
-##              INC(i)
-##      END ;
-##
-##      init := SYSTEM.VAL(Command, mod.PB); init; res := 0
-##
-##
-##                ELSE COPY(name, imported); err(1)
-##                END
-##        END ;
-##        RETURN mod
-##END ThisMod;
-##
-##PROCEDURE ThisCommand*(mod: Module; name: ARRAY OF CHAR): Command;
-##        VAR i: INTEGER; ch: CHAR;
-##                        comadr: LONGINT; com: Command;
-##BEGIN com := NIL;
-##        IF mod # NIL THEN
-##                comadr := mod.CB; res := 5;
-##                LOOP SYSTEM.GET(comadr, ch); INC(comadr);
-##                        IF ch = 0X THEN (*not found*) EXIT END ;
-##                        i := 0;
-##                        LOOP
-##                                IF ch # name[i] THEN EXIT END ;
-##                                INC(i);
-##                                IF ch = 0X THEN res := 0; EXIT END ;
-##                                SYSTEM.GET(comadr, ch); INC(comadr)
-##                        END ;
-##                        IF res = 0 THEN (*match*)
-##                                SYSTEM.GET(comadr, i); com := SYSTEM.VAL(Command, mod.PB + i); EXIT
-##                        ELSE
-##                                WHILE ch > 0X DO SYSTEM.GET(comadr, ch); INC(comadr) END ;
-##                                INC(comadr, 2)
-##                        END
-##                END
-##        END ;
-##        RETURN com
-##END ThisCommand;
-##
-##PROCEDURE unload(mod: Module; all: BOOLEAN);
-##        VAR p: LONGINT; imp: Module;
-##BEGIN p := mod.IB;
-##        WHILE p < mod.EB DO  (*scan imports*)
-##                SYSTEM.GET(p, imp);
-##                IF imp # NIL THEN
-##                        DEC(imp.refcnt);
-##                        IF all & (imp.refcnt = 0) THEN unload(imp, all) END
-##                END ; 
-##                INC(p, 4)
-##        END ;
-##        Kernel.FreeBlock(SYSTEM.VAL(LONGINT, mod))
-##END unload;
-##
-##PROCEDURE Free*(name: ARRAY OF CHAR; all: BOOLEAN);
-##        VAR mod: Module;
-##BEGIN mod :=  SYSTEM.VAL(Module, Kernel.ModList);
-##        LOOP
-##                IF mod = NIL THEN res := 1; EXIT END ;
-##                IF name = mod.name THEN
-##                        IF mod.refcnt = 0 THEN unload(mod, all); res := 0 ELSE res := 2 END ;
-##                        EXIT
-##                END ;
-##                mod := mod.next
-##        END
-##END Free;
-##
-##BEGIN
-##IF Kernel.err = 0 THEN loop := ThisCommand(ThisMod("Oberon"), "Loop") END ;
-##loop
-##END Modules.
-
 
 if __name__ == '__main__':
   import sys
@@ -452,28 +310,28 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     modname = sys.argv[-1].partition('.')[0]
   else:
-    modname = 'Pattern12c'
+    modname = 'Pattern1'
 
   # Load the module binary.
   m = ThisMod(modname)
 
-  # Display the RAM contents after loading.
-  print
-  for address in range(m.code, len(Kernel.memory)+1, 4):
-    instruction = Kernel.memory[address]
-    b = bin(instruction)[2:]
-    b = '0' * (32 - len(b)) + b
-    print 'memory[0x%04x] = 0x%08x %s %s' % (address, instruction, b, dis(instruction))
-  print
-  print
-
-  if '-r' in sys.argv:
-    risc_cpu = RISC(Kernel.memory, m.code)
-    risc_cpu.R[MT] = Kernel.ModuleTable
-    risc_cpu.R[SB] = 0x1000 # Set Stack pointer SP.
-
-    store = risc_cpu.io_ports[32] = BlockDeviceWithDMI(Kernel.memory)
-
-    while risc_cpu.pcnext:
-      risc_cpu.cycle()
-      risc_cpu.view()
+##  # Display the RAM contents after loading.
+##  print
+##  for address in range(m.code, len(Kernel.memory)+1, 4):
+##    instruction = Kernel.memory[address]
+##    b = bin(instruction)[2:]
+##    b = '0' * (32 - len(b)) + b
+##    print 'memory[0x%04x] = 0x%08x %s %s' % (address, instruction, b, dis(instruction))
+##  print
+##  print
+##
+##  if '-r' in sys.argv:
+##    risc_cpu = RISC(Kernel.memory, m.code)
+##    risc_cpu.R[MT] = Kernel.ModuleTable
+##    risc_cpu.R[SB] = 0x1000 # Set Stack pointer SP.
+##
+##    store = risc_cpu.io_ports[32] = BlockDeviceWithDMI(Kernel.memory)
+##
+##    while risc_cpu.pcnext:
+##      risc_cpu.cycle()
+##      risc_cpu.view()
