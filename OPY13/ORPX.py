@@ -259,7 +259,7 @@ def Parameter(par):
   x = ORG.Item()
   expression(x);
   if par != None:
-    varpar = par.class_ == ORB.Par;
+    varpar = par.class_ == ORB.Par
     if CompTypes(par.type_, x.type_, varpar):
       if not varpar:
         ORG.ValueParam(x)
@@ -285,6 +285,20 @@ def Parameter(par):
 
     elif (par.type_.form == ORB.Array) and (par.type_.base.form == ORB.Int) and (par.type_.size == x.type_.size):
       x = ORG.VarParam(x, par.type_)
+
+##    elif (par.type_.form == ORB.Array) and (x.type_.form == ORB.Record):
+##      print 'warning!'
+##      x = ORG.VarParam(x, par.type_)
+##
+##    elif (par.type_.form == ORB.Array) and (x.type_.form == ORB.Array):
+##      print 'wawawawarningrningwarningrningwawarningrningwarningrning!'
+##      x = ORG.VarParam(x, par.type_)
+##
+##    elif varpar and ((par.type_.form == ORB.Array)
+##                     and (par.type_.base.form == ORB.Proc)
+##                     and (x.type_.form == ORB.Int)):
+##      print 'warning!warning'
+##      ORG.VarParam(x, par.type_) 
 
     else:
       ORS.Mark("incompatible parameters")
@@ -817,6 +831,7 @@ def StatSequence():
           sym = ORS.Get()
           rx = ORG.PrepCall(x)
           ParamList(x);
+##          if (x.type_.form == ORB.Proc) :#and (x.type_.base.form == ORB.NoTyp):
           if (x.type_.form == ORB.Proc) and (x.type_.base.form == ORB.NoTyp):
             ORG.Call(x, rx)
           else:
@@ -1413,7 +1428,7 @@ def Declarations(varsize):
 
 
 def ProcedureDecl():
-  global sym, procid, exno, level
+  global sym, exno, level
 ##  VAR proc: ORB.Object;
 ##    type_: ORB.Type;
 ##    procid: ORS.Ident;

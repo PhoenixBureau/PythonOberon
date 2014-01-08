@@ -1165,7 +1165,7 @@ def PrepCall(x):
 
 
 def Call(x, r):
-  global RH, inhibitCalls
+  global RH, inhibitCalls, fixorgP
   if inhibitCalls and (x.r != 11):
     ORS.Mark("inadmissible call")
   else:

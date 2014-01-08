@@ -195,7 +195,7 @@ def InType(R, thismod):
       t.len_ = Files.ReadNum(R) # (*TD adr/exno*)
       t.nofpar = Files.ReadNum(R) #  (*ext level*)
       t.size = Files.ReadNum(R)
-      Read(R, class_);
+      class_ = Read(R)
       while class_ != 0: # (*fields*)
         fld = Object()
         fld.class_ = class_
@@ -218,7 +218,7 @@ def InType(R, thismod):
       np = 0
       class_ = Read(R)
       while class_ != 0: # (*parameters*)
-        NEW(par)
+        par = Object()
         par.class_ = class_
         readonly = Read(R)
         par.rdo = readonly == 1 
