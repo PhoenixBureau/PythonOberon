@@ -222,7 +222,6 @@ def selector(x):
 
 
 def CompTypes(t0, t1, varpar):
-  global sym
 
   def EqualSignatures(t0, t1):
     com = True;
@@ -285,20 +284,6 @@ def Parameter(par):
 
     elif (par.type_.form == ORB.Array) and (par.type_.base.form == ORB.Int) and (par.type_.size == x.type_.size):
       x = ORG.VarParam(x, par.type_)
-
-##    elif (par.type_.form == ORB.Array) and (x.type_.form == ORB.Record):
-##      print 'warning!'
-##      x = ORG.VarParam(x, par.type_)
-##
-##    elif (par.type_.form == ORB.Array) and (x.type_.form == ORB.Array):
-##      print 'wawawawarningrningwarningrningwawarningrningwarningrning!'
-##      x = ORG.VarParam(x, par.type_)
-##
-##    elif varpar and ((par.type_.form == ORB.Array)
-##                     and (par.type_.base.form == ORB.Proc)
-##                     and (x.type_.form == ORB.Int)):
-##      print 'warning!warning'
-##      ORG.VarParam(x, par.type_) 
 
     else:
       ORS.Mark("incompatible parameters")
@@ -831,7 +816,6 @@ def StatSequence():
           sym = ORS.Get()
           rx = ORG.PrepCall(x)
           ParamList(x);
-##          if (x.type_.form == ORB.Proc) :#and (x.type_.base.form == ORB.NoTyp):
           if (x.type_.form == ORB.Proc) and (x.type_.base.form == ORB.NoTyp):
             ORG.Call(x, rx)
           else:
