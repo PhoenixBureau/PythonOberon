@@ -420,7 +420,7 @@ def OutType(R, t):
       Write(R, 0)
 
 def Export(modid, newSF, key):
-
+  global Ref
   Ref = Record + 1
   filename = MakeFileName(modid, ".smb")
   R = Files.New(filename)
@@ -468,8 +468,8 @@ def Export(modid, newSF, key):
 ##    if Files.Length(F) % 4 == 0:
 ##      break
 
-  for Ref in range(Record+1, maxTypTab): # Double check range! FIXME
-    typtab[Ref] = None
+  for r in range(Record+1, maxTypTab): # Double check range! FIXME
+    typtab[r] = None
 
 ##  Files.Set(R, F, 0)
 ##  sum = 0; # (* compute key (checksum) *)
