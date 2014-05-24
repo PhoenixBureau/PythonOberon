@@ -4,24 +4,6 @@ from pprint import pformat
 F = 2**32-1
 
 
-class WordAddressed32BitRAM(object):
-
-  def __init__(self):
-    self.store = {}
-
-  def get(self, addr):
-    return self.store[addr]
-
-  __getitem__ = get
-
-  def put(self, addr, word):
-    assert 0 <= word <= F, repr(word)
-    self.store[addr] = word
-
-  __setitem__ = put
-
-
-
 class ByteAddressed32BitRAM(object):
 
   def __init__(self):
