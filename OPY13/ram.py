@@ -4,6 +4,10 @@ from pprint import pformat
 F = 2**32-1
 
 
+class WordAddressed32BitRAM(object):
+  pass
+
+
 class ByteAddressed32BitRAM(object):
 
   def __init__(self):
