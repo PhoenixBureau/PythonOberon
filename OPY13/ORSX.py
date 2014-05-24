@@ -150,8 +150,9 @@ def Mark(msg):
   global errpos, errcnt
   p = Pos()
   if p > errpos and errcnt < 25:
-    print >> sys.stderr, "\npos %i %s" % (p, msg)
-    raise ValueError
+    msg = "\npos %i %s" % (p, msg)
+    print >> sys.stderr, msg
+    raise ValueError(msg)
   errcnt += 1
   errpos = p + 4
 

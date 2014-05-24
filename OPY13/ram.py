@@ -1,3 +1,4 @@
+from pprint import pformat
 
 
 F = 2**32-1
@@ -46,16 +47,15 @@ class ByteAddressed32BitRAM(object):
     self.store[word_addr] = byte
 
   def __len__(self):
-    return 4 * max(self.store or [0])
+    return (4 * max(self.store)) if self.store else 0
 
   def __repr__(self):
-    import pprint
-    return pprint.pformat(self.store)
+    return pformat(self.store)
 
 
 if __name__ == '__main__':
   d = ByteAddressed32BitRAM()
   for n, ch in enumerate("Hello world!"):
-    d.put_byte(n, ord(ch))
+    d.put_byte(n, ch)
   print d
   print ''.join(chr(d.get_byte(n)) for n in range(12))
