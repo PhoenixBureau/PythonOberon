@@ -14,6 +14,12 @@ class WordAddressed32BitRAM(object):
 
   __getitem__ = get
 
+  def put(self, addr, word):
+    assert 0 <= word <= F, repr(word)
+    self.store[addr] = word
+
+  __setitem__ = put
+
 
 
 class ByteAddressed32BitRAM(object):
