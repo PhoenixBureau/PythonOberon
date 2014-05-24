@@ -5,7 +5,15 @@ F = 2**32-1
 
 
 class WordAddressed32BitRAM(object):
-  pass
+
+  def __init__(self):
+    self.store = {}
+
+  def get(self, addr):
+    return self.store[addr]
+
+  __getitem__ = get
+
 
 
 class ByteAddressed32BitRAM(object):
