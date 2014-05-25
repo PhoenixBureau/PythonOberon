@@ -1,106 +1,3 @@
-'''
-A simple disassembler for Wirth RISC binary.
-
-Currently only the crudest decoding is performed on a single instruction,
-no extra information is used, in particular symbols are not supported.
-
-This module provides one function dis(n) which takes an integer and
-returns a human-readable string description of the order code.
-'''
-from myhdl import intbv, concat
-from util import ops_rev, cmps
-
-
-def dis(n):
-  IR = intbv(n)[32:]
-  p, q = IR[31], IR[30]
-  if not p:
-    if not q:
-      return dis_F0(IR)
-    return dis_F1(IR)
-  if not q:
-    return dis_F2(IR)
-  if not IR[29]:
-    return dis_F3(IR)
-  return dis_F3imm(IR)
-
-
-def opof(op):
-  return ops_rev[int(op)]
-
-
-def dis_F0(IR):
-  op, ira, irb, irc = IR[20:16], IR[28:24], IR[24:20], IR[4:0]
-  q = IR[30]
-  u = IR[29]
-  if not op: # Mov
-    return dis_Mov(IR)
-  return '%s R%i <- R%i R%i (u: %s)' % (
-    opof(op),
-    ira, irb, irc,
-    u,
-    )
-
-
-def dis_Mov(IR):
-  ira = IR[28:24]
-  q = IR[30]
-  u = IR[29]
-  if q: # immediate
-    imm = IR[16:0]
-    if u:
-      imm = imm << 15
-    else:
-      v = IR[28]
-      imm = concat(*([v] * 16 + [imm]))
-    return 'Mov R%i <- 0x%08x' % (ira, imm)
-  if not u:
-    return 'Mov R%i <- R%i' % (ira, IR[4:0])
-  if IR[0]: # i.e. irc[0]
-    return 'Mov R%i <- (N,Z,C,OV, 0..01010000)' % (ira,)
-  return 'Mov R%i <- H' % (ira,)
-  
-
-def dis_F1(IR):
-  op, ira, irb = IR[20:16], IR[28:24], IR[24:20]
-  u = IR[29]
-  v = IR[28]
-  imm = IR[16:0]
-  if not op: # Mov
-    return dis_Mov(IR)
-##    return '%s R%i <- %i (u: %s, v: %s)' % (
-##      opof(op), ira, imm, u, v)
-  return '%s R%i <- R%i %i (u: %s, v: %s)' % (
-    opof(op), ira, irb, imm, u, v)
-
-
-def dis_F2(IR):
-  op = 'Store' if IR[29] else 'Load'
-  arrow = '->' if IR[29] else '<-'
-  width = ' byte' if IR[28] else ''
-  ira = IR[28:24]
-  irb = IR[24:20]
-  off = IR[20:0]
-  return '%s R%i %s [R%i + 0x%08x]%s' % (op, ira, arrow, irb, off, width)
-
-
-def dis_F3(IR):
-  link = '_link' if IR[28] else ''
-  invert = int(IR[27])
-  cc = int(IR[27:24])
-  op = cmps[cc, invert]
-  irc = IR[4:0]
-  return 'BR%s %s [R%i]' % (link, op, irc)
-
-
-def dis_F3imm(IR):
-  link = '_link' if IR[28] else ''
-  invert = int(IR[27])
-  cc = int(IR[27:24])
-  op = cmps[cc, invert]
-  off = IR[24:0]
-  return 'BR%s %s 0x%08x' % (link, op, off)
-
 
 data = [int(n, 2) for n in '''\
 01001110111010010000000000011000
@@ -1021,6 +918,7 @@ data = [int(n, 2) for n in '''\
 
 
 if __name__ == '__main__':
+  from assembler import dis
   for i, n in enumerate(data):
   ##  print '0x%08x' % i, dis(n)
     print dis(n)
