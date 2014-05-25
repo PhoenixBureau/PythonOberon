@@ -1,5 +1,5 @@
 import unittest
-from ram import ByteAddressed32BitRAM
+from risc import ByteAddressed32BitRAM
 
 
 class TestSequenceFunctions(unittest.TestCase):
