@@ -1,18 +1,28 @@
 import unittest
-from ram import ByteAddressed32BitRAM
+from mock import MagicMock
+from risc import RISC, ByteAddressed32BitRAM
 
 
-class TestSequenceFunctions(unittest.TestCase):
+class TestRISC(unittest.TestCase):
+
+  def setUp(self):
+    self.ram = MagicMock(name='RAM')
+    self.cpu = RISC(self.ram)
+
+  def test_Mov_imm(self):
+    # Mov_imm(8, 1)
+    self.ram.__getitem__.return_value = 0b1001000000000000000000000000001
+    self.cpu.cycle()
+    self.assertEqual(1, self.cpu.R[8])
+
+
+class TestByteAddressed32BitRAM(unittest.TestCase):
 
   def setUp(self):
     self.ram = ByteAddressed32BitRAM()
 
   def test_get_invalid_address(self):
-    self.assertRaises(
-      KeyError,
-      self.ram.get,
-      24,
-      )
+    self.assertRaises(KeyError, self.ram.get, 24)
 
   def test_get_invalid_address_getattr(self):
     self.assertRaises(KeyError, lambda: self.ram[24])
@@ -43,5 +53,4 @@ class TestSequenceFunctions(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
-
+  unittest.main()
