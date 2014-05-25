@@ -1,8 +1,26 @@
 import unittest
-from risc import ByteAddressed32BitRAM
+from mock import MagicMock
+from risc import RISC, ByteAddressed32BitRAM
 
 
-class TestSequenceFunctions(unittest.TestCase):
+class TestRISC(unittest.TestCase):
+
+  def setUp(self):
+    self.ram = MagicMock(name='RAM')
+    self.cpu = RISC(self.ram)
+
+  def test_what(self):
+    try:
+      self.cpu.cycle()
+    except:
+      pass
+    print self.ram.mock_calls
+
+##    self.ram.get.return_value = 0
+##    self.assertEqual(self.ram.get(24), 0)
+
+
+class TestByteAddressed32BitRAM(unittest.TestCase):
 
   def setUp(self):
     self.ram = ByteAddressed32BitRAM()
