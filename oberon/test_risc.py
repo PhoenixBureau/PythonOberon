@@ -1,4 +1,4 @@
-import unittest, traceback
+import unittest
 from mock import MagicMock
 from risc import RISC, ByteAddressed32BitRAM
 
@@ -14,26 +14,6 @@ class TestRISC(unittest.TestCase):
     self.ram.__getitem__.return_value = 0b1001000000000000000000000000001
     self.cpu.cycle()
     self.assertEqual(1, self.cpu.R[8])
-
-##  def test_what(self):
-##    self.ram.__getitem__.return_value = 0
-##    print
-##
-#    self.cpu.view() #  FIXME:
-##    Traceback (most recent call last):
-##      File "test_risc.py", line 15, in test_what
-##        self.cpu.view()
-##      File "risc.py", line 187, in view
-##        kw['A'] = self.R[self.ira]
-##    AttributeError: 'RISC' object has no attribute 'ira'
-##
-##    try:
-##      self.cpu.cycle()
-##    except:
-##      traceback.print_exc()
-##    self.cpu.view()
-##    print self.ram.mock_calls
-##    print '-' * 40
 
 
 class TestByteAddressed32BitRAM(unittest.TestCase):
