@@ -8,11 +8,7 @@ class TestSequenceFunctions(unittest.TestCase):
     self.ram = ByteAddressed32BitRAM()
 
   def test_get_invalid_address(self):
-    self.assertRaises(
-      KeyError,
-      self.ram.get,
-      24,
-      )
+    self.assertRaises(KeyError, self.ram.get, 24)
 
   def test_get_invalid_address_getattr(self):
     self.assertRaises(KeyError, lambda: self.ram[24])
@@ -43,5 +39,4 @@ class TestSequenceFunctions(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
-
+  unittest.main()
