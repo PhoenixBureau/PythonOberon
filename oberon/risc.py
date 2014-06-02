@@ -254,7 +254,7 @@ class ByteAddressed32BitRAM(object):
     self.store[word_addr] = byte
 
   def __len__(self):
-    return (4 * max(self.store)) if self.store else 0
+    return (4 * (1 + max(self.store))) if self.store else 0
 
   def __repr__(self):
     return pformat(self.store)
