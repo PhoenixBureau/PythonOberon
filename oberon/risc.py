@@ -25,7 +25,7 @@ class RISC(object):
 
   def cycle(self):
     self.PC = self.pcnext
-    instruction = self.ram[self.PC]
+    instruction = self.ram[self.PC << 2]
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
@@ -123,7 +123,7 @@ class RISC(object):
     return res if isinstance(res, intbv) else intbv(res)[32:0]
 
   def register_instruction(self):
-    self.pcnext = self.PC + 4
+    self.pcnext = self.PC + 1
     self.R[self.ira] = regmux = self.Arithmetic_Logical_Unit()
     self.N = regmux[31]
     self.Z = (regmux[31:0] == 0)
@@ -147,14 +147,14 @@ class RISC(object):
        (self.cc == 7)
        )
       ):
-      self.pcnext = self.PC + 4
+      self.pcnext = self.PC + 1
       return
 
     if self.v: # Save link
       self.R[15] = self.PC + 4
 
     if self.u:
-      self.pcnext = int(self.jmp + self.PC + 4)
+      self.pcnext = int(self.jmp + self.PC + 1)
     elif self.IR[5]:
       self.pcnext = int(self.irc)
     else:
@@ -171,7 +171,7 @@ class RISC(object):
       self.ram.put_byte(addr, self.R[self.ira] & 255)
     else:
       self.ram[addr] = self.R[self.ira]
-    self.pcnext = self.PC + 4
+    self.pcnext = self.PC + 1
 
   def io(self, port):
     device = self.io_ports.get(port)
@@ -200,10 +200,6 @@ class RISC(object):
       print 'R%-2i = 0x%-8x' % (i + 1, reg1),
       print 'R%-2i = 0x%-8x' % (i, reg0)
     print
-
-####    for i in range(0, 16):
-####      print '[%x]: 0x%x' % (i, _RAM[i])
-####    print
 
 
 class ByteAddressed32BitRAM(object):
