@@ -8,7 +8,8 @@ F = 2**32-1
 IO_RANGE = 0x0FFFFFFC0
 
 
-class Trap(Exception): pass
+class Trap(Exception):
+  pass
 
 
 class RISC(object):
@@ -32,8 +33,15 @@ class RISC(object):
 
   def decode(self, instruction):
     self.IR = IR = ibv(32, instruction)
-    self.p, self.q, self.u, self.v, self.w = IR(31), IR(30), IR(29), IR(28), IR(16)
-    self.op, self.ira, self.irb, self.irc = IR(20, 16), IR(28, 24), IR(24, 20), IR(4, 0)
+    self.p = IR(31)
+    self.q = IR(30)
+    self.u = IR(29)
+    self.v = IR(28)
+    self.w = IR(16)
+    self.op = IR(20, 16)
+    self.ira = IR(28, 24)
+    self.irb = IR(24, 20)
+    self.irc = IR(4, 0)
     self.cc = IR(27, 24)
     self.imm = IR(16, 0)
     self.off = IR(20, 0)
@@ -71,13 +79,18 @@ class RISC(object):
   def Arithmetic_Logical_Unit(self):
     B = self.R[self.irb]
 
-    bits = 16 * [self.v] + [self.imm]
-    C1 = self.C1 = concat(*bits) if self.q else self.C0
+    C1 = self.C1 = concat(
+      self.v, self.v, self.v, self.v,
+      self.v, self.v, self.v, self.v,
+      self.v, self.v, self.v, self.v,
+      self.v, self.v, self.v, self.v,
+      self.imm,
+      ) if self.q else self.C0
 
     if self.MOV:
       # (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
       if self.q:
-        res = C1 if not self.u else concat(self.imm, intbv(0)[16:])
+        res = C1 if not self.u else (self.imm << 16)
       else:
         # (~u ? C0 : ... )) :
         if not self.u:
@@ -87,11 +100,7 @@ class RISC(object):
           if not self.irc[0]:
             res = self.H
           else:
-            res = concat(
-              self.N, self.Z, self.C, self.OV,
-              intbv(0)[20:],
-              intbv(0b01010000),
-              )
+            res = concat(self.N, self.Z, self.C, self.OV) << 28 | 80
     elif self.LSL:
       res = B << C1
     elif self.ASR or self.ROR:
