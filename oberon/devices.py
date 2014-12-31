@@ -1,3 +1,4 @@
+from sys import stderr
 from time import time
 
 
@@ -88,7 +89,7 @@ class LEDs(object):
     return 0
 
   def write(self, word):
-    print 'LEDs', bin(word)[2:]
+    print >> stderr, 'LEDs', bin(word)[2:]
 
 
 if __name__ == '__main__':

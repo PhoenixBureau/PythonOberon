@@ -1,3 +1,4 @@
+from sys import stderr
 from pprint import pformat
 from myhdl import intbv
 from util import ibv, bits2signed_int, signed
@@ -36,7 +37,7 @@ class RISC(object):
     PC = self.pcnext
     if PC > 0b1000000000000000000000000:
       PC -= 0b1000000000000000000000000
-      print '! ROM!', hex(PC)
+      print >> stderr, '! ROM!', hex(PC)
     return PC
 
   def decode(self, instruction):
