@@ -366,6 +366,7 @@ class blong(binary_addressing_mixin, long): pass
 
 if __name__ == '__main__':
 ##  from assembler import Mov_imm, Add, Lsl_imm, T_link
+  from devices import LEDs
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
@@ -380,6 +381,7 @@ if __name__ == '__main__':
     memory.put(addr * 4, int(instruction))
 
   risc_cpu = RISC(memory)
+  risc_cpu.io_ports[4] = LEDs()
   for _ in range(100):
     risc_cpu.cycle()
     risc_cpu.view()

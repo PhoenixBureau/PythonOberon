@@ -82,6 +82,15 @@ class clock(object):
     return int(round(1000 * time()))
 
 
+class LEDs(object):
+
+  def read(self):
+    return 0
+
+  def write(self, word):
+    print 'LEDs', bin(word)[2:]
+
+
 if __name__ == '__main__':
   from pprint import pprint
   from ram import ByteAddressed32BitRAM
