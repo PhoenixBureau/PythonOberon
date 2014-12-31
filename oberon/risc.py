@@ -283,6 +283,14 @@ class RISC(object):
     print
 
 
+_BYTE_MASKS = (
+  0b11111111111111111111111100000000,
+  0b11111111111111110000000011111111,
+  0b11111111000000001111111111111111,
+  0b00000000111111111111111111111111,
+  )
+
+
 class ByteAddressed32BitRAM(object):
 
   def __init__(self):
@@ -323,15 +331,9 @@ class ByteAddressed32BitRAM(object):
     except KeyError: # nothing there yet so
       pass # just store shifted byte, or
     else: # merge word and shifted byte
-      mask = F ^ (255 << n)
-      # mask should now be one of:
-      # 0b11111111111111111111111100000000
-      # 0b11111111111111110000000011111111
-      # 0b11111111000000001111111111111111
-      # 0b00000000111111111111111111111111
-      # Now AND the mask with the memory word to clear the bits for the
-      # pre-shifted byte, and OR the result with same.
-      byte |= word & mask
+      # AND mask with the memory word to clear the bits for the
+      # pre-shifted byte and OR the result with it.
+      byte |= word & _BYTE_MASKS[byte_offset]
     self.store[word_addr] = byte
 
   def __len__(self):
