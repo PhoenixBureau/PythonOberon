@@ -26,11 +26,18 @@ class RISC(object):
     self.io_ports = {}
 
   def cycle(self):
-    self.PC = self.pcnext
+    self.PC = self._hmm()
     instruction = self.ram[self.PC << 2]
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
+
+  def _hmm(self):
+    PC = self.pcnext
+    if PC > 0b1000000000000000000000000:
+      PC -= 0b1000000000000000000000000
+      print '! ROM!', hex(PC)
+    return PC
 
   def decode(self, instruction):
     self.IR = IR = bint(instruction)
