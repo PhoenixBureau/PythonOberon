@@ -236,7 +236,7 @@ class RISC(object):
   def ram_instruction(self):
     self.addr = addr = int(self.R[self.irb] + self.off)
     if addr >= IO_RANGE:
-      self.io(self, addr - IO_RANGE)
+      self.io(addr - IO_RANGE)
     elif self.LDR:
       self.R[self.ira] = (self.ram.get_byte(addr) if self.v
                           else self.ram[addr])
@@ -365,20 +365,22 @@ class blong(binary_addressing_mixin, long): pass
 
 
 if __name__ == '__main__':
-  from assembler import Mov_imm, Add, Lsl_imm, T_link
+##  from assembler import Mov_imm, Add, Lsl_imm, T_link
+  from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
   for addr, instruction in enumerate((
-    Mov_imm(8, 1),
-    Mov_imm(1, 1),
-    Add(1, 1, 8),
-    Lsl_imm(1, 1, 2),
-    T_link(1),
+    bootloader
+##    Mov_imm(8, 1),
+##    Mov_imm(1, 1),
+##    Add(1, 1, 8),
+##    Lsl_imm(1, 1, 2),
+##    T_link(1),
     )):
     memory.put(addr * 4, int(instruction))
 
   risc_cpu = RISC(memory)
-  for _ in range(10):
+  for _ in range(100):
     risc_cpu.cycle()
     risc_cpu.view()
 
