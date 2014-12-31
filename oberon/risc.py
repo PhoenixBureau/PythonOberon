@@ -259,8 +259,10 @@ class RISC(object):
     if not device:
       raise Trap('no device at port 0x%x (aka %i)' % (port, port))
     if self.LDR:
+      print >> stderr, 'I/O: read', hex(port), device
       self.R[self.ira] = device.read()
     else:
+      print >> stderr, 'I/O: write', hex(port), device
       device.write(self.R[self.ira])
 
   def view(self):
@@ -376,7 +378,7 @@ class blong(binary_addressing_mixin, long): pass
 
 if __name__ == '__main__':
 ##  from assembler import Mov_imm, Add, Lsl_imm, T_link
-  from devices import LEDs
+  from devices import LEDs, BlockDeviceWithDMI
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
@@ -391,7 +393,9 @@ if __name__ == '__main__':
     memory.put(addr * 4, int(instruction))
 
   risc_cpu = RISC(memory)
-  risc_cpu.io_ports[4] = LEDs()
+  io = risc_cpu.io_ports
+  io[4] = LEDs()
+  io[16] = io[20] = BlockDeviceWithDMI(memory)
   for _ in range(100):
     risc_cpu.cycle()
     risc_cpu.view()

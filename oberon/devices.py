@@ -26,15 +26,18 @@ class BlockDeviceWithDMI(object):
       assert word in {dmiRead, dmiWrite}, repr(word)
       self.direction = word
       self.state = self.READ_SRC
+      print >> stderr, 'disk', ('dmiRead', 'dmiWrite')[word]
 
     elif self.state == self.READ_SRC:
       self.src = word
       self.state = self.READ_DST
+      print >> stderr, 'disk src <-', hex(word)
 
     else:
       assert self.state == self.READ_DST
       self.dst = word
       self.state = self.READ_COMMAND
+      print >> stderr, 'disk dst <-', hex(word)
 
       if self.direction == dmiRead:
         self.read_block()
@@ -44,6 +47,7 @@ class BlockDeviceWithDMI(object):
   def read_block(self):
     sector = self.data[self.src]
     ram_addrs = range(self.dst, self.dst + SectorLength, 4)
+    print >> stderr, 'disk read_block RAM: 0x%x <- disk: 0x%x' % (self.dst, self.src)
     for addr, word in zip(ram_addrs, sector):
       self.ram[addr] = word
 
@@ -53,6 +57,7 @@ class BlockDeviceWithDMI(object):
       xrange(self.src, self.src + SectorLength, 4)
       )
     self.data[self.dst] = sector
+    print >> stderr, 'disk write_block disk: 0x%x <- RAM: 0x%x' % (self.src, self.dst)
 
   def _ram_or_zero(self, addr):
     try:
