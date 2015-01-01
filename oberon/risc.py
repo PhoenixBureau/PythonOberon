@@ -148,8 +148,11 @@ class RISC(object):
 
     elif self.LSL:
       res = B << C1
-    elif self.ASR or self.ROR:
-      res = B >> C1 # FIXME not quite right is it?
+    elif self.ASR:
+      res = B >> C1
+    elif self.ROR:
+      lost_bits = bint(B)[C1:0]
+      res = (B >> C1) | (lost_bits << (32 - C1))
     elif self.AND:
       res = B & C1
     elif self.ANN:
