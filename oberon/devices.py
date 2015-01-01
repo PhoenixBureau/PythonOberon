@@ -1,8 +1,10 @@
 from sys import stderr
 from time import time
+from collections import defaultdict
 
 
-dmiRead = 0; dmiWrite = 1;
+dmiRead = 0
+dmiWrite = 1
 SectorLength = 1024
 
 
@@ -57,7 +59,7 @@ class BlockDeviceWithDMI(object):
       xrange(self.src, self.src + SectorLength, 4)
       )
     self.data[self.dst] = sector
-    print >> stderr, 'disk write_block disk: 0x%x <- RAM: 0x%x' % (self.src, self.dst)
+    print >> stderr, 'disk write_block disk: 0x%x <- RAM: 0x%x' % (self.dst, self.src)
 
   def _ram_or_zero(self, addr):
     try:
@@ -66,7 +68,17 @@ class BlockDeviceWithDMI(object):
       return 0
 
   def read(self):
+    print >> stderr, 'disk read() RAM: 0x%x <- disk: 0x%x' % (self.dst, self.src)
+    return 1
     raise NotImplementedError
+
+
+def fake_sector():
+  return [0xdeadbeef for n in xrange(0, SectorLength, 4)]
+
+
+def fake_disk():
+  return defaultdict(fake_sector)
 
 
 class clock(object):
@@ -95,6 +107,16 @@ class LEDs(object):
 
   def write(self, word):
     print >> stderr, 'LEDs', bin(word)[2:]
+
+
+class FakeSPI(object):
+
+  def read(self):
+    print >> stderr, 'FakeSPI read'
+    return 1
+
+  def write(self, word):
+    print >> stderr, 'FakeSPI write', bin(word)[2:]
 
 
 if __name__ == '__main__':

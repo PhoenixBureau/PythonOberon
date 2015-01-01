@@ -381,7 +381,7 @@ class blong(binary_addressing_mixin, long): pass
 
 if __name__ == '__main__':
 ##  from assembler import Mov_imm, Add, Lsl_imm, T_link
-  from devices import LEDs, BlockDeviceWithDMI
+  from devices import LEDs, BlockDeviceWithDMI, fake_disk, FakeSPI
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
@@ -395,10 +395,13 @@ if __name__ == '__main__':
     )):
     memory.put(addr * 4, int(instruction))
 
+  disk = fake_disk()
+
   risc_cpu = RISC(memory)
   io = risc_cpu.io_ports
   io[4] = LEDs()
-  io[16] = io[20] = BlockDeviceWithDMI(memory)
+  io[16] = BlockDeviceWithDMI(memory, disk)
+  io[20] = FakeSPI()
   for _ in range(100):
     risc_cpu.cycle()
     risc_cpu.view()
