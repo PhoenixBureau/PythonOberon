@@ -1,13 +1,18 @@
+import pdb
 from sys import stderr
 from pprint import pformat
-from myhdl import intbv
-from util import ibv, bits2signed_int, signed
+from util import bint
 from assembler import dis
 from signs import py2signed, signed2py
 
 
 F = 2**32-1
 IO_RANGE = 0x0FFFFFFC0
+ROMStart = 0xFFFFF800 / 4
+MemSize = 0x00180000
+MemWords = MemSize / 4
+
+#define DisplayStart 0x000E7F00
 
 
 class Trap(Exception):
@@ -18,7 +23,8 @@ class RISC(object):
 
   MT = 12 # Module Table register.
 
-  def __init__(self, ram, PC=0):
+  def __init__(self, rom, ram, PC=ROMStart):
+    self.rom = rom
     self.ram = ram
     self.PC = self.pcnext = PC
     self.R = [0] * 16
@@ -27,18 +33,19 @@ class RISC(object):
     self.io_ports = {}
 
   def cycle(self):
-    self.PC = self._hmm()
-    instruction = self.ram[self.PC << 2]
+    self.PC = self.pcnext
+    instruction = self._hmm()
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
 
   def _hmm(self):
-    PC = self.pcnext
-    if PC > 0b1000000000000000000000000:
-      PC -= 0b1000000000000000000000000
-      print >> stderr, '! ROM!', hex(PC)
-    return PC
+    if self.PC < MemSize:
+      return self.ram[self.PC << 2]
+    if ROMStart <= self.PC < (ROMStart + len(self.rom)):
+      PC = self.PC - ROMStart
+      return self.rom[PC]
+    raise ValueError(repr(self.PC))
 
   def decode(self, instruction):
     self.IR = IR = bint(instruction)
@@ -80,8 +87,8 @@ class RISC(object):
       self.register_instruction()
     elif self.q:
       self.branch_instruction()
-      if self.pcnext == self.R[self.MT]:
-        raise Trap(self.IR[8:4])
+##      if self.pcnext == self.R[self.MT]:
+##        raise Trap(self.IR[8:4])
     else:
       self.ram_instruction()
 
@@ -194,7 +201,7 @@ class RISC(object):
     else:
       res = 0
 
-    return res if isinstance(res, bint) else bint(res)
+    return res
 
   def _check_overflow(self, res, bits=33):
     try:
@@ -207,11 +214,15 @@ class RISC(object):
   def register_instruction(self):
     self.pcnext = self.PC + 1
     regmux = self.Arithmetic_Logical_Unit()
-    self.R[self.ira] = regmux[32:0]
-    self.N = regmux[31]
-    self.Z = regmux == 0
+    self.set_register(regmux)
+
+  def set_register(self, value):
+    value = value if isinstance(value, bint) else bint(value)
+    self.R[self.ira] = value[32:0]
+    self.N = value[31]
+    self.Z = value == 0
     if self.ADD | self.SUB:
-      self.C = regmux[32]
+      self.C = value[32]
 #    self.OV = ... if (ADD|SUB) else OV
     self.H = (self.product[64:32] if self.MUL
               else self.remainder if self.DIV
@@ -238,9 +249,8 @@ class RISC(object):
       self.R[15] = self.PC + 1
 
     if self.u:
-      self.pcnext = int(self.jmp + self.PC + 1)
-    elif self.IR[5]:
-      self.pcnext = int(self.irc)
+      offset = signed2py(self.jmp, width=24)
+      self.pcnext = int(offset + self.PC + 1)
     else:
       self.pcnext = int(self.C0)
 
@@ -249,8 +259,8 @@ class RISC(object):
     if addr >= IO_RANGE:
       self.io(addr - IO_RANGE)
     elif self.LDR:
-      self.R[self.ira] = (self.ram.get_byte(addr) if self.v
-                          else self.ram[addr])
+      value = self.ram.get_byte(addr) if self.v else self.ram[addr]
+      self.set_register(value)
     elif self.v:
       self.ram.put_byte(addr, self.R[self.ira] & 255)
     else:
@@ -262,30 +272,30 @@ class RISC(object):
     if not device:
       raise Trap('no device at port 0x%x (aka %i)' % (port, port))
     if self.LDR:
-      print >> stderr, 'I/O: read', hex(port), device
-      self.R[self.ira] = device.read()
+      x = device.read()
+      self.set_register(x)
+##      print >> stderr, 'I/O: read', hex(port), device, x
     else:
-      print >> stderr, 'I/O: write', hex(port), device
+##      print >> stderr, 'I/O: write', hex(port), device, self.R[self.ira]
       device.write(self.R[self.ira])
 
   def view(self):
+    if self.PC >= MemSize:
+      return
     kw = self.__dict__.copy()
     kw['A'] = self.R[self.ira]
-    print '- ' * 40
-    print 'PC: [0x%(PC)04x] = 0x%(IR)08x =' % kw, dis(int(self.IR))
-    print
+    #print '- ' * 40
+    print 'PC: 0x%(PC)04x ---' % kw, dis(int(self.IR))
     if self.STR:
-      print 'Storing', '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw
-      print
+      print '            Storing', '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw
     elif self.LDR:
-      print 'loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
-      print
+      print '            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
 
-    for i in range(0, 16, 2):
-      reg0, reg1 = self.R[i], self.R[i + 1]
-      print 'R%-2i = 0x%-8x' % (i + 1, reg1),
-      print 'R%-2i = 0x%-8x' % (i, reg0)
-    print
+##    for i in range(0, 16, 2):
+##      reg0, reg1 = self.R[i], self.R[i + 1]
+##      print 'R%-2i = 0x%-8x' % (i + 1, reg1),
+##      print 'R%-2i = 0x%-8x' % (i, reg0)
+##    print
 
 
 _BYTE_MASKS = (
@@ -349,29 +359,22 @@ class ByteAddressed32BitRAM(object):
 
 
 if __name__ == '__main__':
-##  from assembler import Mov_imm, Add, Lsl_imm, T_link
-  from devices import LEDs, BlockDeviceWithDMI, fake_disk, FakeSPI
+  from devices import LEDs, FakeSPI, Disk
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
-  for addr, instruction in enumerate((
-    bootloader
-##    Mov_imm(8, 1),
-##    Mov_imm(1, 1),
-##    Add(1, 1, 8),
-##    Lsl_imm(1, 1, 2),
-##    T_link(1),
-    )):
-    memory.put(addr * 4, int(instruction))
+  disk = Disk('baseRISC.img')
+  risc_cpu = RISC(bootloader, memory)
 
-  disk = fake_disk()
+  risc_cpu.io_ports[4] = LEDs()
+  risc_cpu.io_ports[20] = fakespi = FakeSPI()
+  risc_cpu.io_ports[16] = fakespi.data
 
-  risc_cpu = RISC(memory)
-  io = risc_cpu.io_ports
-  io[4] = LEDs()
-  io[16] = BlockDeviceWithDMI(memory, disk)
-  io[20] = FakeSPI()
-  for _ in range(100):
-    risc_cpu.cycle()
-    risc_cpu.view()
+  fakespi.register(1, disk)
 
+  def cycle():
+    while True:
+      risc_cpu.cycle()
+      risc_cpu.view()
+
+  cycle()
