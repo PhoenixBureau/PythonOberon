@@ -348,37 +348,6 @@ class ByteAddressed32BitRAM(object):
     return pformat(self.store)
 
 
-class binary_addressing_mixin(object):
-
-  def __getitem__(self, n):
-    if isinstance(n, tuple):
-      if len(n) != 2:
-        raise IndexError('Must pass only two indicies.')
-      start, stop = n
-      return self._mask(stop, start - stop)
-    if isinstance(n, slice):
-      return self._getslice(n)
-    return bool(self >> n & 1)
-
-  def _getslice(self, s):
-    n = s.start - s.stop
-    if n < 0:
-      raise IndexError('Slice indexes should be left-to-right.')
-    if not n:
-      raise IndexError('Zero bits.')
-    if s.step:
-      raise TypeError('Slice with step not supported.')
-
-    return self._mask(s.stop, n)
-
-  def _mask(self, stop, n):
-    return type(self)(self >> stop & (2**n - 1))
-
-
-class bint(binary_addressing_mixin, int): pass
-class blong(binary_addressing_mixin, long): pass
-
-
 if __name__ == '__main__':
 ##  from assembler import Mov_imm, Add, Lsl_imm, T_link
   from devices import LEDs, BlockDeviceWithDMI, fake_disk, FakeSPI
