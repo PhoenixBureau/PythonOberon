@@ -1,6 +1,5 @@
 from math import log, floor
 from struct import pack, unpack
-from myhdl import Signal, intbv
 
 
 ops = dict(
@@ -11,10 +10,10 @@ ops = dict(
 ops_rev = dict((v, k) for k, v in ops.iteritems())
 
 
-word = lambda n: intbv(n, min=0, max=2**32)
+word = lambda n: bint(n)
 
 
-ibv = lambda bits, n=0: Signal(intbv(n, min=0, max=2**bits))
+ibv = lambda bits, n=0: bint(n)
 
 
 ##  ((cc == 0) & N | // MI, PL
@@ -50,13 +49,13 @@ def signed(n, bits=16):
   limit = 2**bits
   if -limit < n < limit:
     q = ((n < 0) << (bits - 1)) + abs(n)
-    return intbv(q)[bits:]
+    return bint(q)[bits:]
   raise ValueError
 
 
 def bits2signed_int(i):
-  if not isinstance(i, intbv):
-    raise ValueError("Must be intbv object. %r" % (i,))
+  if not isinstance(i, bint):
+    raise ValueError("Must be bint object. %r" % (i,))
   n = len(i)
   if not n:
     raise ValueError("Must have non-zero length. %r" % (i,))
