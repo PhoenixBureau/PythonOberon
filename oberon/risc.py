@@ -362,7 +362,7 @@ if __name__ == '__main__':
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
-  disk = Disk('baseRISC.img')
+  disk = Disk('disk.img')
   risc_cpu = RISC(bootloader, memory)
 
   risc_cpu.io_ports[4] = LEDs()

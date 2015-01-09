@@ -18,7 +18,7 @@ class Disk(object):
   SECTOR_SIZE = 512
   SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
 
-  def __init__(self, filename='002RISC.img'):
+  def __init__(self, filename='disk.img'):
     self.state = diskCommand
 
     self.rx_buf = [None] * self.SECTOR_SIZE_WORDS
