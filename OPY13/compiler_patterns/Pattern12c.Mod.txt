@@ -1,8 +1,0 @@
-MODULE Pattern12c;
-IMPORT Pattern12a, Pattern12b;
-VAR i: INTEGER; y: REAL;
-BEGIN
-i := Pattern12a.k;
-y := Pattern12b.x;
-END Pattern12c.
-
