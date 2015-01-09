@@ -45,6 +45,38 @@ cmps = {
 }
 
 
+def py2signed(i, width=32):
+  assert width > 0
+  width -= 1
+  b = 2**width
+  if not (-b <= i < b):
+    raise ValueError
+  if i >= 0:
+    return i
+  return b + i + (1 << width)
+
+
+def signed2py(i, width=32):
+  assert width > 0
+  b = 2**width
+  if not (0 <= i < b):
+    raise ValueError
+  if i < b / 2:
+    return i
+  return i - b
+  
+
+def _show_signed_in_action():
+  W = 4
+  for i in range(-10, 10):
+    print '%2i' % i,
+    try: s = py2signed(i, W)
+    except ValueError: print
+    else: print '  ->  %04s aka %i  ->  %2i' % (
+      bin(s)[2:], s, signed2py(s, W)
+      )
+
+
 def signed(n, bits=16):
   limit = 2**bits
   if -limit < n < limit:
@@ -53,12 +85,9 @@ def signed(n, bits=16):
   raise ValueError
 
 
-def bits2signed_int(i):
+def bits2signed_int(i, n=32):
   if not isinstance(i, bint):
     raise ValueError("Must be bint object. %r" % (i,))
-  n = len(i)
-  if not n:
-    raise ValueError("Must have non-zero length. %r" % (i,))
   n -= 1
   return (-1 if i[n] else 1) * i[n:]
 

@@ -1,9 +1,8 @@
 import pdb
 from sys import stderr
 from pprint import pformat
-from util import bint
+from util import bint, py2signed, signed2py
 from assembler import dis
-from signs import py2signed, signed2py
 
 
 F = 2**32-1
@@ -106,7 +105,7 @@ class RISC(object):
     #  END Put1;
     #
     # If the immediate value is negative the V bit in the instruction is set.
-    # In any event the immediate value has it's high sixteen bits masked off
+    # In any event the immediate value has its high sixteen bits masked off
     # (modulus 0x10000 effects this.)  For example, -23 looks like this,
     # bit-wise:
     #

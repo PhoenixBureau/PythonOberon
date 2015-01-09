@@ -6,8 +6,7 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
-from signs import signed2py
-from util import ops, word, signed, ops_rev, cmps, bint
+from util import ops, word, signed, ops_rev, cmps, bint, signed2py
 
 
 def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
