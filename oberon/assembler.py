@@ -6,8 +6,8 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
-from myhdl import intbv, concat
-from util import ops, word, signed, ops_rev, cmps
+from signs import signed2py
+from util import ops, word, signed, ops_rev, cmps, bint
 
 
 def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
@@ -85,7 +85,7 @@ def dis(n):
   Take an integer and return a human-readable string description of the
   assembly instruction.
   '''
-  IR = intbv(n)[32:]
+  IR = bint(n)[32:0]
   p, q = IR[31], IR[30]
   if not p:
     if not q:
@@ -173,7 +173,8 @@ def dis_Mov(IR):
       imm = imm << 15
     else:
       v = IR[28]
-      imm = concat(*([v] * 16 + [imm]))
+      if v:
+        imm = 0xffff0000 + imm
     return 'Mov R%i <- 0x%08x' % (ira, imm)
   if not u:
     return 'Mov R%i <- R%i' % (ira, IR[4:0])
