@@ -153,17 +153,48 @@ class LEDs(object):
     return 0
 
   def write(self, word):
-    print >> stderr, 'LEDs', bin(word)[2:]
+    print 'LEDs', bin(word)[2:]
 
 
 class FakeSPI(object):
 
+  def __init__(self):
+    self.things = {}
+    self.current_thing = None
+
+    class DataControl(object):
+
+      def read(inner):
+        if self.current_thing:
+          data = self.current_thing.read()
+        else:
+          data = 0xff
+        log('FakeSPI Data Read: 0x%x', data)
+        return data
+
+      def write(inner, word):
+        log('FakeSPI Data Write: 0x%x', word)
+        if self.current_thing:
+          self.current_thing.write(word)
+
+    self.data = DataControl()
+
+  def register(self, index, thing):
+    self.things[index] = thing
+
   def read(self):
-    print >> stderr, 'FakeSPI read'
+    log('FakeSPI Control Read: 0x1')
     return 1
 
   def write(self, word):
-    print >> stderr, 'FakeSPI write', bin(word)[2:]
+    log('FakeSPI Control Write: 0x%x', word)
+    word %= 4
+    try:
+      self.current_thing = self.things[word]
+      log('Setting SPI device to %s', self.current_thing)
+    except KeyError:
+      log('No SPI device %i', word)
+      self.current_thing = None
 
 
 if __name__ == '__main__':
