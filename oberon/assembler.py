@@ -220,7 +220,7 @@ def dis_F3imm(IR):
   invert = int(IR[27])
   cc = int(IR[27:24])
   op = cmps[cc, invert]
-  off = IR[24:0]
+  off = signed2py(IR[24:0], width=24)
   return 'BR%s %s 0x%08x' % (link, op, off)
 
 
