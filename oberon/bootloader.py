@@ -50,7 +50,7 @@ bootloader = (
 0x40000029, 0x41000001, 0x4111001E, 0xF7FFFFA5,
 0x5000FFD0, 0x80000000, 0xA0E00004, 0x5000FFFF,
 0xF7FFFF90, 0x5000FFFF, 0xF7FFFF8E, 0x5000FFFF,
-0xF7FFFF8C, 0x40002710, 0xF7FFFF73, 0x80E00004,
+0xF7FFFF8C, 0x40000003, 0xF7FFFF73, 0x80E00004,
 0xE9FFFFEC, 0x40000010, 0x41000200, 0xF7FFFF95,
 0x40000001, 0xF7FFFF6C, 0x8FE00000, 0x4EE8000C,
 0xC700000F, 0x4EE9000C, 0xAFE00000, 0xA0E00004,
@@ -98,7 +98,10 @@ bootloader = (
 )
 
 
+ROMStart = 0xFFFFF800 / 4
+
+
 if __name__ == '__main__':
   from assembler import dis
   for i, instruction in enumerate(bootloader):
-    print '0x%04x %s' % (i, dis(instruction))
+    print '0x%08x - 0x%04x : %s' % (i + ROMStart, i, dis(instruction))
