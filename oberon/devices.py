@@ -9,7 +9,8 @@ diskCommand, diskRead, diskWrite, diskWriting = 0, 1, 2, 3
 
 
 def log(message, *args):
-  print message % args
+  pass
+##  print message % args
 ##  print >> stderr, message % args
 
 
