@@ -33,20 +33,16 @@ class RISC(object):
 
   def cycle(self):
     self.PC = self.pcnext
-##    if self.PC == 0x00000BB0:
-##      pdb.set_trace()
-##    print '0x%08X' % (self.PC,)
-    instruction = self._hmm()
-
-    if self.PC < MemWords:
-      print '0x%08x : 0x%08x %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i 0x%x' % ((self.PC, instruction,
-                                                                                 ) + tuple(map(signed2py, self.R[:-1]))
-                                                                                 + (self.R[-1],))
+    instruction = self.fetch()
+##    if self.PC < MemWords:
+##      print '0x%08x : 0x%08x %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i 0x%x' % ((self.PC, instruction,
+##                                                                                 ) + tuple(map(signed2py, self.R[:-1]))
+##                                                                                 + (self.R[-1],))
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
 
-  def _hmm(self):
+  def fetch(self):
     if self.PC < MemWords:
       return self.ram[self.PC << 2]
     if ROMStart <= self.PC < (ROMStart + len(self.rom)):
@@ -94,9 +90,6 @@ class RISC(object):
       self.register_instruction()
     elif self.q:
       self.branch_instruction()
-      if self.pcnext == self.R[self.MT]:
-        self.dump_ram()
-        raise Trap(self.IR[8:4])
     else:
       self.ram_instruction()
 
@@ -211,7 +204,7 @@ class RISC(object):
       self.remainder = py2signed(remainder)
 
     else:
-      res = 0
+      raise ValueError() # We should never get here!
 
     return res
 
@@ -233,17 +226,9 @@ class RISC(object):
     self.R[self.ira] = value[32:0]
     self.N = value[31]
     self.Z = value == 0
-##    if self.ADD | self.SUB:
-##      self.C = value[32]
-#    self.OV = ... if (ADD|SUB) else OV
     self.H = (self.product[64:32] if self.MUL
               else self.remainder if self.DIV
               else self.H)
-
-##    if self.ira == 12:
-##      print hex(self.PC)
-##      print 'R[12] :=', self.R[12]
-
 
   def branch_instruction(self):
     S = self.N ^ self.OV
@@ -271,17 +256,6 @@ class RISC(object):
     else:
       self.pcnext = self.C0 >> 2
 
-##      if self.PC < MemSize:
-##        print '!!!', int(self.C0), int(self.C0) / 4
-##      pcnext = int(self.C0
-##      if pcnext == 0x20:
-##        pcnext /= 4
-##      if pcnext == 0x00001625:
-##        pcnext = 0x00000952
-##      if pcnext == 0x00001645:
-##        pcnext = 0x00000952
-###      print '0x%08x : 0x%08x to 0x%08x' % (self.PC, self.IR, pcnext)
-
   def ram_instruction(self):
     self.addr = addr = int(self.R[self.irb] + self.off)
     if addr >= IO_RANGE:
@@ -300,11 +274,8 @@ class RISC(object):
     if not device:
       raise Trap('no device at port 0x%x (aka %i)' % (port, port))
     if self.LDR:
-      x = device.read()
-      self.set_register(x)
-##      print >> stderr, 'I/O: read', hex(port), device, x
+      self.set_register(device.read())
     else:
-##      print >> stderr, 'I/O: write', hex(port), device, self.R[self.ira]
       device.write(self.R[self.ira])
 
   def dump_ram(self, location=None, number=10):
@@ -325,7 +296,7 @@ class RISC(object):
       print '            Storing', '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw
     elif self.LDR:
       print '            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
-
+    # Print the registers.
 ##    for i in range(0, 16, 2):
 ##      reg0, reg1 = self.R[i], self.R[i + 1]
 ##      print 'R%-2i = 0x%-8x' % (i + 1, reg1),
@@ -414,7 +385,11 @@ if __name__ == '__main__':
 
   def cycle():
     while True:
-      risc_cpu.cycle()
-      risc_cpu.view()
+      try:
+        risc_cpu.cycle()
+#        risc_cpu.view()
+      except:
+        risc_cpu.dump_ram()
+        break
 
   cycle()
