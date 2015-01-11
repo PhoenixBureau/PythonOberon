@@ -1,7 +1,7 @@
 import pdb
 from sys import stderr
 from pprint import pformat
-from util import bint, py2signed, signed2py
+from util import bint, blong, py2signed, signed2py
 from assembler import dis
 
 
@@ -33,13 +33,21 @@ class RISC(object):
 
   def cycle(self):
     self.PC = self.pcnext
+##    if self.PC == 0x00000BB0:
+##      pdb.set_trace()
+##    print '0x%08X' % (self.PC,)
     instruction = self._hmm()
+
+    if self.PC < MemWords:
+      print '0x%08x : 0x%08x %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i 0x%x' % ((self.PC, instruction,
+                                                                                 ) + tuple(map(signed2py, self.R[:-1]))
+                                                                                 + (self.R[-1],))
     self.decode(instruction)
     self.what_are_we_up_to()
     self.control_unit()
 
   def _hmm(self):
-    if self.PC < MemSize:
+    if self.PC < MemWords:
       return self.ram[self.PC << 2]
     if ROMStart <= self.PC < (ROMStart + len(self.rom)):
       PC = self.PC - ROMStart
@@ -86,8 +94,9 @@ class RISC(object):
       self.register_instruction()
     elif self.q:
       self.branch_instruction()
-##      if self.pcnext == self.R[self.MT]:
-##        raise Trap(self.IR[8:4])
+      if self.pcnext == self.R[self.MT]:
+        self.dump_ram()
+        raise Trap(self.IR[8:4])
     else:
       self.ram_instruction()
 
@@ -156,6 +165,8 @@ class RISC(object):
       res = B << C1
     elif self.ASR:
       res = B >> C1
+      if bint(B)[31]: # Extend sign bit.
+        res |= 2**C1 - 1 << (32 - C1)
     elif self.ROR:
       lost_bits = bint(B)[C1:0]
       res = (B >> C1) | (lost_bits << (32 - C1))
@@ -175,6 +186,7 @@ class RISC(object):
       B = signed2py(B)
       C1 = signed2py(C1)
       res = B + C1 + (self.u and self.C)
+      self.C = bool(res < B)
       res = self._check_overflow(res)
 
     elif self.SUB:
@@ -182,6 +194,7 @@ class RISC(object):
       C1 = signed2py(C1)
       res = B - C1 - (self.u and self.C)
       res = self._check_overflow(res)
+      self.C = bool(res > B)
 
     elif self.MUL:
       B = signed2py(B)
@@ -220,38 +233,54 @@ class RISC(object):
     self.R[self.ira] = value[32:0]
     self.N = value[31]
     self.Z = value == 0
-    if self.ADD | self.SUB:
-      self.C = value[32]
+##    if self.ADD | self.SUB:
+##      self.C = value[32]
 #    self.OV = ... if (ADD|SUB) else OV
     self.H = (self.product[64:32] if self.MUL
               else self.remainder if self.DIV
               else self.H)
 
+##    if self.ira == 12:
+##      print hex(self.PC)
+##      print 'R[12] :=', self.R[12]
+
+
   def branch_instruction(self):
     S = self.N ^ self.OV
-    if not (
-      self.IR[27] ^
-      ((self.cc == 0) & self.N |
-       (self.cc == 1) & self.Z |
-       (self.cc == 2) & self.C |
-       (self.cc == 3) & self.OV |
-       (self.cc == 4) & (self.C|self.Z) |
-       (self.cc == 5) & S |
-       (self.cc == 6) & (S|self.Z) |
-       (self.cc == 7)
-       )
-      ):
+    T = ((self.cc == 0) & self.N |
+         (self.cc == 1) & self.Z |
+         (self.cc == 2) & self.C |
+         (self.cc == 3) & self.OV |
+         (self.cc == 4) & (self.C|self.Z) |
+         (self.cc == 5) & S |
+         (self.cc == 6) & (S|self.Z) |
+         (self.cc == 7)
+         )
+    if self.IR[27]:
+      T = not T
+    if not T:
       self.pcnext = self.PC + 1
       return
 
     if self.v: # Save link
-      self.R[15] = self.PC + 1
+      self.R[15] = (self.PC + 1) << 2
 
     if self.u:
       offset = signed2py(self.jmp, width=24)
       self.pcnext = int(offset + self.PC + 1)
     else:
-      self.pcnext = int(self.C0)
+      self.pcnext = self.C0 >> 2
+
+##      if self.PC < MemSize:
+##        print '!!!', int(self.C0), int(self.C0) / 4
+##      pcnext = int(self.C0
+##      if pcnext == 0x20:
+##        pcnext /= 4
+##      if pcnext == 0x00001625:
+##        pcnext = 0x00000952
+##      if pcnext == 0x00001645:
+##        pcnext = 0x00000952
+###      print '0x%08x : 0x%08x to 0x%08x' % (self.PC, self.IR, pcnext)
 
   def ram_instruction(self):
     self.addr = addr = int(self.R[self.irb] + self.off)
@@ -277,6 +306,13 @@ class RISC(object):
     else:
 ##      print >> stderr, 'I/O: write', hex(port), device, self.R[self.ira]
       device.write(self.R[self.ira])
+
+  def dump_ram(self, location=None, number=10):
+    if location is None:
+      location = self.PC
+    for i in range(location - number, location + number):
+      h = '>' if i == location else ' '
+      print h, hex(i), dis(self.ram[i << 2])
 
   def view(self):
     if self.PC >= MemSize:
@@ -313,7 +349,12 @@ class ByteAddressed32BitRAM(object):
   def get(self, addr):
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
-    return self.store[word_addr]
+    try:
+      value = self.store[word_addr]
+    except KeyError:
+      # Should we log this?
+      value = self.store[word_addr] = 0
+    return value
 
   __getitem__ = get
 
