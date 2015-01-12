@@ -318,6 +318,8 @@ class ByteAddressed32BitRAM(object):
     self.store = {}
 
   def get(self, addr):
+    if addr == 0xe7f00:
+      pdb.set_trace()
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     try:
@@ -330,6 +332,8 @@ class ByteAddressed32BitRAM(object):
   __getitem__ = get
 
   def put(self, addr, word):
+    if addr == 0xe7f00:
+      pdb.set_trace()
     assert 0 <= word <= F, repr(word)
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
@@ -370,14 +374,17 @@ class ByteAddressed32BitRAM(object):
 
 
 if __name__ == '__main__':
-  from devices import LEDs, FakeSPI, Disk
+  from devices import LEDs, FakeSPI, Disk, clock
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
   disk = Disk('disk.img')
   risc_cpu = RISC(bootloader, memory)
 
+##  risc_cpu.io_ports[0] = clock()
   risc_cpu.io_ports[4] = LEDs()
+#  risc_cpu.io_ports[8] = RS232 data
+#  risc_cpu.io_ports[12] = RS232 status
   risc_cpu.io_ports[20] = fakespi = FakeSPI()
   risc_cpu.io_ports[16] = fakespi.data
 
