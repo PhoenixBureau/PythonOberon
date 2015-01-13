@@ -64,7 +64,15 @@ def signed2py(i, width=32):
   if i < b / 2:
     return i
   return i - b
-  
+
+
+def unsigned_to_signed(g):
+  return unpack('<i', pack('<I', g))[0]
+
+
+def signed_to_unsigned(g):
+  return unpack('<I', pack('<i', g))[0]
+
 
 def _show_signed_in_action():
   W = 4
@@ -131,20 +139,26 @@ class binary_addressing_mixin(object):
         raise IndexError('Must pass only two indicies.')
       start, stop = n
       return self._mask(stop, start - stop)
+
     if isinstance(n, slice):
       return self._getslice(n)
+
     return bool(self >> n & 1)
 
   def _getslice(self, s):
-    n = s.start - s.stop
-    if n < 0:
-      raise IndexError('Slice indexes should be left-to-right.')
-    if not n:
-      return type(self)(0)
     if s.step:
       raise TypeError('Slice with step not supported.')
 
-    return self._mask(s.stop, n)
+    start = 0 if s.start is None else s.start
+    stop = 0 if s.stop is None else s.stop
+    n = start - stop
+    if n < 0:
+      raise IndexError('Slice indexes should be left-to-right.')
+
+    if not n:
+      return type(self)(0)
+
+    return self._mask(stop, n)
 
   def _mask(self, stop, n):
     return type(self)(self >> stop & (2**n - 1))
@@ -154,6 +168,6 @@ class bint(binary_addressing_mixin, int): pass
 class blong(binary_addressing_mixin, long): pass
 
 
-if __name__ == '__main__':
-  for n in xrange(2**32):
-    print n, decode_set(n)
+##if __name__ == '__main__':
+##  for n in xrange(2**32):
+##    print n, decode_set(n)

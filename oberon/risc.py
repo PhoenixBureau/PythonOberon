@@ -1,7 +1,7 @@
 import pdb
 from sys import stderr
 from pprint import pformat
-from util import bint, blong, py2signed, signed2py
+from util import bint, blong, py2signed, signed2py, unsigned_to_signed
 from assembler import dis
 
 
@@ -10,8 +10,7 @@ IO_RANGE = 0x0FFFFFFC0
 ROMStart = 0xFFFFF800 / 4
 MemSize = 0x00180000
 MemWords = MemSize / 4
-
-#define DisplayStart 0x000E7F00
+DisplayStart = 0xe7f00
 
 
 class Trap(Exception):
@@ -34,6 +33,8 @@ class RISC(object):
   def cycle(self):
     self.PC = self.pcnext
     instruction = self.fetch()
+    if instruction == 0xe7ffffff: # REPEAT UNTIL False i.e. halt loop.
+      raise Trap('REPEAT UNTIL False ing')
 ##    if self.PC < MemWords:
 ##      print '0x%08x : 0x%08x %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i 0x%x' % ((self.PC, instruction,
 ##                                                                                 ) + tuple(map(signed2py, self.R[:-1]))
@@ -122,7 +123,7 @@ class RISC(object):
     #
     # The statement immediately below reconstructs the negative 32-bit value
     # if the V bit is set in the instruction, otherwise it simply passes
-    # through the given immediate value. (This happens, of coures, only if
+    # through the given immediate value. (This happens, of course, only if
     # the Q bit is set, otherwise C1 is just set to C0.)
 
     C1 = self.C1 = (
@@ -155,12 +156,14 @@ class RISC(object):
     # Bit-wise logical operations
 
     elif self.LSL:
-      res = B << C1
+      res = B << (C1 & 31)
     elif self.ASR:
+      C1 &= 31
       res = B >> C1
       if bint(B)[31]: # Extend sign bit.
         res |= 2**C1 - 1 << (32 - C1)
     elif self.ROR:
+      C1 &= 31
       lost_bits = bint(B)[C1:0]
       res = (B >> C1) | (lost_bits << (32 - C1))
     elif self.AND:
@@ -179,7 +182,7 @@ class RISC(object):
       B = signed2py(B)
       C1 = signed2py(C1)
       res = B + C1 + (self.u and self.C)
-      self.C = bool(res < B)
+      self.C = res < B
       res = self._check_overflow(res)
 
     elif self.SUB:
@@ -187,7 +190,7 @@ class RISC(object):
       C1 = signed2py(C1)
       res = B - C1 - (self.u and self.C)
       res = self._check_overflow(res)
-      self.C = bool(res > B)
+      self.C = res > B
 
     elif self.MUL:
       B = signed2py(B)
@@ -257,7 +260,7 @@ class RISC(object):
       self.pcnext = self.C0 >> 2
 
   def ram_instruction(self):
-    self.addr = addr = int(self.R[self.irb] + self.off)
+    self.addr = addr = int(self.R[self.irb] + self._sign_extend_offset())
     if addr >= IO_RANGE:
       self.io(addr - IO_RANGE)
     elif self.LDR:
@@ -269,6 +272,12 @@ class RISC(object):
       self.ram[addr] = self.R[self.ira]
     self.pcnext = self.PC + 1
 
+  def _sign_extend_offset(self):
+    off = bint(self.off & 0xfffff)
+    if off[19]:
+      off = unsigned_to_signed(off | 0xfff00000)
+    return off
+
   def io(self, port):
     device = self.io_ports.get(port)
     if not device:
@@ -277,6 +286,11 @@ class RISC(object):
       self.set_register(device.read())
     else:
       device.write(self.R[self.ira])
+
+  def screen_size_hack(self, width=1024, height=768):
+    self.ram[DisplayStart] = 0x53697A66  # magic value 'SIZE'+1
+    self.ram[DisplayStart + 4] = width
+    self.ram[DisplayStart + 8] = height
 
   def dump_ram(self, location=None, number=10):
     if location is None:
@@ -318,8 +332,6 @@ class ByteAddressed32BitRAM(object):
     self.store = {}
 
   def get(self, addr):
-    if addr == 0xe7f00:
-      pdb.set_trace()
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     try:
@@ -332,8 +344,6 @@ class ByteAddressed32BitRAM(object):
   __getitem__ = get
 
   def put(self, addr, word):
-    if addr == 0xe7f00:
-      pdb.set_trace()
     assert 0 <= word <= F, repr(word)
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
@@ -374,12 +384,14 @@ class ByteAddressed32BitRAM(object):
 
 
 if __name__ == '__main__':
+  from traceback import print_exc
   from devices import LEDs, FakeSPI, Disk, clock
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
   disk = Disk('disk.img')
   risc_cpu = RISC(bootloader, memory)
+  risc_cpu.screen_size_hack()
 
 ##  risc_cpu.io_ports[0] = clock()
   risc_cpu.io_ports[4] = LEDs()
@@ -396,6 +408,7 @@ if __name__ == '__main__':
         risc_cpu.cycle()
 #        risc_cpu.view()
       except:
+        print_exc()
         risc_cpu.dump_ram()
         break
 
