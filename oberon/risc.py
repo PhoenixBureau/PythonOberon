@@ -33,22 +33,21 @@ class RISC(object):
   def cycle(self):
     self.PC = self.pcnext
     instruction = self.fetch()
-    if instruction == 0xe7ffffff: # REPEAT UNTIL False i.e. halt loop.
-      raise Trap('REPEAT UNTIL False ing')
-##    if self.PC < MemWords:
-##      print '0x%08x : 0x%08x %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i 0x%x' % ((self.PC, instruction,
-##                                                                                 ) + tuple(map(signed2py, self.R[:-1]))
-##                                                                                 + (self.R[-1],))
     self.decode(instruction)
     self.control_unit()
 
   def fetch(self):
     if self.PC < MemWords:
-      return self.ram[self.PC << 2]
-    if ROMStart <= self.PC < (ROMStart + len(self.rom)):
-      PC = self.PC - ROMStart
-      return self.rom[PC]
-    raise ValueError(repr(self.PC))
+      instruction = self.ram[self.PC << 2]
+    elif ROMStart <= self.PC < (ROMStart + len(self.rom)):
+      instruction = self.rom[self.PC - ROMStart]
+    else:
+      raise ValueError(repr(self.PC))
+
+    if instruction == 0xe7ffffff: # REPEAT UNTIL False i.e. halt loop.
+      raise Trap('REPEAT UNTIL False ing')
+
+    return instruction
 
   def decode(self, instruction):
     self.IR = IR = bint(instruction)
@@ -315,6 +314,17 @@ class RISC(object):
 ##      print 'R%-2i = 0x%-8x' % (i, reg0)
 ##    print
 
+  def brief_view(self):
+    return ('0x%08x : 0x%08x'
+            ' %i %i %i %i %i %i %i %i'
+            ' %i %i %i %i %i %i %i'
+            ' 0x%x'
+            ) % (
+              (self.PC, self.IR)
+              + tuple(map(signed2py, self.R[:-1]))
+              + (self.R[-1],)
+              )
+
 
 _BYTE_MASKS = (
   0b11111111111111111111111100000000,
@@ -404,7 +414,7 @@ if __name__ == '__main__':
     while True:
       try:
         risc_cpu.cycle()
-#        risc_cpu.view()
+        print risc_cpu.brief_view()
       except:
         print_exc()
         risc_cpu.dump_ram()
