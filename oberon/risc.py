@@ -40,7 +40,6 @@ class RISC(object):
 ##                                                                                 ) + tuple(map(signed2py, self.R[:-1]))
 ##                                                                                 + (self.R[-1],))
     self.decode(instruction)
-    self.what_are_we_up_to()
     self.control_unit()
 
   def fetch(self):
@@ -68,7 +67,6 @@ class RISC(object):
     self.jmp = IR[24, 0]
     self.C0 = self.R[self.irc]
 
-  def what_are_we_up_to(self):
     self.MOV = (not self.p) and (self.op == 0)
     self.LSL = (not self.p) and (self.op == 1)
     self.ASR = (not self.p) and (self.op == 2)
