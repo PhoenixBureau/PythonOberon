@@ -6,7 +6,45 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
-from util import ops, word, signed, ops_rev, cmps, bint, signed2py
+from util import signed, bint, signed_int_to_python_int
+
+
+ops = dict(
+  Mov = 0, Lsl = 1, Asr = 2, Ror= 3,
+  And = 4, Ann = 5, Ior = 6, Xor = 7,
+  Add = 8, Sub = 9, Mul = 10, Div = 11,
+  Fad = 12, Fsb = 13, Fml = 14, Fdv = 15,
+  )
+ops_rev = dict((v, k) for k, v in ops.iteritems())
+
+
+##  ((cc == 0) & N | // MI, PL
+##   (cc == 1) & Z | // EQ, NE
+##   (cc == 2) & C | // CS, CC
+##   (cc == 3) & OV | // VS, VC
+##   (cc == 4) & (C|Z) | // LS, HI
+##   (cc == 5) & S | // LT, GE
+##   (cc == 6) & (S|Z) | // LE, GT
+##   (cc == 7)); // T, F
+
+cmps = {
+  (0, 0): 'MI',
+  (0, 1): 'PL',
+  (1, 0): 'EQ',
+  (1, 1): 'NE',
+  (2, 0): 'CS',
+  (2, 1): 'CC',
+  (3, 0): 'VS',
+  (3, 1): 'VC',
+  (4, 0): 'LS',
+  (4, 1): 'HI',
+  (5, 0): 'LT',
+  (5, 1): 'GE',
+  (6, 0): 'LE',
+  (6, 1): 'GT',
+  (7, 0): 'T',
+  (7, 1): 'F',
+}
 
 
 def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
@@ -103,7 +141,7 @@ def make_F0(u, op, a, b, c):
   assert 0 <= a < 0x10, repr(a)
   assert 0 <= b < 0x10, repr(b)
   assert 0 <= c < 0x10, repr(c)
-  return word(
+  return bint(
     (u << 29) +
     (a << 24) +
     (b << 20) +
@@ -119,7 +157,7 @@ def make_F1(u, v, op, a, b, K):
   assert 0 <= a < 0x10, repr(a)
   assert 0 <= b < 0x10, repr(b)
   assert 0 <= abs(K) < 2**16, repr(K)
-  return word(
+  return bint(
     (1 << 30) + # set q
     (u << 29) +
     (v << 28) +
@@ -136,7 +174,7 @@ def make_F3(cond, c, invert=False, v=False):
   assert 0 <= c < 0x10, repr(c)
   assert bool(invert) == invert, repr(invert)
   assert bool(v) == v, repr(v)
-  return word(
+  return bint(
     (0b11 << 30) + # set p, q
     (v << 28) +
     (invert << 27) +
@@ -151,7 +189,6 @@ def opof(op):
 
 def dis_F0(IR):
   op, ira, irb, irc = IR[20:16], IR[28:24], IR[24:20], IR[4:0]
-  q = IR[30]
   u = IR[29]
   if not op: # Mov
     return dis_Mov(IR)
@@ -219,7 +256,7 @@ def dis_F3imm(IR):
   invert = int(IR[27])
   cc = int(IR[27:24])
   op = cmps[cc, invert]
-  off = signed2py(IR[24:0], width=24)
+  off = signed_int_to_python_int(IR[24:0], width=24)
   return 'BR%s %s 0x%08x' % (link, op, off)
 
 

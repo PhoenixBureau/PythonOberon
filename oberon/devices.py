@@ -1,7 +1,5 @@
-from sys import stderr
-from time import time
-from collections import defaultdict
 import pdb
+from time import time
 from struct import unpack
 
 

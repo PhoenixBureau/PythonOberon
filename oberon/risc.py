@@ -1,8 +1,11 @@
 import pdb
-from sys import stderr
 from pprint import pformat
-from util import bint, blong, py2signed, signed2py, unsigned_to_signed
 from assembler import dis
+from util import (
+  bint, blong,
+  python_int_to_signed_int,
+  signed_int_to_python_int,
+  )
 
 
 F = 2**32-1
@@ -27,7 +30,7 @@ class RISC(object):
     self.PC = self.pcnext = PC
     self.R = [0] * 16
     self.H = 0
-    self.N = self.Z = self.C = self.OV = 0
+    self.N = self.Z = self.C = self.OV = False
     self.io_ports = {}
 
   def cycle(self):
@@ -176,32 +179,32 @@ class RISC(object):
     # correctly handle negative numbers.
 
     elif self.ADD:
-      B = signed2py(B)
-      C1 = signed2py(C1)
+      B = signed_int_to_python_int(B)
+      C1 = signed_int_to_python_int(C1)
       res = B + C1 + (self.u and self.C)
       self.C = res < B
       res = self._check_overflow(res)
 
     elif self.SUB:
-      B = signed2py(B)
-      C1 = signed2py(C1)
+      B = signed_int_to_python_int(B)
+      C1 = signed_int_to_python_int(C1)
       res = B - C1 - (self.u and self.C)
       res = self._check_overflow(res)
       self.C = res > B
 
     elif self.MUL:
-      B = signed2py(B)
-      C1 = signed2py(C1)
+      B = signed_int_to_python_int(B)
+      C1 = signed_int_to_python_int(C1)
       product = B * C1
-      self.product = blong(py2signed(product, 64))
+      self.product = blong(python_int_to_signed_int(product, 64))
       res = self.product[32:0]
 
     elif self.DIV:
-      B = signed2py(B)
-      C1 = signed2py(C1)
+      B = signed_int_to_python_int(B)
+      C1 = signed_int_to_python_int(C1)
       res, remainder = divmod(B, C1)
-      res = py2signed(res)
-      self.remainder = py2signed(remainder)
+      res = python_int_to_signed_int(res)
+      self.remainder = python_int_to_signed_int(remainder)
 
     else:
       raise ValueError() # We should never get here!
@@ -210,16 +213,15 @@ class RISC(object):
 
   def _check_overflow(self, res, bits=33):
     try:
-      return py2signed(res)
+      return python_int_to_signed_int(res)
     except ValueError:
       self.OV = True
-      return blong(py2signed(res, bits))[32:0]
+      return blong(python_int_to_signed_int(res, bits))[32:0]
     self.OV = False
 
   def register_instruction(self):
     self.pcnext = self.PC + 1
-    regmux = self.Arithmetic_Logical_Unit()
-    self.set_register(regmux)
+    self.set_register(self.Arithmetic_Logical_Unit())
 
   def set_register(self, value):
     value = value if isinstance(value, bint) else bint(value)
@@ -251,7 +253,7 @@ class RISC(object):
       self.R[15] = (self.PC + 1) << 2
 
     if self.u:
-      offset = signed2py(self.jmp, width=24)
+      offset = signed_int_to_python_int(self.jmp, width=24)
       self.pcnext = int(offset + self.PC + 1)
     else:
       self.pcnext = self.C0 >> 2
@@ -272,7 +274,7 @@ class RISC(object):
   def _sign_extend_offset(self):
     off = bint(self.off & 0xfffff)
     if off[19]:
-      off = unsigned_to_signed(off | 0xfff00000)
+      off = signed_int_to_python_int(off | 0xfff00000)
     return off
 
   def io(self, port):
@@ -321,7 +323,7 @@ class RISC(object):
             ' 0x%x'
             ) % (
               (self.PC, self.IR)
-              + tuple(map(signed2py, self.R[:-1]))
+              + tuple(map(signed_int_to_python_int, self.R[:-1]))
               + (self.R[-1],)
               )
 
@@ -401,7 +403,7 @@ if __name__ == '__main__':
   risc_cpu = RISC(bootloader, memory)
   risc_cpu.screen_size_hack()
 
-##  risc_cpu.io_ports[0] = clock()
+  risc_cpu.io_ports[0] = clock()
   risc_cpu.io_ports[4] = LEDs()
 #  risc_cpu.io_ports[8] = RS232 data
 #  risc_cpu.io_ports[12] = RS232 status
