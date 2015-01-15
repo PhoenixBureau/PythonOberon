@@ -37,6 +37,8 @@ class RISC(object):
     self.PC = self.pcnext
     instruction = self.fetch()
     self.decode(instruction)
+##    if self.PC < MemWords:
+##      print self.brief_view()
     self.control_unit()
 
   def fetch(self):
@@ -395,7 +397,7 @@ class ByteAddressed32BitRAM(object):
 
 if __name__ == '__main__':
   from traceback import print_exc
-  from devices import LEDs, FakeSPI, Disk, clock
+  from devices import LEDs, FakeSPI, Disk, clock, Mouse
   from bootloader import bootloader
 
   memory = ByteAddressed32BitRAM()
@@ -409,6 +411,9 @@ if __name__ == '__main__':
 #  risc_cpu.io_ports[12] = RS232 status
   risc_cpu.io_ports[20] = fakespi = FakeSPI()
   risc_cpu.io_ports[16] = fakespi.data
+  risc_cpu.io_ports[24] = mouse = Mouse()
+
+  mouse.set_coords(450, 474) # Imitate values in C trace.
 
   fakespi.register(1, disk)
 
@@ -416,7 +421,6 @@ if __name__ == '__main__':
     while True:
       try:
         risc_cpu.cycle()
-        print risc_cpu.brief_view()
       except:
         print_exc()
         risc_cpu.dump_ram()

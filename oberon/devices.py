@@ -127,6 +127,29 @@ class Disk(object):
 #    self.file.write(data)
 
 
+class Mouse(object):
+
+  def __init__(self):
+    self.value = 0
+
+  def read(self):
+    return self.value
+
+  def write(self, word):
+    raise NotImplementedError
+
+  def set_coords(self, x, y):
+    self.value = self.value & 0xff000000 | x | (y << 12)
+
+  def button_up(self, n):
+    assert 1 <= n <= 3, repr(n)
+    self.value = self.value & (0xffffffff ^ (1 << (27 - n)))
+
+  def button_down(self, n):
+    assert 1 <= n <= 3, repr(n)
+    self.value = self.value | (1 << (27 - n))
+
+
 class clock(object):
 
   def __init__(self, now=None):
@@ -197,5 +220,11 @@ class FakeSPI(object):
 
 
 if __name__ == '__main__':
-  disk = Disk()
-  print disk.read_data()
+  m = Mouse()
+  print m.read()
+  m.set_coords(450, 474)
+  print bin(m.read())
+  m.button_down(3)
+  print bin(m.read())
+  m.button_up(3)
+  print bin(m.read())

@@ -1,6 +1,4 @@
 from sys import stderr
-import pygame
-from pygame.locals import *
 from util import bint
 
 
@@ -10,6 +8,12 @@ DISPLAY_START = 0xe7f00
 DISPLAY_SIZE = width * height / 32
 
 words_in_horizontal_scanline = width / 32
+
+
+class FakeScreen:
+  def set_at(self, (x, y), color):
+    pass
+##    print x, y, color
 
 
 def iter_coords_of_word(address):
@@ -24,7 +28,7 @@ def update_screen(screen, address, value):
   bits = (value[i] for i in range(32))
   coords = iter_coords_of_word(address)
   for (x, y), bit in zip(coords, bits):
-    screen.set_at((y, x), 0xff * (1 - bit))
+    screen.set_at((x, y), 0xff * bit)
 
 
 class ScreenRAMMixin(object):
@@ -36,22 +40,21 @@ class ScreenRAMMixin(object):
     super(ScreenRAMMixin, self).put(address, word)
     if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE:
       print >> stderr, 'updating display ram 0x%08x: %s' % (address, bin(word)[2:])
-      address -= DISPLAY_START
-      update_screen(self.screen, address >> 2, word)
-      pygame.display.flip()
+      address = (address - DISPLAY_START) << 2
+      update_screen(self.screen, address, word)
 
   def __setitem__(self, key, value):
     self.put(key, value)
 
 
 if __name__ == '__main__':
+  import sys
   from traceback import print_exc
-  from risc import ByteAddressed32BitRAM, RISC
+  from risc import ByteAddressed32BitRAM, RISC, MemWords
   from devices import LEDs, FakeSPI, Disk, clock, Mouse
   from bootloader import bootloader
 
-  pygame.init()
-  screen = pygame.display.set_mode(size, 0, 8)
+  screen = FakeScreen()
 
   class Memory(ScreenRAMMixin, ByteAddressed32BitRAM):
     pass
@@ -76,9 +79,11 @@ if __name__ == '__main__':
 
   n = 0
   while n < 8000000:
-    n += 1
-    if not n % 1000:
-      pygame.display.flip()
+
+    if risc_cpu.PC < MemWords:
+      if not n % 10000:
+        print >> sys.stderr, n
+      n += 1
 
     try:
       risc_cpu.cycle()
