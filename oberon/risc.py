@@ -17,9 +17,6 @@ MemWords = MemSize / 4
 DisplayStart = 0xe7f00
 
 
-diskCommand, diskRead, diskWrite, diskWriting = 0, 1, 2, 3
-
-
 def log(message, *args):
   pass
 ##  print message % args
@@ -95,7 +92,7 @@ class RISC(object):
 
   def control_unit(self):
 ##    if self.PC < MemWords:
-    print self.brief_view()
+##      print self.brief_view()
     if not self.p:
       self.register_instruction()
     elif self.q:
@@ -348,15 +345,14 @@ class RISC(object):
               )
 
 
-_BYTE_MASKS = (
-  0b11111111111111111111111100000000,
-  0b11111111111111110000000011111111,
-  0b11111111000000001111111111111111,
-  0b00000000111111111111111111111111,
-  )
-
-
 class ByteAddressed32BitRAM(object):
+
+  BYTE_MASKS = (
+    0b11111111111111111111111100000000,
+    0b11111111111111110000000011111111,
+    0b11111111000000001111111111111111,
+    0b00000000111111111111111111111111,
+    )
 
   def __init__(self):
     self.store = {}
@@ -402,7 +398,7 @@ class ByteAddressed32BitRAM(object):
     else: # merge word and shifted byte
       # AND mask with the memory word to clear the bits for the
       # pre-shifted byte and OR the result with it.
-      byte |= word & _BYTE_MASKS[byte_offset]
+      byte |= word & self.BYTE_MASKS[byte_offset]
     self.store[word_addr] = byte
 
   def __len__(self):
@@ -417,8 +413,10 @@ class Disk(object):
   SECTOR_SIZE = 512
   SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
 
+  diskCommand, diskRead, diskWrite, diskWriting = range(4)
+
   def __init__(self, filename='disk.img'):
-    self.state = diskCommand
+    self.state = self.diskCommand
 
     self.rx_buf = [None] * self.SECTOR_SIZE_WORDS
     self.rx_idx = 0
@@ -443,7 +441,7 @@ class Disk(object):
 
     self.tx_idx += 1
 
-    if self.state == diskCommand:
+    if self.state == self.diskCommand:
       if (0xff & word) == 0xff and self.rx_idx == 0:
         log('disk_write PASS 0x%x', word)
         return
@@ -455,19 +453,19 @@ class Disk(object):
         self.run_command()
         self.rx_idx = 0
 
-    elif self.state == diskRead:
+    elif self.state == self.diskRead:
       if self.tx_idx == self.tx_cnt:
-        self.state = diskCommand
+        self.state = self.diskCommand
         log('disk_write diskRead -> diskCommand')
         self.tx_cnt = 0
         self.tx_idx = 0
 
-    elif self.state == diskWrite:
+    elif self.state == self.diskWrite:
       if word == 254:
-        self.state = diskWriting
+        self.state = self.diskWriting
         log('disk_write diskWrite -> diskWriting')
 
-    elif self.state == diskWriting:
+    elif self.state == self.diskWriting:
       if self.rx_idx < 128:
         self.rx_buf[self.rx_idx] = word
 
@@ -481,7 +479,7 @@ class Disk(object):
         self.tx_cnt = 1
         self.tx_idx = -1
         self.rx_idx = 0
-        self.state = diskCommand
+        self.state = self.diskCommand
         log('disk_write diskWriting -> diskCommand')
 
   def run_command(self):
@@ -491,7 +489,7 @@ class Disk(object):
     log('run_command ' + ' '.join(map(hex, (cmd, arg))))
 
     if cmd == 81:
-      self.state = diskRead
+      self.state = self.diskRead
       self.tx_buf[0] = 0
       self.tx_buf[1] = 254
       self._seek(arg)
@@ -500,7 +498,7 @@ class Disk(object):
       self.tx_cnt = 2 + 128
 
     elif cmd == 88:
-      self.state = diskWrite
+      self.state = self.diskWrite
       self._seek(arg)
       self.tx_buf[0] = 0
       self.tx_cnt = 1
@@ -626,6 +624,7 @@ if __name__ == '__main__':
   memory = ByteAddressed32BitRAM()
   disk = Disk('disk.img')
   risc_cpu = RISC(bootloader, memory)
+
   risc_cpu.screen_size_hack()
 
   risc_cpu.io_ports[0] = clock()
