@@ -8,7 +8,6 @@ from util import (
   )
 
 
-F = 2**32-1
 IO_RANGE = 0x0FFFFFFC0
 ROMStart = 0xFFFFF800 / 4
 MemSize = 0x00180000
@@ -22,8 +21,6 @@ class Trap(Exception):
 
 class RISC(object):
 
-  MT = 12 # Module Table register.
-
   def __init__(self, rom, ram, PC=ROMStart):
     self.rom = rom
     self.ram = ram
@@ -35,10 +32,7 @@ class RISC(object):
 
   def cycle(self):
     self.PC = self.pcnext
-    instruction = self.fetch()
-    self.decode(instruction)
-##    if self.PC < MemWords:
-##      print self.brief_view()
+    self.decode(self.fetch())
     self.control_unit()
 
   def fetch(self):
@@ -47,10 +41,10 @@ class RISC(object):
     elif ROMStart <= self.PC < (ROMStart + len(self.rom)):
       instruction = self.rom[self.PC - ROMStart]
     else:
-      raise ValueError(repr(self.PC))
+      raise Trap('Fetch from bad address 0x%08x' % (self.PC,))
 
     if instruction == 0xe7ffffff: # REPEAT UNTIL False i.e. halt loop.
-      raise Trap('REPEAT UNTIL False ing')
+      raise Trap('REPEAT-UNTIL-False-ing')
 
     return instruction
 
@@ -89,12 +83,18 @@ class RISC(object):
     self.BR  = self.p and self.q
 
   def control_unit(self):
+##    if self.PC < MemWords:
+##      print self.brief_view()
     if not self.p:
       self.register_instruction()
     elif self.q:
       self.branch_instruction()
     else:
       self.ram_instruction()
+
+  def register_instruction(self):
+    self.pcnext = self.PC + 1
+    self.set_register(self.Arithmetic_Logical_Unit())
 
   def Arithmetic_Logical_Unit(self):
     B = self.R[self.irb]
@@ -159,21 +159,27 @@ class RISC(object):
 
     elif self.LSL:
       res = B << (C1 & 31)
+
     elif self.ASR:
       C1 &= 31
       res = B >> C1
-      if bint(B)[31]: # Extend sign bit.
-        res |= 2**C1 - 1 << (32 - C1)
+      if bint(B)[31]:
+        res |= (2**C1 - 1) << (32 - C1) # Extend sign bit.
+
     elif self.ROR:
       C1 &= 31
       lost_bits = bint(B)[C1:0]
       res = (B >> C1) | (lost_bits << (32 - C1))
+
     elif self.AND:
       res = B & C1
+
     elif self.ANN:
-      res = B & (F ^ C1)
+      res = B & (0xffffffff ^ C1)
+
     elif self.IOR:
       res = B | C1
+
     elif self.XOR:
       res = B ^ C1
 
@@ -209,7 +215,7 @@ class RISC(object):
       self.remainder = python_int_to_signed_int(remainder)
 
     else:
-      raise ValueError() # We should never get here!
+      raise Trap('We should never get here!')
 
     return res
 
@@ -220,10 +226,6 @@ class RISC(object):
       self.OV = True
       return blong(python_int_to_signed_int(res, bits))[32:0]
     self.OV = False
-
-  def register_instruction(self):
-    self.pcnext = self.PC + 1
-    self.set_register(self.Arithmetic_Logical_Unit())
 
   def set_register(self, value):
     value = value if isinstance(value, bint) else bint(value)
@@ -262,15 +264,20 @@ class RISC(object):
 
   def ram_instruction(self):
     self.addr = addr = int(self.R[self.irb] + self._sign_extend_offset())
+
     if addr >= IO_RANGE:
       self.io(addr - IO_RANGE)
+
     elif self.LDR:
       value = self.ram.get_byte(addr) if self.v else self.ram[addr]
       self.set_register(value)
+
     elif self.v:
       self.ram.put_byte(addr, self.R[self.ira] & 255)
+
     else:
       self.ram[addr] = self.R[self.ira]
+
     self.pcnext = self.PC + 1
 
   def _sign_extend_offset(self):
@@ -356,7 +363,6 @@ class ByteAddressed32BitRAM(object):
   __getitem__ = get
 
   def put(self, addr, word):
-    assert 0 <= word <= F, repr(word)
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     self.store[word_addr] = word
