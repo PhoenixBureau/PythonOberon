@@ -50,8 +50,7 @@ class ScreenRAMMixin(object):
 if __name__ == '__main__':
   import sys
   from traceback import print_exc
-  from risc import ByteAddressed32BitRAM, RISC, MemWords
-  from devices import LEDs, FakeSPI, Disk, clock, Mouse
+  from risc import ByteAddressed32BitRAM, RISC, MemWords, LEDs, FakeSPI, Disk, clock, Mouse
   from bootloader import bootloader
 
   screen = FakeScreen()

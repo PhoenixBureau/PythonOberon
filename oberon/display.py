@@ -55,8 +55,7 @@ class ScreenRAMMixin(object):
 
 if __name__ == '__main__':
   from traceback import print_exc
-  from risc import ByteAddressed32BitRAM, RISC
-  from devices import LEDs, FakeSPI, Disk, clock, Mouse
+  from risc import ByteAddressed32BitRAM, RISC, LEDs, FakeSPI, Disk, clock, Mouse
   from bootloader import bootloader
 
   pygame.init()
