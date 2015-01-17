@@ -14,7 +14,6 @@ IO_RANGE = 0x0FFFFFFC0
 ROMStart = 0xFFFFF800 / 4
 MemSize = 0x00180000
 MemWords = MemSize / 4
-DisplayStart = 0xe7f00
 
 
 def log(message, *args):
@@ -302,11 +301,6 @@ class RISC(object):
       self.set_register(device.read())
     else:
       device.write(self.R[self.ira])
-
-  def screen_size_hack(self, width=1024, height=768):
-    self.ram[DisplayStart] = 0x53697A66  # magic value 'SIZE'+1
-    self.ram[DisplayStart + 4] = width
-    self.ram[DisplayStart + 8] = height
 
   def dump_ram(self, location=None, number=10):
     if location is None:
@@ -620,13 +614,16 @@ class FakeSPI(object):
 if __name__ == '__main__':
   from traceback import print_exc
   from bootloader import bootloader
+  from display import initialize_screen, ScreenRAMMixin
 
-  memory = ByteAddressed32BitRAM()
+  class Memory(ScreenRAMMixin, ByteAddressed32BitRAM):
+    pass
+
+  screen = initialize_screen()
+  memory = Memory()
+  memory.set_screen(screen)
   disk = Disk('disk.img')
   risc_cpu = RISC(bootloader, memory)
-
-  risc_cpu.screen_size_hack()
-
   risc_cpu.io_ports[0] = clock()
   risc_cpu.io_ports[4] = LEDs()
 #  risc_cpu.io_ports[8] = RS232 data
@@ -634,9 +631,7 @@ if __name__ == '__main__':
   risc_cpu.io_ports[20] = fakespi = FakeSPI()
   risc_cpu.io_ports[16] = fakespi.data
   risc_cpu.io_ports[24] = mouse = Mouse()
-
   mouse.set_coords(450, 474) # Imitate values in C trace.
-
   fakespi.register(1, disk)
 
   def cycle():
