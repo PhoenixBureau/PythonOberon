@@ -1,30 +1,39 @@
 from sys import stderr
 import pygame
 from pygame.locals import *
-from util import bint
 
 
 size = width, height = 1024, 768
 
 DISPLAY_START = 0xe7f00
-DISPLAY_SIZE = width * height / 32
+DISPLAY_SIZE_IN_BYTES = width * height / 8
+DISPLAY_SIZE_IN_WORDS = width * height / 32
 
 words_in_horizontal_scanline = width / 32
 
 
-def iter_coords_of_word(address):
-  word_x, word_y = divmod(address, words_in_horizontal_scanline)
-  pixel_y = word_y * 32
-  for y in range(pixel_y, pixel_y + 32):
-    yield word_x, y
+def coords_of_word(address):
+  '''
+  Given the address in words already adjusted for DISPLAY_START return
+  a generator that yields the (x, y) coords of the pixels in that word.
+  '''
+  y, word_x = divmod(address, words_in_horizontal_scanline)
+  y = height - y - 1
+  pixel_x = word_x * 32
+  for x in range(pixel_x, pixel_x + 32):
+    yield x, y
+
+
+def bits_of_int(i):
+  for _ in range(32):
+    yield i & 1
+    i >>= 1
 
 
 def update_screen(screen, address, value):
-  value = bint(value)
-  bits = (value[i] for i in range(32))
-  coords = iter_coords_of_word(address)
-  for (x, y), bit in zip(coords, bits):
-    screen.set_at((y, x), 0xff * (1 - bit))
+  for coords, bit in zip(coords_of_word(address), bits_of_int(value)):
+    screen.set_at(coords, 0xff * (1 - bit))
+  pygame.display.flip()
 
 
 class ScreenRAMMixin(object):
@@ -34,11 +43,11 @@ class ScreenRAMMixin(object):
 
   def put(self, address, word):
     super(ScreenRAMMixin, self).put(address, word)
-    if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE:
+    if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE_IN_BYTES:
       print >> stderr, 'updating display ram 0x%08x: %s' % (address, bin(word)[2:])
-      address -= DISPLAY_START
-      update_screen(self.screen, address >> 2, word)
-      pygame.display.flip()
+      # Convert byte RAM address to word screen address.
+      address = (address - DISPLAY_START) >> 2
+      update_screen(self.screen, address, word)
 
   def __setitem__(self, key, value):
     self.put(key, value)
@@ -78,7 +87,7 @@ if __name__ == '__main__':
   while n < 8000000:
     n += 1
     if not n % 1000:
-      pygame.display.flip()
+      print n
 
     try:
       risc_cpu.cycle()
