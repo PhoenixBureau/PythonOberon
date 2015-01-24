@@ -1,3 +1,4 @@
+from sys import stderr
 from traceback import print_exc
 from .risc import (
   RISC,
@@ -7,6 +8,7 @@ from .risc import (
   FakeSPI,
   Mouse,
   ByteAddressed32BitRAM,
+  MemWords,
   )
 from .bootloader import bootloader
 from .display import initialize_screen, ScreenRAMMixin
@@ -36,14 +38,20 @@ mouse.set_coords(450, 474) # Imitate values in C trace.
 fakespi.register(1, disk)
 
 
-def cycle():
-  while True:
+def cycle(cpu, limit):
+  n = 0
+  while n < limit:
     try:
-      risc_cpu.cycle()
+      cpu.cycle()
     except:
       print_exc()
-      risc_cpu.dump_ram()
+      cpu.dump_ram()
       break
 
+    if cpu.PC < MemWords:
+      if not n % 10000:
+        print >> stderr, n
+      n += 1
 
-cycle()
+
+cycle(risc_cpu, 8000000)
