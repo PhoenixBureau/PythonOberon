@@ -40,7 +40,12 @@ class RISC(object):
   def cycle(self):
     self.PC = self.pcnext
     self.decode(self.fetch())
-    self.control_unit()
+    if not self.p:
+      self.register_instruction()
+    elif self.q:
+      self.branch_instruction()
+    else:
+      self.ram_instruction()
 
   def fetch(self):
     if self.PC < MemWords:
@@ -89,15 +94,8 @@ class RISC(object):
     self.STR = self.p and (not self.q) and self.u
     self.BR  = self.p and self.q
 
-  def control_unit(self):
 ##    if self.PC < MemWords:
 ##      print self.brief_view()
-    if not self.p:
-      self.register_instruction()
-    elif self.q:
-      self.branch_instruction()
-    else:
-      self.ram_instruction()
 
   def register_instruction(self):
     self.pcnext = self.PC + 1
