@@ -4,7 +4,12 @@ from .bootloader import bootloader
 from .demo import Memory, make_cpu
 from .display import initialize_screen
 from .risc import Disk
-import pygame
+try:
+  import pygame
+except ImportError:
+  pump = lambda: None
+else:
+  pump = pygame.event.pump
 
 
 memory = Memory()
@@ -26,7 +31,7 @@ def cycle(cpu, limit):
       break
 
     if not n % 10000:
-      pygame.event.pump()
+      pump()
       print >> stderr, n
     n += 1
 
