@@ -407,7 +407,7 @@ class Disk(object):
 
   diskCommand, diskRead, diskWrite, diskWriting = range(4)
 
-  def __init__(self, filename='disk.img'):
+  def __init__(self, image_file):
     self.state = self.diskCommand
 
     self.rx_buf = [None] * self.SECTOR_SIZE_WORDS
@@ -417,7 +417,7 @@ class Disk(object):
     self.tx_cnt = 0
     self.tx_idx = 0
 
-    self.file = open(filename, 'rb')
+    self.file = image_file
     self.read_sector()
     self.offset = 0x80002 if self.tx_buf[0] == 0x9B1EA38D else 0
 
@@ -620,7 +620,7 @@ if __name__ == '__main__':
   screen = initialize_screen()
   memory = Memory()
   memory.set_screen(screen)
-  disk = Disk('disk.img')
+  disk = Disk(open('../disk.img', 'rb'))
   risc_cpu = RISC(bootloader, memory)
   risc_cpu.io_ports[0] = clock()
   risc_cpu.io_ports[4] = LEDs()
