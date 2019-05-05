@@ -42,8 +42,9 @@ class binary_addressing_mixin(object):
     return type(self)(self >> stop & (2**n - 1))
 
 
-class bint(binary_addressing_mixin, int): pass
+#class bint(binary_addressing_mixin, int): pass
 class blong(binary_addressing_mixin, long): pass
+bint = blong
 
 
 def python_int_to_signed_int(i, width=32):
