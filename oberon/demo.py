@@ -17,14 +17,14 @@
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
 from .risc import (
-    RISC,
-    Disk,
-    clock,
-    LEDs,
-    FakeSPI,
-    Mouse,
     ByteAddressed32BitRAM,
+    clock,
+    Disk,
+    FakeSPI,
+    LEDs,
     MemWords,
+    Mouse,
+    RISC,
     )
 from .bootloader import bootloader
 from .display import initialize_screen, ScreenRAMMixin
