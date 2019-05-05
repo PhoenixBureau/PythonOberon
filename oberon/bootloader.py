@@ -1,3 +1,14 @@
+'''
+This module is just a convenient way to make the machine code
+of the Oberon bootloader available in Python.
+'''
+
+
+# Since I didn't write the bootloader code I feel it would be
+# inappropriate to assert copyright over the contents of this
+# file.
+
+
 bootloader = (
 0xE7000151, 0x00000000, 0x00000000, 0x00000000,
 0x00000000, 0x00000000, 0x00000000, 0x00000000,
