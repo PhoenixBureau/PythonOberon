@@ -19,3 +19,16 @@ instructions (in the form of 32-bit-wide ints.  However, it also provides
 a function dis() that will return a string representing the (integer)
 instruction passed to it.
 
+Start with:
+
+    python -i -m oberon
+
+
+This will use `disk.img` by default.  At around 3400000 cycles the screen
+background begins to fill in, and at around 6500000 cycles the window
+content begins to be drawn:
+
+![PyGame window showing Oberon](./Screenshot.png "PyGame window showing Oberon")
+
+(The `-i` option tells Python to drop into interactive REPL mode after
+the script has run.  You can interact with the risc object.)
