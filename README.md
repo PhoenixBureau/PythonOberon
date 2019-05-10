@@ -21,8 +21,9 @@ instruction passed to it.
 
 Start with:
 
-    python -i -m oberon
-
+```
+python -i -m oberon
+```
 
 This will use `disk.img` by default.  At around 3400000 cycles the screen
 background begins to fill in, and at around 6500000 cycles the window
