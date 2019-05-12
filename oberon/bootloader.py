@@ -1,6 +1,14 @@
 '''
+
+Oberon Bootloader
+=========================================
+
 This module is just a convenient way to make the machine code
 of the Oberon bootloader available in Python.
+
+You can find the Oberon source code for the bootloader in the
+BootLoader.Mod file in the ``disk.img`` after booting.  Running this
+module as a script will print a crude disassembly.
 '''
 
 

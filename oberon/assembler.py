@@ -18,6 +18,10 @@
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
 '''
+
+Assembler
+=========================================
+
 A very simple "assembler".  Really it's just a collection of routines to
 generate binary order codes for debugging.
 

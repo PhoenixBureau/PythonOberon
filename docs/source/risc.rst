@@ -1,0 +1,3 @@
+
+.. automodule:: oberon.risc
+   :members:
