@@ -3,6 +3,11 @@ Python Oberon
 
 Some software for [Oberon 2013](http://www.inf.ethz.ch/personal/wirth/ProjectOberon/).
 
+-  [Documentation](https://pythonoberon.readthedocs.io/en/latest/)
+-  [Source code](https://git.sr.ht/~sforman/PythonOberon)
+-  [Bugs & issues](https://todo.sr.ht/~sforman/python-oberon)
+
+
 See also:
 
 -  [projectoberon.com](http://projectoberon.com/)

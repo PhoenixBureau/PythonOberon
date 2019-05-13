@@ -11,9 +11,15 @@ An emulator written in Python for the Project Oberon RISC processor.  If
 `PyGame <https://www.pygame.org/>`_ is available it will open a screen of the standard dimensions of
 1024 x 768 pixels.  There's also a very crude "assembler".
 
+* `Documentation <https://pythonoberon.readthedocs.io/en/latest/>`_
+* `Source code <https://git.sr.ht/~sforman/PythonOberon>`_  (`mirror <https://github.com/PhoenixBureau/PythonOberon>`_)
+* `Bugs & issues <https://todo.sr.ht/~sforman/python-oberon>`_
+
 
 Information on Oberon
 ----------------------------------
+
+Links to external resources:
 
 * `Oberon 2013 <http://www.inf.ethz.ch/personal/wirth/ProjectOberon/>`_
 * `projectoberon.com <http://projectoberon.com/>`_
