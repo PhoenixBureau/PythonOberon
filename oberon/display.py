@@ -22,6 +22,10 @@
 Display
 ========================
 
+This module encapsulates the PyGame library and provides a mixin class
+:py:class:`ScreenRAMMixin` for the :py:class:`oberon.risc.ByteAddressed32BitRAM`
+class that visualizes the memory-mapped raster display on a PyGame surface.
+
 '''
 from sys import stderr
 try:
@@ -33,20 +37,33 @@ except ImportError:
 
 
   class FakeScreen:
+    '''
+    If PyGame is unavailable this class will be used to imitate the 
+    screen object.
+    '''
     def set_at(self, (x, y), color):
       pass
   #    print x, y, color
 
 
   def initialize_screen():
+    '''
+    Pretend to initialize screen but just return a :py:obj:`FakeScreen`
+    object.
+    '''
+    
     return FakeScreen()
 
 
   def display_flip():
+    '''Pretend to flip the screen.'''
     pass
 
 
   class ScreenRAMMixin(object):
+    '''
+    A fake mixin class for :py:class:`ScreenRAMMixin`.
+    '''
     def set_screen(self, screen):
       screen_size_hack(self)
 
@@ -55,21 +72,40 @@ else:
 
 
   def initialize_screen():
+    '''
+    Fire up PyGame and return a screen surface of :py:obj:`SIZE`.
+    '''
     pygame.init()
-    return pygame.display.set_mode(size, 0, 8)
+    return pygame.display.set_mode(SIZE, 0, 8)
 
 
   def display_flip():
+    '''
+    Call ``pygame.display.flip()``.
+    '''
     pygame.display.flip()
 
 
   class ScreenRAMMixin(object):
+    '''
+    A mixin class for the :py:class:`oberon.risc.ByteAddressed32BitRAM`
+    that updates the PyGame screen pixels when data are written to RAM
+    addresses within the memory-mapped raster display.
+    '''
 
     def set_screen(self, screen):
+      '''
+      Connect a PyGame surface to the RAM.
+      '''
       self.screen = screen
       screen_size_hack(self)
 
     def put(self, address, word):
+      '''
+      Extends :py:meth:`oberon.risc.ByteAddressed32BitRAM.put` to check
+      for writes to the memory-mapped raster display RAM and update the
+      PyGame screen accordingly.
+      '''
       super(ScreenRAMMixin, self).put(address, word)
       if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE_IN_BYTES:
         # Convert byte RAM address to word screen address.
@@ -80,14 +116,26 @@ else:
       self.put(key, value)
 
 
-size = width, height = 1024, 768
+SIZE = width, height = 1024, 768
+'Size of the screen in pixels.'
 
 DISPLAY_START = 0xe7f00
+'RAM address of the start of the memory-mapped raster display.'
+
 DISPLAY_SIZE_IN_BYTES = width * height / 8
+'As the name implies, the number of bytes in the display portion of the RAM.'
+
 WORDS_IN_SCANLINE = width / 32
+'The number of 32-bit words in one horizontal scna line of the display.'
 
 
 def screen_size_hack(ram, width=1024, height=768):
+  '''
+  Tuck a "magic number" and the screen dimensions into a location in RAM
+  at the start of the display.  (I forget how they are used by the system.)
+  If you have PyGame installed you can see the data in the pixels in the
+  lower-left (origin) corner of the screen.
+  '''
   ram[DISPLAY_START] = 0x53697A66  # magic value 'SIZE'+1
   ram[DISPLAY_START + 4] = width
   ram[DISPLAY_START + 8] = height
@@ -95,7 +143,7 @@ def screen_size_hack(ram, width=1024, height=768):
 
 def coords_of_word(address):
   '''
-  Given the address in words already adjusted for DISPLAY_START return
+  Given the address in words already adjusted for :py:obj:`DISPLAY_START` return
   a generator that yields the (x, y) coords of the pixels in that word.
   '''
   y, word_x = divmod(address, WORDS_IN_SCANLINE)
@@ -106,12 +154,17 @@ def coords_of_word(address):
 
 
 def bits_of_int(i):
+  '''Yield thirty-two bits, LSB to MSB, of an integer.'''
   for _ in range(32):
     yield i & 1
     i >>= 1
 
 
 def update_screen(screen, address, value):
+  '''
+  Update the contents of the PyGame ``screen`` at ``address`` with the
+  bit values from the integer ``value``.
+  '''
   for coords, bit in zip(coords_of_word(address), bits_of_int(value)):
     screen.set_at(coords, 0xff * (1 - bit))
   display_flip()
