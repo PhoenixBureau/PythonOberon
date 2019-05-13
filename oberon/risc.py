@@ -282,7 +282,7 @@ class RISC(object):
 
   def set_register(self, value):
     '''
-    Set ``A`` register and `N`, `Z`, and `H`.
+    Set ``A`` register and ``N``, ``Z``, and ``H``.
     '''
     value = value if isinstance(value, bint) else bint(value)
     self.R[self.ira] = value[32:0]

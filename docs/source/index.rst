@@ -17,7 +17,7 @@ Information on Oberon
 
 * `Oberon 2013 <http://www.inf.ethz.ch/personal/wirth/ProjectOberon/>`_
 * `projectoberon.com <http://projectoberon.com/>`_
-* `pdewacht/oberon-risc-emu on github <https://github.com/pdewacht/oberon-risc-emu>`_
+* `Project Oberon emulator in C <https://github.com/pdewacht/oberon-risc-emu>`_
 * `Project Oberon emulators in JavaScript and Java <http://schierlm.github.io/OberonEmulator/>`_
 * `A resource page for Oberon-07 <http://oberon07.com/>`_
 
@@ -44,13 +44,19 @@ base directory with::
 
     python -i -m oberon
 
-It will use the ``disk.img`` file by default.  At around 3400000 cycles the screen
-background begins to fill in, and at around 6500000 cycles the window
-content begins to be drawn.
+It will use the ``disk.img`` file and run for eight million cycles by
+default.  At around 3400000 cycles the screen background begins to fill
+in, and at around 6500000 cycles the window content begins to be drawn.
+
+(The ``-i`` option tells the Python interpreter to drop into the 
+interactive REPL after cycling the emulator.  Without it the script will
+just exit and the screen will disappear.)
 
 
 Screenshot
 ----------------------------------
+
+After eight million cycles:
 
 .. image:: _static/Screenshot.png
 

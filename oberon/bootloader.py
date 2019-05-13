@@ -115,9 +115,10 @@ bootloader = (
 0x61000008, 0xA1000000, 0x40000084, 0x5100FFC4,
 0xA0100000, 0x40000000, 0xC7000000,
 )
-
+'Machine code of the bootloader ROM.'
 
 ROMStart = 0xFFFFF800 / 4
+'Address (in words, not bytes) of the start of the ROM.'
 
 
 if __name__ == '__main__':
