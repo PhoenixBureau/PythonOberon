@@ -18,6 +18,7 @@
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
 from argparse import ArgumentParser, FileType
+from pkg_resources import resource_filename
 from sys import stderr
 from traceback import print_exc
 from .bootloader import bootloader
@@ -40,7 +41,7 @@ parser = ArgumentParser(
 parser.add_argument(
   '-d', '--disk-image',
   type=FileType('rb'),
-  default='disk.img',
+  default=resource_filename(__name__, 'disk.img'),
   )
 args = parser.parse_args()
 
