@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='PythonOberon',
-    version='0.1',
+    version='0.1.0',
     author='Simon Forman',
     author_email='sforman@hushmail.com',
     description='A hardware emulator for the Oberon RISC processor.',
