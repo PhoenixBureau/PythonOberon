@@ -17,6 +17,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
+'''
+
+Display
+========================
+
+'''
 from sys import stderr
 try:
   import pygame

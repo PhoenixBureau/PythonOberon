@@ -17,6 +17,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
+'''
+
+Emulated Hardware
+========================================
+
+
+'''
 import pdb
 from time import time
 from struct import unpack
@@ -46,6 +53,7 @@ class Trap(Exception):
 
 
 class RISC(object):
+  '''The RISC processsor.'''
 
   def __init__(self, rom, ram, PC=ROMStart):
     self.rom = rom
@@ -57,6 +65,7 @@ class RISC(object):
     self.io_ports = {}
 
   def cycle(self):
+    '''Run one cycle of the processor.'''
     self.PC = self.pcnext
     self.decode(self.fetch())
     if not self.p:
@@ -357,6 +366,9 @@ class RISC(object):
 
 
 class ByteAddressed32BitRAM(object):
+  '''
+  Represent a RAM chip.
+  '''
 
   BYTE_MASKS = (
     0b11111111111111111111111100000000,
@@ -420,6 +432,7 @@ class ByteAddressed32BitRAM(object):
 
 
 class Disk(object):
+  '''Disk'''
 
   SECTOR_SIZE = 512
   SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
@@ -537,6 +550,7 @@ class Disk(object):
 
 
 class Mouse(object):
+  '''Mouse'''
 
   def __init__(self):
     self.value = 0
@@ -560,6 +574,7 @@ class Mouse(object):
 
 
 class clock(object):
+  '''clock'''
 
   def __init__(self, now=None):
     self.reset(now)
@@ -579,6 +594,7 @@ class clock(object):
 
 
 class LEDs(object):
+  '''LEDs'''
 
   def read(self):
     return 0
@@ -588,6 +604,7 @@ class LEDs(object):
 
 
 class FakeSPI(object):
+  '''SPI'''
 
   def __init__(self):
     self.things = {}
