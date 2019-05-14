@@ -38,7 +38,7 @@ ops = dict(
   Add = 8, Sub = 9, Mul = 10, Div = 11,
   Fad = 12, Fsb = 13, Fml = 14, Fdv = 15,
   )
-'A map from operation names to the integer value that represents the '
+'Operation names mapped to their values in instructions.'
 
 ops_rev = dict((v, k) for k, v in ops.iteritems())
 
