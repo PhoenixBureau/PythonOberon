@@ -2,13 +2,10 @@
 .PHONY: clean dist docs test upload
 
 
-PYPI_REPO=testpypi
-TESTDIR=./TEST00
-
-
 clean:
 	$(RM) -vr ./build ./dist ./PythonOberon.egg-info ./docs/build
 	$(RM) -r $(TESTDIR)
+	$(RM) -vr oberon/*.pyc
 
 
 dist:
@@ -20,12 +17,17 @@ docs:
 	$(MAKE) -C docs html
 
 
+# Test server only.
+TESTDIR=./TEST00
+
 upload: dist
 	twine upload -r $(PYPI_REPO) ./dist/*
 
 
 # In order to support testing the code as installed
 # create a virtualenv and install the source dist zip there.
+PYPI_REPO=testpypi
+
 test: dist
 	$(RM) -r $(TESTDIR)
 	mkdir $(TESTDIR)

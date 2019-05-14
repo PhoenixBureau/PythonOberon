@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 
-Python Oberon
+Python Oberon v0.1.0
 ========================================
 
 An emulator written in Python for the Project Oberon RISC processor.  If
@@ -14,32 +14,15 @@ An emulator written in Python for the Project Oberon RISC processor.  If
 * `Documentation <https://pythonoberon.readthedocs.io/en/latest/>`_
 * `Source code <https://git.sr.ht/~sforman/PythonOberon>`_  (`mirror <https://github.com/PhoenixBureau/PythonOberon>`_)
 * `Bugs & issues <https://todo.sr.ht/~sforman/python-oberon>`_
+* `On PyPI <https://pypi.org/project/PythonOberon/>`_
 
 
-Information on Oberon
+Installing
 ----------------------------------
 
-Links to external resources:
+The usual way from PyPI::
 
-* `Oberon 2013 <http://www.inf.ethz.ch/personal/wirth/ProjectOberon/>`_
-* `projectoberon.com <http://projectoberon.com/>`_
-* `Project Oberon emulator in C <https://github.com/pdewacht/oberon-risc-emu>`_
-* `Project Oberon emulators in JavaScript and Java <http://schierlm.github.io/OberonEmulator/>`_
-* `A resource page for Oberon-07 <http://oberon07.com/>`_
-
-
-Module Documentation
-----------------------------------
-
-
-.. toctree::
-   :maxdepth: 2
-
-   assembler
-   bootloader
-   display
-   risc
-   util
+    pip install PythonOberon
 
 
 Starting the Emulator
@@ -65,6 +48,29 @@ Screenshot
 After eight million cycles:
 
 .. image:: _static/Screenshot.png
+
+
+Module Documentation
+----------------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   assembler
+   bootloader
+   display
+   risc
+   util
+
+
+Information on Oberon
+----------------------------------
+
+* `Oberon 2013 <http://www.inf.ethz.ch/personal/wirth/ProjectOberon/>`_
+* `projectoberon.com <http://projectoberon.com/>`_
+* `Project Oberon emulator in C <https://github.com/pdewacht/oberon-risc-emu>`_
+* `Project Oberon emulators in JavaScript and Java <http://schierlm.github.io/OberonEmulator/>`_
+* `A resource page for Oberon-07 <http://oberon07.com/>`_
 
 
 Indices and tables
