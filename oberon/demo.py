@@ -34,7 +34,7 @@ from .bootloader import bootloader
 from .display import initialize_screen, ScreenRAMMixin
 from .risc import (
     ByteAddressed32BitRAM,
-    clock,
+    Clock,
     Disk,
     FakeSPI,
     LEDs,
@@ -80,7 +80,7 @@ def make_cpu(disk_image, serial=None):
     ram.set_screen(initialize_screen())
     disk = Disk(disk_image)
     risc_cpu = RISC(bootloader, ram)
-    risc_cpu.io_ports[0] = clock()
+    risc_cpu.io_ports[0] = Clock()
     risc_cpu.io_ports[4] = switches = LEDs()
     if serial:
         switches.switches |= 1
