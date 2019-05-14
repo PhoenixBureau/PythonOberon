@@ -88,9 +88,9 @@ def make_cpu(disk_image, serial=None):
         risc_cpu.io_ports[12] = serial_port.status
     risc_cpu.io_ports[20] = fakespi = FakeSPI()
     risc_cpu.io_ports[16] = fakespi.data
+    fakespi.register(1, disk)
     risc_cpu.io_ports[24] = mouse = Mouse()
     mouse.set_coords(450, 474)
-    fakespi.register(1, disk)
     return risc_cpu
 
 
