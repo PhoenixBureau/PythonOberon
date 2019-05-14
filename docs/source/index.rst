@@ -58,6 +58,7 @@ Module Documentation
 
    assembler
    bootloader
+   demo
    display
    risc
    util
