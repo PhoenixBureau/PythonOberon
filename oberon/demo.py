@@ -41,6 +41,7 @@ from .risc import (
     MemWords,
     Mouse,
     RISC,
+    Serial,
     )
 try:
     import pygame
@@ -64,10 +65,14 @@ def make_arg_parser():
         type=FileType('rb'),
         default=resource_filename(__name__, 'disk.img'),
         )
+    parser.add_argument(
+        '--serial-in',
+        type=FileType('rb'),
+        )
     return parser
 
 
-def make_cpu(disk_image):
+def make_cpu(disk_image, serial=None):
     '''
     Build and return a :py:class:`RISC` object with peripherals.
     '''
@@ -76,9 +81,11 @@ def make_cpu(disk_image):
     disk = Disk(disk_image)
     risc_cpu = RISC(bootloader, ram)
     risc_cpu.io_ports[0] = clock()
-    risc_cpu.io_ports[4] = LEDs()
-    #  risc_cpu.io_ports[8] = RS232 data
-    #  risc_cpu.io_ports[12] = RS232 status
+    risc_cpu.io_ports[4] = switches = LEDs()
+    if serial:
+        switches.switches |= 1
+        risc_cpu.io_ports[8] = serial_port = Serial(serial)
+        risc_cpu.io_ports[12] = serial_port.status
     risc_cpu.io_ports[20] = fakespi = FakeSPI()
     risc_cpu.io_ports[16] = fakespi.data
     risc_cpu.io_ports[24] = mouse = Mouse()

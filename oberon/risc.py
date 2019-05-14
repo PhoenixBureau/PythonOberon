@@ -67,6 +67,7 @@ class RISC(object):
     self.H = 0
     self.N = self.Z = self.C = self.OV = False
     self.io_ports = {}
+    self.switches = 0
 
   def cycle(self):
     '''Run one cycle of the processor.'''
@@ -537,7 +538,7 @@ class Disk(object):
       self.rx_buf[self.rx_idx] = word
       self.rx_idx += 1
       if self.rx_idx == 6:
-##        pdb.set_trace()
+        ##  pdb.set_trace()
         self.run_command()
         self.rx_idx = 0
 
@@ -581,7 +582,7 @@ class Disk(object):
       self.tx_buf[0] = 0
       self.tx_buf[1] = 254
       self._seek(arg)
-##      pdb.set_trace()
+      ##  pdb.set_trace()
       self.read_sector(2)
       self.tx_cnt = 2 + 128
 
@@ -609,8 +610,8 @@ class Disk(object):
 
   def write_sector(self):
     log('write sector %r', self.rx_buf)
-#    data = pack('<128I', self.rx_buf)
-#    self.file.write(data)
+    # data = pack('<128I', self.rx_buf)
+    # self.file.write(data)
 
 
 class Mouse(object):
@@ -660,8 +661,11 @@ class clock(object):
 class LEDs(object):
   '''LEDs'''
 
+  def __init__(self):
+    self.switches = 0
+
   def read(self):
-    return 0
+    return self.switches
 
   def write(self, word):
     print 'LEDs', bin(word)[2:]
@@ -707,6 +711,29 @@ class FakeSPI(object):
     except KeyError:
       log('No SPI device %i', word)
       self.current_thing = None
+
+
+class Serial(object):
+  
+  def __init__(self, input_file):
+    self.input_file = input_file
+
+    class SerialStatus(object):
+
+      def read(inner):
+        return 1
+
+      def write(inner, word):
+        2/0
+
+    self.status = SerialStatus()
+
+
+  def read(self):
+    return ord(self.input_file.read(1))
+
+  def write(self, word):
+    1/0
 
 
 if __name__ == '__main__':
