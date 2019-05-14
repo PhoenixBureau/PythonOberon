@@ -10,23 +10,16 @@ clean:
 
 dist:
 	python ./setup.py sdist bdist_wheel
-	twine check dist/*
+	twine check ./dist/*
 
 
 docs:
 	$(MAKE) -C docs html
 
 
-# Test server only.
+# In order to support testing the code as installed create a virtualenv
+# and install the source dist zip there.
 TESTDIR=./TEST00
-
-upload: dist
-	twine upload -r $(PYPI_REPO) ./dist/*
-
-
-# In order to support testing the code as installed
-# create a virtualenv and install the source dist zip there.
-PYPI_REPO=testpypi
 
 test: dist
 	$(RM) -r $(TESTDIR)
@@ -38,5 +31,14 @@ test: dist
 	echo "Type: cd $(TESTDIR) ; source ./venv/bin/activate"
 
 
+# Upload to test server only.
+PYPI_REPO=testpypi
+
+upload: dist
+	twine upload -r $(PYPI_REPO) ./dist/*
+
+
 # To install from the test PyPI server.
 # pip install -i https://test.pypi.org/simple/ --no-deps PythonOberon
+
+
