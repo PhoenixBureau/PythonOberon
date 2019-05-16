@@ -23,34 +23,45 @@ def strfi(file_obj):
     return StringIO.StringIO(file_obj.read())
 
 
-def disconnect(cpu):
-    # disk = cpu.io_ports[20].things[1]
-    # serial_port = cpu.io_ports[8]
-    # D, disk.file = disk.file, None
-    S, cpu.ram.screen = cpu.ram.screen, None
-    # F, serial_port.input_file = serial_port.input_file, None
-    return S
-
-
-args = make_arg_parser().parse_args(['--serial-in', './fillscreen.bin'])
-cpu = make_cpu(
-    strfi(args.disk_image),
-    strfi(args.serial_in),
-    )
-print
-
-
-def one():
+def one(cpu):
     cpu.cycle()
     os.system('clear')
     image(cpu)
 
 
-for n in range(100):
-    if not n % 100: pump()
-    one()
-    time.sleep(.01)
+def run(cpu, cycles=10000):
+    for n in range(cycles):
+        if not n % 100:
+            pump()
+        one(cpu)
+        time.sleep(.01)
 
-unpicklable = disconnect(cpu)
+
+# Use the fill screen binary.
+ARGS = ['--serial-in', './fillscreen.bin']
+
+args = make_arg_parser().parse_args(ARGS)
+cpu = make_cpu(
+    strfi(args.disk_image),
+    strfi(args.serial_in),
+    )
+
+run(cpu, 100)
+
+# Disconnect the screen.  Can't pickle it.
+S, cpu.ram.screen = cpu.ram.screen, None
+
 with open('a.pickle', 'wb') as f:
     pickle.dump(cpu, f)
+
+print 'BLINK!'
+time.sleep(.25)
+
+with open('a.pickle', 'rb') as f:
+    new_cpu = pickle.load(f)
+
+# Connect the screen to the new cpu object.
+new_cpu.ram.screen = S
+
+# Let 'er rip!
+run(new_cpu)
