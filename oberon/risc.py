@@ -674,23 +674,7 @@ class FakeSPI(object):
   def __init__(self):
     self.things = {}
     self.current_thing = None
-
-    class DataControl(object):
-
-      def read(inner):
-        if self.current_thing:
-          data = self.current_thing.read()
-        else:
-          data = 0xff
-        log('FakeSPI Data Read: 0x%x', data)
-        return data
-
-      def write(inner, word):
-        log('FakeSPI Data Write: 0x%x', word)
-        if self.current_thing:
-          self.current_thing.write(word)
-
-    self.data = DataControl()
+    self.data = DataControl(self)
 
   def register(self, index, thing):
     self.things[index] = thing
@@ -710,20 +694,42 @@ class FakeSPI(object):
       self.current_thing = None
 
 
+class DataControl(object):
+
+  def __init__(self, spi):
+    self.spi = spi
+
+  def read(self):
+    if self.spi.current_thing:
+      data = self.spi.current_thing.read()
+    else:
+      data = 0xff
+    log('FakeSPI Data Read: 0x%x', data)
+    return data
+
+  def write(self, word):
+    log('FakeSPI Data Write: 0x%x', word)
+    if self.spi.current_thing:
+      self.spi.current_thing.write(word)
+
+
+class SerialStatus(object):
+
+  def __init__(self, ser):
+    self.ser = ser
+
+  def read(self):
+    return 1
+
+  def write(write, word):
+    2/0
+
+
 class Serial(object):
   
   def __init__(self, input_file):
     self.input_file = input_file
-
-    class SerialStatus(object):
-
-      def read(inner):
-        return 1
-
-      def write(inner, word):
-        2/0
-
-    self.status = SerialStatus()
+    self.status = SerialStatus(self)
 
 
   def read(self):
