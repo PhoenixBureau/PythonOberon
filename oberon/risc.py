@@ -137,9 +137,6 @@ class RISC(object):
     self.STR = self.p and (not self.q) and self.u
     self.BR  = self.p and self.q
 
-##    if self.PC < MemWords:
-##      print self.brief_view()
-
   def register_instruction(self):
     '''
     Increment ``PC`` and set a register from the ALU.
@@ -386,11 +383,11 @@ class RISC(object):
     elif self.LDR:
       print '            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
     # Print the registers.
-##    for i in range(0, 16, 2):
-##      reg0, reg1 = self.R[i], self.R[i + 1]
-##      print 'R%-2i = 0x%-8x' % (i + 1, reg1),
-##      print 'R%-2i = 0x%-8x' % (i, reg0)
-##    print
+    # for i in range(0, 16, 2):
+    #   reg0, reg1 = self.R[i], self.R[i + 1]
+    #   print 'R%-2i = 0x%-8x' % (i + 1, reg1),
+    #   print 'R%-2i = 0x%-8x' % (i, reg0)
+    # print
 
   def brief_view(self):
     '''
