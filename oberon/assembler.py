@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 #    Copyright © 2019 Simon Forman
 #
@@ -17,6 +18,10 @@
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
 '''
+
+Assembler
+=========================================
+
 A very simple "assembler".  Really it's just a collection of routines to
 generate binary order codes for debugging.
 
@@ -33,6 +38,8 @@ ops = dict(
   Add = 8, Sub = 9, Mul = 10, Div = 11,
   Fad = 12, Fsb = 13, Fml = 14, Fdv = 15,
   )
+'A map from operation names to the integer value that represents the '
+
 ops_rev = dict((v, k) for k, v in ops.iteritems())
 
 

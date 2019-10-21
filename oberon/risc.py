@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 #    Copyright © 2019 Simon Forman
 #
@@ -16,6 +17,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
+'''
+
+Emulated Hardware
+========================================
+
+
+'''
 import pdb
 from time import time
 from struct import unpack
@@ -45,6 +53,11 @@ class Trap(Exception):
 
 
 class RISC(object):
+  '''
+  The RISC processsor.
+  
+  This class is designed for ease of introspection rather than efficiency.
+  '''
 
   def __init__(self, rom, ram, PC=ROMStart):
     self.rom = rom
@@ -54,8 +67,10 @@ class RISC(object):
     self.H = 0
     self.N = self.Z = self.C = self.OV = False
     self.io_ports = {}
+    self.switches = 0
 
   def cycle(self):
+    '''Run one cycle of the processor.'''
     self.PC = self.pcnext
     self.decode(self.fetch())
     if not self.p:
@@ -66,6 +81,12 @@ class RISC(object):
       self.ram_instruction()
 
   def fetch(self):
+    '''
+    Load an instruction from RAM or ROM and return it.  Raise
+    :py:exc:`Trap` if ``PC`` goes out of bounds or if the machine
+    enters a certain kind of infinite loop (this is a way for code
+    running on the emulated chip to signal *HALT*.)
+    '''
     if self.PC < MemWords:
       instruction = self.ram[self.PC << 2]
     elif ROMStart <= self.PC < (ROMStart + len(self.rom)):
@@ -79,6 +100,10 @@ class RISC(object):
     return instruction
 
   def decode(self, instruction):
+    '''
+    Decode the instruction and set various field and flag member values
+    of the emulator object.
+    '''
     self.IR = IR = bint(instruction)
     self.p = IR[31]
     self.q = IR[30]
@@ -116,10 +141,16 @@ class RISC(object):
 ##      print self.brief_view()
 
   def register_instruction(self):
+    '''
+    Increment ``PC`` and set a register from the ALU.
+    '''
     self.pcnext = self.PC + 1
     self.set_register(self.Arithmetic_Logical_Unit())
 
   def Arithmetic_Logical_Unit(self):
+    '''
+    Enact the ALU of the RISC chip.
+    '''
     B = self.R[self.irb]
 
     # Here's how negative immediate values are stored in the instruction and
@@ -251,6 +282,9 @@ class RISC(object):
     self.OV = False
 
   def set_register(self, value):
+    '''
+    Set ``A`` register and ``N``, ``Z``, and ``H``.
+    '''
     value = value if isinstance(value, bint) else bint(value)
     self.R[self.ira] = value[32:0]
     self.N = value[31]
@@ -260,6 +294,9 @@ class RISC(object):
               else self.H)
 
   def branch_instruction(self):
+    '''
+    Branch instruction.
+    '''
     S = self.N ^ self.OV
     T = ((self.cc == 0) & self.N |
          (self.cc == 1) & self.Z |
@@ -286,6 +323,9 @@ class RISC(object):
       self.pcnext = self.C0 >> 2
 
   def ram_instruction(self):
+    '''
+    RAM read/write instruction.
+    '''
     self.addr = addr = int(self.R[self.irb] + self._sign_extend_offset())
 
     if addr >= IO_RANGE:
@@ -310,6 +350,9 @@ class RISC(object):
     return off
 
   def io(self, port):
+    '''
+    I/O instruction.
+    '''
     device = self.io_ports.get(port)
     if not device:
       raise Trap('no device at port 0x%x (aka %i)' % (port, port))
@@ -319,6 +362,9 @@ class RISC(object):
       device.write(self.R[self.ira])
 
   def dump_ram(self, location=None, number=10):
+    '''
+    Debug function, print a disassembly of a span of RAM.
+    '''
     if location is None:
       location = self.PC
     for i in range(location - number, location + number):
@@ -326,6 +372,9 @@ class RISC(object):
       print h, hex(i), dis(self.ram[i << 2])
 
   def view(self):
+    '''
+    Debug function, print current instruction.
+    '''
     if self.PC >= MemSize:
       return
     kw = self.__dict__.copy()
@@ -344,6 +393,9 @@ class RISC(object):
 ##    print
 
   def brief_view(self):
+    '''
+    Debug function, print crude state of chip.
+    '''
     return ('0x%08x : 0x%08x'
             ' %i %i %i %i %i %i %i %i'
             ' %i %i %i %i %i %i %i'
@@ -356,6 +408,11 @@ class RISC(object):
 
 
 class ByteAddressed32BitRAM(object):
+  '''
+  Represent a 32-bit wide RAM chip that is byte-addressed.
+
+  E.g. addresses 0-3 are the first four bytes, or one (32-bit) word.
+  '''
 
   BYTE_MASKS = (
     0b11111111111111111111111100000000,
@@ -365,9 +422,14 @@ class ByteAddressed32BitRAM(object):
     )
 
   def __init__(self):
+    # Use a dict rather than some array.  Might be woth exploring other
+    # datastructures...
     self.store = {}
 
   def get(self, addr):
+    '''
+    Return a (32-bit) word.  Address must be word-aligned.
+    '''
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     try:
@@ -380,6 +442,9 @@ class ByteAddressed32BitRAM(object):
   __getitem__ = get
 
   def put(self, addr, word):
+    '''
+    Set a (32-bit) word.  Address must be word-aligned.
+    '''
     word_addr, byte_offset = divmod(addr, 4)
     assert not byte_offset, repr(addr)
     self.store[word_addr] = word
@@ -387,11 +452,17 @@ class ByteAddressed32BitRAM(object):
   __setitem__ = put
 
   def get_byte(self, addr):
+    '''
+    Return a byte.  Address need not be word-aligned.
+    '''
     word_addr, byte_offset = divmod(addr, 4)
     word = self.store[word_addr]
     return (word >> (8 * byte_offset)) & 255
 
   def put_byte(self, addr, byte):
+    '''
+    Set a byte.  Address need not be word-aligned.
+    '''
     if isinstance(byte, str):
       byte = ord(byte[:1])
     if not (0 <= byte < 256):
@@ -419,6 +490,14 @@ class ByteAddressed32BitRAM(object):
 
 
 class Disk(object):
+  '''
+  Disk
+
+  (I cribbed most of this from
+  `pdewacht/oberon-risc-emu <https://github.com/pdewacht/oberon-risc-emu>`
+  .  I'm not exactly sure how it works but it does work, well enough to
+  load the Oberon OS from the disk image.)
+  '''
 
   SECTOR_SIZE = 512
   SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
@@ -459,7 +538,7 @@ class Disk(object):
       self.rx_buf[self.rx_idx] = word
       self.rx_idx += 1
       if self.rx_idx == 6:
-##        pdb.set_trace()
+        ##  pdb.set_trace()
         self.run_command()
         self.rx_idx = 0
 
@@ -503,7 +582,7 @@ class Disk(object):
       self.tx_buf[0] = 0
       self.tx_buf[1] = 254
       self._seek(arg)
-##      pdb.set_trace()
+      ##  pdb.set_trace()
       self.read_sector(2)
       self.tx_cnt = 2 + 128
 
@@ -531,11 +610,12 @@ class Disk(object):
 
   def write_sector(self):
     log('write sector %r', self.rx_buf)
-#    data = pack('<128I', self.rx_buf)
-#    self.file.write(data)
+    # data = pack('<128I', self.rx_buf)
+    # self.file.write(data)
 
 
 class Mouse(object):
+  '''Mouse'''
 
   def __init__(self):
     self.value = 0
@@ -558,7 +638,8 @@ class Mouse(object):
     self.value = self.value | (1 << (27 - n))
 
 
-class clock(object):
+class Clock(object):
+  '''clock'''
 
   def __init__(self, now=None):
     self.reset(now)
@@ -578,15 +659,20 @@ class clock(object):
 
 
 class LEDs(object):
+  '''LEDs'''
+
+  def __init__(self):
+    self.switches = 0
 
   def read(self):
-    return 0
+    return self.switches
 
   def write(self, word):
     print 'LEDs', bin(word)[2:]
 
 
 class FakeSPI(object):
+  '''SPI'''
 
   def __init__(self):
     self.things = {}
@@ -627,36 +713,24 @@ class FakeSPI(object):
       self.current_thing = None
 
 
-if __name__ == '__main__':
-  from traceback import print_exc
-  from bootloader import bootloader
-  from display import initialize_screen, ScreenRAMMixin
+class Serial(object):
+  
+  def __init__(self, input_file):
+    self.input_file = input_file
 
-  class Memory(ScreenRAMMixin, ByteAddressed32BitRAM):
-    pass
+    class SerialStatus(object):
 
-  screen = initialize_screen()
-  memory = Memory()
-  memory.set_screen(screen)
-  disk = Disk(open('../disk.img', 'rb'))
-  risc_cpu = RISC(bootloader, memory)
-  risc_cpu.io_ports[0] = clock()
-  risc_cpu.io_ports[4] = LEDs()
-#  risc_cpu.io_ports[8] = RS232 data
-#  risc_cpu.io_ports[12] = RS232 status
-  risc_cpu.io_ports[20] = fakespi = FakeSPI()
-  risc_cpu.io_ports[16] = fakespi.data
-  risc_cpu.io_ports[24] = mouse = Mouse()
-  mouse.set_coords(450, 474) # Imitate values in C trace.
-  fakespi.register(1, disk)
+      def read(inner):
+        return 1
 
-  def cycle():
-    while True:
-      try:
-        risc_cpu.cycle()
-      except:
-        print_exc()
-        risc_cpu.dump_ram()
-        break
+      def write(inner, word):
+        2/0
 
-  cycle()
+    self.status = SerialStatus()
+
+
+  def read(self):
+    return ord(self.input_file.read(1))
+
+  def write(self, word):
+    1/0
