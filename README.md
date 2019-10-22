@@ -20,7 +20,7 @@ A hardware emulator for the new RISC processor written in Python.  If
 Pygame is available it will open a screen of the standard dimensions of
 1024 x 768 pixels.  I've also implemented a very crude "assembler" which
 is really little more than a bunch of helper functions to emit binary
-instructions (in the form of 32-bit-wide ints.  However, it also provides
+instructions (in the form of 32-bit-wide ints.)  However, it also provides
 a function dis() that will return a string representing the (integer)
 instruction passed to it.
 
