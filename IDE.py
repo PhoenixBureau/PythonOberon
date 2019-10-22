@@ -2,6 +2,7 @@ import os, pickle, StringIO, time
 from oberon.assembler import dis
 from oberon.demo import make_arg_parser, make_cpu
 from oberon.demo import pump, cycle
+from oberon.risc import MemWords
 
 
 def image(cpu):
@@ -17,6 +18,21 @@ def image(cpu):
     print '-' * 36
     print 'H: 0x%(H)08x N:%(N)i Z:%(Z)i C:%(C)i OV:%(OV)i' % kw
     print '=' * 36
+    # cpu.print_dis()
+    # if cpu.PC < MemWords:
+    cpu.dump_mem()
+    # lower = max((0, cpu.PC - 40))
+    # upper = cpu.PC + 40 + 4
+    # print lower, upper
+    # data = [(addr, cpu.ram[addr]) for addr in range(lower, upper, 4)]
+    # for addr, inst in data:
+    #     print '-->' if addr == cpu.PC else '   ', ('0x%08x:' % addr), dis(inst)
+
+# if cpu.PC < MemWords:
+#       instruction = self.ram[self.PC << 2]
+#     elif ROMStart <= self.PC < (ROMStart + len(self.rom)):
+#       instruction = self.rom[self.PC - ROMStart]
+    
 
 
 def strfi(file_obj):

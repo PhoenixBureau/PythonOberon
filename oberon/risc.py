@@ -358,15 +358,34 @@ class RISC(object):
     else:
       device.write(self.R[self.ira])
 
+  def dump_mem(self):
+    if self.PC < MemWords:
+      self.dump_ram()
+    else:
+      self.dump_rom()
+
   def dump_ram(self, location=None, number=10):
     '''
     Debug function, print a disassembly of a span of RAM.
     '''
     if location is None:
       location = self.PC
-    for i in range(location - number, location + number):
+    lower = max((0, location - number))
+    for i in range(lower, location + number):
       h = '>' if i == location else ' '
       print h, hex(i), dis(self.ram[i << 2])
+
+  def dump_rom(self, location=None, number=10):
+    '''
+    Debug function, print a disassembly of a span of ROM.
+    '''
+    if location is None:
+      location = self.PC - ROMStart
+    lower = max((0, location - number))
+    upper = min((len(self.rom), location + number + 1))
+    for i in range(lower, upper):
+      h = '>' if i == location else ' '
+      print h, hex(i + ROMStart), dis(self.rom[i])
 
   def view(self):
     '''
