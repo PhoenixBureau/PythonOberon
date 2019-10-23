@@ -501,6 +501,7 @@ class Disk(object):
 
   SECTOR_SIZE = 512
   SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
+  STRUCT_FORMAT = '<%iI' % SECTOR_SIZE_WORDS
 
   diskCommand, diskRead, diskWrite, diskWriting = range(4)
 
@@ -606,11 +607,11 @@ class Disk(object):
       
   def read_sector(self, into=0):
     data = self.file.read(self.SECTOR_SIZE)
-    self.tx_buf[into:] = unpack('<128I', data)
+    self.tx_buf[into:] = unpack(self.STRUCT_FORMAT, data)
 
   def write_sector(self):
     log('write sector %r', self.rx_buf)
-    # data = pack('<128I', self.rx_buf)
+    # data = pack(self.STRUCT_FORMAT, self.rx_buf)
     # self.file.write(data)
 
 

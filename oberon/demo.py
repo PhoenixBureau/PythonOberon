@@ -38,7 +38,6 @@ from .risc import (
     Disk,
     FakeSPI,
     LEDs,
-    MemWords,
     Mouse,
     RISC,
     Serial,

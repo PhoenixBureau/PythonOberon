@@ -126,7 +126,7 @@ DISPLAY_SIZE_IN_BYTES = width * height / 8
 'As the name implies, the number of bytes in the display portion of the RAM.'
 
 WORDS_IN_SCANLINE = width / 32
-'The number of 32-bit words in one horizontal scna line of the display.'
+'The number of 32-bit words in one horizontal scan line of the display.'
 
 
 def screen_size_hack(ram, width=1024, height=768):
@@ -154,7 +154,7 @@ def coords_of_word(address):
 
 
 def bits_of_int(i):
-  '''Yield thirty-two bits, LSB to MSB, of an integer.'''
+  '''Yield thirty-two bits of an integer as 0 or 1, LSB to MSB.'''
   for _ in range(32):
     yield i & 1
     i >>= 1
