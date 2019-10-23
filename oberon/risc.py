@@ -137,9 +137,6 @@ class RISC(object):
     self.STR = self.p and (not self.q) and self.u
     self.BR  = self.p and self.q
 
-##    if self.PC < MemWords:
-##      print self.brief_view()
-
   def register_instruction(self):
     '''
     Increment ``PC`` and set a register from the ALU.
@@ -361,15 +358,34 @@ class RISC(object):
     else:
       device.write(self.R[self.ira])
 
+  def dump_mem(self):
+    if self.PC < MemWords:
+      self.dump_ram()
+    else:
+      self.dump_rom()
+
   def dump_ram(self, location=None, number=10):
     '''
     Debug function, print a disassembly of a span of RAM.
     '''
     if location is None:
       location = self.PC
-    for i in range(location - number, location + number):
+    lower = max((0, location - number))
+    for i in range(lower, location + number):
       h = '>' if i == location else ' '
       print h, hex(i), dis(self.ram[i << 2])
+
+  def dump_rom(self, location=None, number=10):
+    '''
+    Debug function, print a disassembly of a span of ROM.
+    '''
+    if location is None:
+      location = self.PC - ROMStart
+    lower = max((0, location - number))
+    upper = min((len(self.rom), location + number + 1))
+    for i in range(lower, upper):
+      h = '>' if i == location else ' '
+      print h, hex(i + ROMStart), dis(self.rom[i])
 
   def view(self):
     '''
@@ -386,11 +402,11 @@ class RISC(object):
     elif self.LDR:
       print '            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
     # Print the registers.
-##    for i in range(0, 16, 2):
-##      reg0, reg1 = self.R[i], self.R[i + 1]
-##      print 'R%-2i = 0x%-8x' % (i + 1, reg1),
-##      print 'R%-2i = 0x%-8x' % (i, reg0)
-##    print
+    # for i in range(0, 16, 2):
+    #   reg0, reg1 = self.R[i], self.R[i + 1]
+    #   print 'R%-2i = 0x%-8x' % (i + 1, reg1),
+    #   print 'R%-2i = 0x%-8x' % (i, reg0)
+    # print
 
   def brief_view(self):
     '''
@@ -678,23 +694,7 @@ class FakeSPI(object):
   def __init__(self):
     self.things = {}
     self.current_thing = None
-
-    class DataControl(object):
-
-      def read(inner):
-        if self.current_thing:
-          data = self.current_thing.read()
-        else:
-          data = 0xff
-        log('FakeSPI Data Read: 0x%x', data)
-        return data
-
-      def write(inner, word):
-        log('FakeSPI Data Write: 0x%x', word)
-        if self.current_thing:
-          self.current_thing.write(word)
-
-    self.data = DataControl()
+    self.data = DataControl(self)
 
   def register(self, index, thing):
     self.things[index] = thing
@@ -714,20 +714,42 @@ class FakeSPI(object):
       self.current_thing = None
 
 
+class DataControl(object):
+
+  def __init__(self, spi):
+    self.spi = spi
+
+  def read(self):
+    if self.spi.current_thing:
+      data = self.spi.current_thing.read()
+    else:
+      data = 0xff
+    log('FakeSPI Data Read: 0x%x', data)
+    return data
+
+  def write(self, word):
+    log('FakeSPI Data Write: 0x%x', word)
+    if self.spi.current_thing:
+      self.spi.current_thing.write(word)
+
+
+class SerialStatus(object):
+
+  def __init__(self, ser):
+    self.ser = ser
+
+  def read(self):
+    return 1
+
+  def write(write, word):
+    2/0
+
+
 class Serial(object):
   
   def __init__(self, input_file):
     self.input_file = input_file
-
-    class SerialStatus(object):
-
-      def read(inner):
-        return 1
-
-      def write(inner, word):
-        2/0
-
-    self.status = SerialStatus()
+    self.status = SerialStatus(self)
 
 
   def read(self):
