@@ -31,7 +31,7 @@ from pkg_resources import resource_filename
 from sys import stderr
 from traceback import print_exc
 from .bootloader import bootloader
-from .display import initialize_screen, ScreenRAMMixin
+from .display import PYGAME, initialize_screen, ScreenRAMMixin
 from .risc import (
     ByteAddressed32BitRAM,
     Clock,
@@ -42,12 +42,15 @@ from .risc import (
     RISC,
     Serial,
     )
-try:
+
+if PYGAME:
     import pygame
-except ImportError:
-    pump = lambda: None
-else:
     pump = pygame.event.pump
+    class Memory(ScreenRAMMixin, ByteAddressed32BitRAM):
+        '''RAM with memory-mapped raster display.'''
+else:
+    pump = lambda: None
+    Memory = ByteAddressed32BitRAM
 
 
 def make_arg_parser():
@@ -76,7 +79,8 @@ def make_cpu(disk_image, serial=None):
     Build and return a :py:class:`RISC` object with peripherals.
     '''
     ram = Memory()
-    ram.set_screen(initialize_screen())
+    if PYGAME:
+        ram.set_screen(initialize_screen())
     disk = Disk(disk_image)
     risc_cpu = RISC(bootloader, ram)
     risc_cpu.io_ports[0] = Clock()
@@ -91,10 +95,6 @@ def make_cpu(disk_image, serial=None):
     risc_cpu.io_ports[24] = mouse = Mouse()
     mouse.set_coords(450, 474)
     return risc_cpu
-
-
-class Memory(ScreenRAMMixin, ByteAddressed32BitRAM):
-    '''RAM with memory-mapped raster display.'''
 
 
 def cycle(cpu, limit):

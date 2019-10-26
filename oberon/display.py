@@ -31,89 +31,11 @@ from sys import stderr
 try:
   import pygame
   from pygame.locals import *
-
 except ImportError:
   print >> stderr, 'Unable to import pygame.'
-
-
-  class FakeScreen:
-    '''
-    If PyGame is unavailable this class will be used to imitate the 
-    screen object.
-    '''
-    def set_at(self, (x, y), color):
-      pass
-  #    print x, y, color
-
-
-  def initialize_screen():
-    '''
-    Pretend to initialize screen but just return a :py:obj:`FakeScreen`
-    object.
-    '''
-    
-    return FakeScreen()
-
-
-  def display_flip():
-    '''Pretend to flip the screen.'''
-    pass
-
-
-  class ScreenRAMMixin(object):
-    '''
-    A fake mixin class for :py:class:`ScreenRAMMixin`.
-    '''
-    def set_screen(self, screen):
-      screen_size_hack(self)
-
-
+  PYGAME = False
 else:
-
-
-  def initialize_screen():
-    '''
-    Fire up PyGame and return a screen surface of :py:obj:`SIZE`.
-    '''
-    pygame.init()
-    return pygame.display.set_mode(SIZE, 0, 8)
-
-
-  def display_flip():
-    '''
-    Call ``pygame.display.flip()``.
-    '''
-    pygame.display.flip()
-
-
-  class ScreenRAMMixin(object):
-    '''
-    A mixin class for the :py:class:`oberon.risc.ByteAddressed32BitRAM`
-    that updates the PyGame screen pixels when data are written to RAM
-    addresses within the memory-mapped raster display.
-    '''
-
-    def set_screen(self, screen):
-      '''
-      Connect a PyGame surface to the RAM.
-      '''
-      self.screen = screen
-      screen_size_hack(self)
-
-    def put(self, address, word):
-      '''
-      Extends :py:meth:`oberon.risc.ByteAddressed32BitRAM.put` to check
-      for writes to the memory-mapped raster display RAM and update the
-      PyGame screen accordingly.
-      '''
-      super(ScreenRAMMixin, self).put(address, word)
-      if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE_IN_BYTES:
-        # Convert byte RAM address to word screen address.
-        address = (address - DISPLAY_START) >> 2
-        update_screen(self.screen, address, word)
-
-    def __setitem__(self, key, value):
-      self.put(key, value)
+  PYGAME = True
 
 
 SIZE = WIDTH, HEIGHT = 1024, 768
@@ -127,6 +49,47 @@ DISPLAY_SIZE_IN_BYTES = WIDTH * HEIGHT / 8
 
 WORDS_IN_SCANLINE = WIDTH / 32
 'The number of 32-bit words in one horizontal scan line of the display.'
+
+
+def initialize_screen():
+  '''
+  Fire up PyGame and return a screen surface of :py:obj:`SIZE`.
+  '''
+  pygame.init()
+  return pygame.display.set_mode(SIZE, 0, 8)
+
+
+display_flip = pygame.display.flip
+
+
+class ScreenRAMMixin(object):
+  '''
+  A mixin class for the :py:class:`oberon.risc.ByteAddressed32BitRAM`
+  that updates the PyGame screen pixels when data are written to RAM
+  addresses within the memory-mapped raster display.
+  '''
+
+  def set_screen(self, screen):
+    '''
+    Connect a PyGame surface to the RAM.
+    '''
+    self.screen = screen
+    screen_size_hack(self)
+
+  def put(self, address, word):
+    '''
+    Extends :py:meth:`oberon.risc.ByteAddressed32BitRAM.put` to check
+    for writes to the memory-mapped raster display RAM and update the
+    PyGame screen accordingly.
+    '''
+    super(ScreenRAMMixin, self).put(address, word)
+    if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE_IN_BYTES:
+      # Convert byte RAM address to word screen address.
+      address = (address - DISPLAY_START) >> 2
+      update_screen(self.screen, address, word)
+
+  def __setitem__(self, key, value):
+    self.put(key, value)
 
 
 def screen_size_hack(ram, width=WIDTH, height=HEIGHT):
