@@ -36,6 +36,7 @@ except ImportError:
   PYGAME = False
 else:
   PYGAME = True
+  display_flip = pygame.display.flip
 
 
 SIZE = WIDTH, HEIGHT = 1024, 768
@@ -57,9 +58,6 @@ def initialize_screen():
   '''
   pygame.init()
   return pygame.display.set_mode(SIZE, 0, 8)
-
-
-display_flip = pygame.display.flip
 
 
 class ScreenRAMMixin(object):
