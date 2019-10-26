@@ -116,20 +116,20 @@ else:
       self.put(key, value)
 
 
-SIZE = width, height = 1024, 768
+SIZE = WIDTH, HEIGHT = 1024, 768
 'Size of the screen in pixels.'
 
 DISPLAY_START = 0xe7f00
 'RAM address of the start of the memory-mapped raster display.'
 
-DISPLAY_SIZE_IN_BYTES = width * height / 8
+DISPLAY_SIZE_IN_BYTES = WIDTH * HEIGHT / 8
 'As the name implies, the number of bytes in the display portion of the RAM.'
 
-WORDS_IN_SCANLINE = width / 32
+WORDS_IN_SCANLINE = WIDTH / 32
 'The number of 32-bit words in one horizontal scan line of the display.'
 
 
-def screen_size_hack(ram, width=1024, height=768):
+def screen_size_hack(ram, width=WIDTH, height=HEIGHT):
   '''
   Tuck a "magic number" and the screen dimensions into a location in RAM
   at the start of the display.  (I forget how they are used by the system.)
@@ -147,7 +147,7 @@ def coords_of_word(address):
   a generator that yields the (x, y) coords of the pixels in that word.
   '''
   y, word_x = divmod(address, WORDS_IN_SCANLINE)
-  y = height - y - 1
+  y = HEIGHT - y - 1
   pixel_x = word_x * 32
   for x in range(pixel_x, pixel_x + 32):
     yield x, y
