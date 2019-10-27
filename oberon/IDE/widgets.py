@@ -55,6 +55,7 @@ class Fullscreen_Window(object):
 
 
 class RegisterWidget(Frame):
+    '''Display one register.'''
 
     FORMATS = [
         '%08x',
@@ -63,6 +64,10 @@ class RegisterWidget(Frame):
         '%i',
         hex,
     ]
+    '''\
+    A list of format strings or callables that are used to convert
+    register values to strings for display.
+    '''
 
     def __init__(self, root, register_number):
         Frame.__init__(self, root)
@@ -88,22 +93,27 @@ class RegisterWidget(Frame):
 
         self.label = Entry(self, textvariable=self.value, state="readonly")
         'Display the register value.'
+
         self.label.bind('<Button-3>', self.toggle_format)
         self.label.pack(side=LEFT)
 
     def set(self, value):
         '''Given an integer value set the string value of the label.'''
-        self._value = value
+
+        self._value = value  # So we can use it in toggle_format.
+
         formatter = self.FORMATS[self.current_format]
+
         if isinstance(formatter, basestring):
             label = formatter % (value,)
         elif callable(formatter):
             label = formatter(value)
         else:
             raise TypeError('wtf')
+
         self.value.set(label)
 
     def toggle_format(self, event=None):
+        '''Switch to the next formatter.'''
         self.current_format = (self.current_format + 1) % len(self.FORMATS)
         self.set(self._value)
-        
