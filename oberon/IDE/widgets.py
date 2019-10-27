@@ -7,11 +7,14 @@ To test run with::
 '''
 from Tkinter import (
     Tk,
+    Entry,
     Frame,
     LabelFrame,
     Label,
     StringVar,
     LEFT,
+    E,
+    W,
     )
 
 
@@ -37,7 +40,7 @@ class Fullscreen_Window(object):
 
     def _register(self, register_number, column, row):
         regwidg = RegisterWidget(self.registers, register_number)
-        regwidg.grid(column=column, row=row)
+        regwidg.grid(column=column, row=row, sticky=W)
         return regwidg
 
     def toggle_fullscreen(self, event=None):
@@ -55,6 +58,10 @@ class RegisterWidget(Frame):
 
     FORMATS = [
         '%08x',
+        (lambda n: (lambda s: '%s:%s' % (s[:4], s[4:]))('%08x' % (n,))),
+        (lambda n: (lambda s: '%s:%s:%s:%s' % (s[:2], s[2:4], s[4:6], s[6:]))('%08x' % (n,))),
+        '%i',
+        hex,
     ]
 
     def __init__(self, root, register_number):
@@ -63,19 +70,40 @@ class RegisterWidget(Frame):
         self.current_format = 0
         'Index into the ring buffer of format strings for register label.'
 
+        self._value = 0
+        # Cache the int value to enable refresh after changing format.
+        
         self.value = StringVar(self)
         'The current text to display.'
 
-        self.set(0)
+        self.set(self._value)
 
-        Label(self, text='%x:' % register_number).pack(side=LEFT)
+        Label(
+            self,
+            anchor=E,
+            text='%x:' % register_number,
+            width=3,
+            ).pack(side=LEFT)
         # Anonymous label for the register display label.
 
-        self.label = Label(self, textvariable=self.value)
+        self.label = Entry(self, textvariable=self.value, state="readonly")
         'Display the register value.'
+        self.label.bind('<Button-3>', self.toggle_format)
         self.label.pack(side=LEFT)
 
     def set(self, value):
         '''Given an integer value set the string value of the label.'''
-        self.value.set(self.FORMATS[self.current_format] % (value,))
+        self._value = value
+        formatter = self.FORMATS[self.current_format]
+        if isinstance(formatter, basestring):
+            label = formatter % (value,)
+        elif callable(formatter):
+            label = formatter(value)
+        else:
+            raise TypeError('wtf')
+        self.value.set(label)
+
+    def toggle_format(self, event=None):
+        self.current_format = (self.current_format + 1) % len(self.FORMATS)
+        self.set(self._value)
         
