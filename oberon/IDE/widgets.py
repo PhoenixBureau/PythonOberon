@@ -54,7 +54,7 @@ class Fullscreen_Window(object):
 class RegisterWidget(Frame):
 
     FORMATS = [
-        '%-08x',
+        '%08x',
     ]
 
     def __init__(self, root, register_number):
