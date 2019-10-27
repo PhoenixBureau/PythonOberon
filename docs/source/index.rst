@@ -41,6 +41,12 @@ in, and at around 6500000 cycles the window content begins to be drawn.
 interactive REPL after cycling the emulator.  Without it the script will
 just exit and the screen will disappear.)
 
+If you want to see something right away there's a tiny binary that can
+be loaded by the bootloader from a (virtual) serial port.  It fills the
+screen with a simple pattern of vertical bars::
+
+    python -m oberon --serial-in fillscreen.bin
+
 
 Screenshot
 ----------------------------------
