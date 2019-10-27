@@ -17,10 +17,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
-from oberon.IDE.widgets import Fullscreen_Window
+from oberon.IDE.widgets import DebugApp
 from sys import argv
 
 
-w = Fullscreen_Window()
+w = DebugApp()
 if '-n' not in argv:
     w.tk.mainloop()
