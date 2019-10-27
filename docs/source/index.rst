@@ -68,6 +68,7 @@ Module Documentation
    display
    risc
    util
+   IDE
 
 
 Information on Oberon

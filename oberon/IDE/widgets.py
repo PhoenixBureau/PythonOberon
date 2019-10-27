@@ -1,7 +1,34 @@
 '''
+
+Experimental GUI
+========================
+
 To test run with::
     
     ipython --gui=tk -i -m oberon.IDE -- -n
+
+Let's break that down.  We're using ``ipython``.  The ``--gui=tk`` CLI option
+tells it to use the ``Tkinter``-compatible event loop, ``-i`` tells it to drop
+into interactive mode after the script ends rather than exiting,
+``-m oberon.IDE`` tells it to
+use the ``oberon.IDE.__main__`` module as the script to run, and ``--`` tells
+it to pass the rest of the CLI options to the script itself.  The ``-n`` CLI
+option is detected by the main script and prevents it from starting the
+Tkinter mainloop on its own.
+
+The combination of using IPython's ``Tkinter``-compatible event loop and not
+calling the Tkinter mainloop in the main script lets you use IPython shell
+while the GUI runs and updates.  This is really flexible and powerful, as
+you have all of Python available to work with, but you have to read the
+source and know something about Python and Tkinter GUI code to take
+advantage of it.
+
+For example, the main script creates the app and puts it in a variable ``w``,
+and you can change the `font properties <https://effbot.org/tkinterbook/tkinter-widget-styling.htm#fonts>`_ like this::
+
+    In [1]: w.font['family'] = 'Iosevka Term'
+
+    In [2]: w.font['size'] = 12
 
 
 '''
@@ -24,6 +51,7 @@ import tkFont
 
 
 class DebugApp(object):
+    '''damn'''
 
     def __init__(self):
         self.tk = Tk()
