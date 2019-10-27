@@ -24,7 +24,7 @@ Emulated Hardware
 
 
 '''
-import pdb
+import pdb, sys
 from time import time
 from struct import unpack
 from pprint import pformat
@@ -358,13 +358,15 @@ class RISC(object):
     else:
       device.write(self.R[self.ira])
 
-  def dump_mem(self):
+  def dump_mem(self, to_file=None):
+    if to_file is None:
+      to_file = sys.stdout
     if self.PC < MemWords:
-      self.dump_ram()
+      self.dump_ram(to_file=to_file)
     else:
-      self.dump_rom()
+      self.dump_rom(to_file=to_file)
 
-  def dump_ram(self, location=None, number=10):
+  def dump_ram(self, to_file, location=None, number=10):
     '''
     Debug function, print a disassembly of a span of RAM.
     '''
@@ -373,9 +375,9 @@ class RISC(object):
     lower = max((0, location - number))
     for i in range(lower, location + number):
       h = '>' if i == location else ' '
-      print h, hex(i), dis(self.ram[i << 2])
+      print >> to_file, h, hex(i), dis(self.ram[i << 2])
 
-  def dump_rom(self, location=None, number=10):
+  def dump_rom(self, to_file, location=None, number=10):
     '''
     Debug function, print a disassembly of a span of ROM.
     '''
@@ -385,7 +387,7 @@ class RISC(object):
     upper = min((len(self.rom), location + number + 1))
     for i in range(lower, upper):
       h = '>' if i == location else ' '
-      print h, hex(i + ROMStart), dis(self.rom[i])
+      print >> to_file, h, hex(i + ROMStart), dis(self.rom[i])
 
   def view(self):
     '''
