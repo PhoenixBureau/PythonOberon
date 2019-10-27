@@ -7,8 +7,10 @@ To test run with::
 '''
 from Tkinter import (
     Tk,
+    Checkbutton,
     Entry,
     Frame,
+    IntVar,
     LabelFrame,
     Label,
     StringVar,
@@ -28,20 +30,34 @@ class Fullscreen_Window(object):
         self.tk.bind("<F11>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
 
-        self.registers = LabelFrame(
-            self.frame,
-            text='Registers'
-            )
-        self.registers.pack()
+        self.register_frame = LabelFrame(self.frame, text='Registers')
+        self.register_frame.pack()
+
         self.register_vars = [
-            self._register(i, i // 8, i % 8)
+            self._register(self.register_frame, '%x:' % i, i // 8, i % 8)
             for i in xrange(16)
             ]
 
-    def _register(self, register_number, column, row):
-        regwidg = RegisterWidget(self.registers, register_number)
+        self.specials = LabelFrame(self.frame, text='Specials')
+        self.specials.pack()
+
+        self.PC = self._register(self.specials, 'PC:')
+        self.H = self._register(self.specials, 'H:', row=1)
+
+        self.N = self._flag(self.specials, 'N:', column=1)
+        self.Z = self._flag(self.specials, 'Z:', column=2)
+        self.C = self._flag(self.specials, 'C:', column=1, row=1)
+        self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
+
+    def _register(self, frame, register_number, column=0, row=0):
+        regwidg = RegisterWidget(frame, register_number)
         regwidg.grid(column=column, row=row, sticky=W)
         return regwidg
+
+    def _flag(self, frame, label, column=0, row=0):
+        flagwidg = FlagWidget(frame, label)
+        flagwidg.grid(column=column, row=row, sticky=W)
+        return flagwidg
 
     def toggle_fullscreen(self, event=None):
         self.fullscreen = not self.fullscreen
@@ -52,6 +68,21 @@ class Fullscreen_Window(object):
         self.fullscreen = False
         self.tk.attributes("-fullscreen", False)
         return "break"
+
+
+class FlagWidget(Frame):
+
+    def __init__(self, root, label_text):
+        Frame.__init__(self, root)
+        Label(
+            self,
+            anchor=E,
+            text=label_text,
+            width=3,
+            ).pack(side=LEFT)
+        self.value = IntVar(self, value=0)
+        self.checkbox = Checkbutton(self, variable=self.value)
+        self.checkbox.pack(side=LEFT)
 
 
 class RegisterWidget(Frame):
@@ -69,9 +100,9 @@ class RegisterWidget(Frame):
     register values to strings for display.
     '''
 
-    def __init__(self, root, register_number):
+    def __init__(self, root, label_text):
         Frame.__init__(self, root)
-        
+
         self.current_format = 0
         'Index into the ring buffer of format strings for register label.'
 
@@ -86,7 +117,7 @@ class RegisterWidget(Frame):
         Label(
             self,
             anchor=E,
-            text='%x:' % register_number,
+            text=label_text,
             width=3,
             ).pack(side=LEFT)
         # Anonymous label for the register display label.
