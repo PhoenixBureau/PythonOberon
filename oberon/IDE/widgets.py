@@ -20,12 +20,14 @@ from Tkinter import (
     LEFT,
     W,
     )
+import tkFont
 
 
 class DebugApp(object):
 
     def __init__(self):
         self.tk = Tk()
+        self.font = tkFont.Font(family='Courier', size=8)
         self.frame = Frame(self.tk)
         self.frame.pack()
 
@@ -49,12 +51,12 @@ class DebugApp(object):
         self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
 
     def _register(self, frame, register_number, column=0, row=0):
-        regwidg = RegisterWidget(frame, register_number)
+        regwidg = RegisterWidget(frame, register_number, self.font)
         regwidg.grid(column=column, row=row, sticky=W)
         return regwidg
 
     def _flag(self, frame, label, column=0, row=0):
-        flagwidg = FlagWidget(frame, label)
+        flagwidg = FlagWidget(frame, label, self.font)
         flagwidg.grid(column=column, row=row, sticky=W)
         return flagwidg
 
@@ -62,12 +64,13 @@ class DebugApp(object):
 class FlagWidget(Frame):
     '''Display a binary Boolean flag.'''
 
-    def __init__(self, root, label_text):
+    def __init__(self, root, label_text, font):
         Frame.__init__(self, root)
         
         Label(  # I want the label on the left, Checkbox widget built-in labels are on the right only.
             self,
             anchor=E,
+            font=font,
             text=label_text,
             width=3,
             ).pack(side=LEFT)
@@ -94,7 +97,7 @@ class RegisterWidget(Frame):
     register values to strings for display.
     '''
 
-    def __init__(self, root, label_text):
+    def __init__(self, root, label_text, font):
         Frame.__init__(self, root)
 
         self.current_format = 0
@@ -111,11 +114,18 @@ class RegisterWidget(Frame):
         Label(  # Anonymous label for the register display label.
             self,
             anchor=E,
+            font=font,
             text=label_text,
             width=3,
             ).pack(side=LEFT)
 
-        self.label = Entry(self, textvariable=self.value, state="readonly")
+        self.label = Entry(
+            self,
+            font=font,
+            textvariable=self.value,
+            state="readonly",
+            width=12,
+            )
         'Display the register value.'
 
         self.label.bind('<Button-3>', self.toggle_format)
