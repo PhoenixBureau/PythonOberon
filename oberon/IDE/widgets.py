@@ -7,28 +7,27 @@ To test run with::
 '''
 from Tkinter import (
     Tk,
+
     Checkbutton,
     Entry,
     Frame,
     IntVar,
-    LabelFrame,
     Label,
+    LabelFrame,
     StringVar,
-    LEFT,
+
     E,
+    LEFT,
     W,
     )
 
 
-class Fullscreen_Window(object):
+class DebugApp(object):
 
     def __init__(self):
         self.tk = Tk()
         self.frame = Frame(self.tk)
         self.frame.pack()
-        self.fullscreen = False
-        self.tk.bind("<F11>", self.toggle_fullscreen)
-        self.tk.bind("<Escape>", self.end_fullscreen)
 
         self.register_frame = LabelFrame(self.frame, text='Registers')
         self.register_frame.pack()
@@ -58,16 +57,6 @@ class Fullscreen_Window(object):
         flagwidg = FlagWidget(frame, label)
         flagwidg.grid(column=column, row=row, sticky=W)
         return flagwidg
-
-    def toggle_fullscreen(self, event=None):
-        self.fullscreen = not self.fullscreen
-        self.tk.attributes("-fullscreen", self.fullscreen)
-        return "break"
-
-    def end_fullscreen(self, event=None):
-        self.fullscreen = False
-        self.tk.attributes("-fullscreen", False)
-        return "break"
 
 
 class FlagWidget(Frame):
