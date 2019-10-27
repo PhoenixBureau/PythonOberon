@@ -33,7 +33,7 @@ class Fullscreen_Window(object):
         self.register_frame = LabelFrame(self.frame, text='Registers')
         self.register_frame.pack()
 
-        self.register_vars = [
+        self.register_widgets = [
             self._register(self.register_frame, '%x:' % i, i // 8, i % 8)
             for i in xrange(16)
             ]
@@ -71,16 +71,21 @@ class Fullscreen_Window(object):
 
 
 class FlagWidget(Frame):
+    '''Display a binary Boolean flag.'''
 
     def __init__(self, root, label_text):
         Frame.__init__(self, root)
-        Label(
+        
+        Label(  # I want the label on the left, Checkbox widget built-in labels are on the right only.
             self,
             anchor=E,
             text=label_text,
             width=3,
             ).pack(side=LEFT)
+
         self.value = IntVar(self, value=0)
+        'Call the set method of this IntVar with 0 or 1.'
+
         self.checkbox = Checkbutton(self, variable=self.value)
         self.checkbox.pack(side=LEFT)
 
@@ -90,8 +95,8 @@ class RegisterWidget(Frame):
 
     FORMATS = [
         '%08x',
-        (lambda n: (lambda s: '%s:%s' % (s[:4], s[4:]))('%08x' % (n,))),
-        (lambda n: (lambda s: '%s:%s:%s:%s' % (s[:2], s[2:4], s[4:6], s[6:]))('%08x' % (n,))),
+        (lambda n: (lambda s:    '%s:%s'    % (       s[ :4], s[4: ]       ))('%08x' % n)),
+        (lambda n: (lambda s: '%s:%s:%s:%s' % (s[:2], s[2:4], s[4:6], s[6:]))('%08x' % n)),
         '%i',
         hex,
     ]
@@ -114,13 +119,12 @@ class RegisterWidget(Frame):
 
         self.set(self._value)
 
-        Label(
+        Label(  # Anonymous label for the register display label.
             self,
             anchor=E,
             text=label_text,
             width=3,
             ).pack(side=LEFT)
-        # Anonymous label for the register display label.
 
         self.label = Entry(self, textvariable=self.value, state="readonly")
         'Display the register value.'
