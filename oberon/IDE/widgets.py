@@ -41,13 +41,23 @@ from Tkinter import (
     IntVar,
     Label,
     LabelFrame,
+    Listbox,
+    Scrollbar,
     StringVar,
 
     E,
+    N,
+    S,
     LEFT,
+    VERTICAL,
     W,
     )
 import tkFont
+import tkFileDialog
+
+from glob import iglob
+from os import getcwd
+from os.path import exists, join, split, splitext
 
 
 class DebugApp(object):
@@ -77,6 +87,8 @@ class DebugApp(object):
         self.Z = self._flag(self.specials, 'Z:', column=2)
         self.C = self._flag(self.specials, 'C:', column=1, row=1)
         self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
+
+        self.pj = PickleJar(self.frame, self.font, )
 
     def _register(self, frame, register_number, column=0, row=0):
         regwidg = RegisterWidget(frame, register_number, self.font)
@@ -133,7 +145,7 @@ class RegisterWidget(Frame):
 
         self._value = 0
         # Cache the int value to enable refresh after changing format.
-        
+
         self.value = StringVar(self)
         'The current text to display.'
 
@@ -179,3 +191,69 @@ class RegisterWidget(Frame):
         '''Switch to the next formatter.'''
         self.current_format = (self.current_format + 1) % len(self.FORMATS)
         self.set(self._value)
+
+
+class PickleJar(object):
+    '''Manage the directory of saved states.'''
+
+    def __init__(self, frame, font, save_dir=None):
+        self.frame = LabelFrame(frame, text='Saved States')
+        self.frame.pack()
+
+        self.save_dir = getcwd() if save_dir is None else save_dir
+        assert exists(self.save_dir)
+
+        self.current_dir = StringVar(self.frame)
+        self.current_dir.set(self.save_dir)
+        self.current_dir_entry = Entry(
+            self.frame,
+            font=font,
+            textvariable=self.current_dir,
+            state="readonly",
+            width=24,
+            )
+        self.current_dir_entry.xview(len(self.save_dir))
+        self.current_dir_entry.pack()
+        self.current_dir_entry.bind('<Button-3>', self.pick_save_dir)
+
+        self.make_listbox(font).pack(expand=True, fill='both')
+        self.populate_pickles()
+
+    def make_listbox(self, font):
+        lb_frame = Frame(self.frame)
+        self.lb_yScroll = Scrollbar(lb_frame, orient=VERTICAL)
+        self.lb_val = StringVar(lb_frame)
+        self.lb = Listbox(
+            lb_frame,
+            listvariable=self.lb_val,
+            font=font,
+            height=6,
+            yscrollcommand=self.lb_yScroll.set
+            )
+        self.lb_yScroll['command']= self.lb.yview
+        self.lb.grid(row=0, column=0, sticky=N+E+W+S)
+        self.lb_yScroll.grid(row=0, column=1, sticky=N+S)
+        return lb_frame
+
+    def populate_pickles(self):
+        self.pickles = {
+            self._per_pickle_files(f): f
+            for f in iglob(join(self.save_dir, '*.pickle'))
+        }
+        self.lb_val.set(' '.join(sorted(self.pickles)))
+
+    def _per_pickle_files(self, filename):
+        _, fn = split(filename)
+        pickle_name, _ = splitext(fn)
+        return pickle_name
+
+    def pick_save_dir(self, event=None):
+        save_dir = tkFileDialog.askdirectory(
+            initialdir=self.save_dir,
+            mustexist=True,
+        )
+        if save_dir:
+            self.save_dir = save_dir
+            self.current_dir.set(self.save_dir)
+            self.current_dir_entry.xview(len(self.save_dir))
+            self.populate_pickles()
