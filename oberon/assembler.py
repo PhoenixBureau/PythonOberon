@@ -231,7 +231,7 @@ def dis_Mov(IR):
   if q: # immediate
     imm = IR[16:0]
     if u:
-      imm = imm << 15
+      imm = imm << 16
     else:
       v = IR[28]
       if v:
