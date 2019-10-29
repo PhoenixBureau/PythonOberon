@@ -46,3 +46,12 @@ def strfi(fn):
 
 def newcpu():
     return make_cpu(strfi(DISKIMG), strfi(FILLSCR))
+
+
+if __name__ == '__main__':
+    import pickle
+    cpu = newcpu()
+    for _ in xrange(100):
+        cpu.cycle()
+    with open('default+100.pickle', 'wb') as f:
+        pickle.dump(cpu, f)

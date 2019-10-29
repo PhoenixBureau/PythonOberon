@@ -43,7 +43,8 @@ the script has run.  You can interact with the risc object.)
 TODO
 --------------
 
-    [ ] Load/save pickles
+    [X] Load pickles
+    [ ] Save pickles
     [ ] Watch expressions
     [ ] Breakpoints
     [ ] RAM Inspector

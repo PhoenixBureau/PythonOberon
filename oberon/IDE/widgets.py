@@ -119,9 +119,14 @@ class DebugApp(object):
         return flagwidg
 
     def copy_cpu_values(self):
-        # Registers
         for reg, regwidg in zip(self.cpu.R, self.register_widgets):
             regwidg.set(reg)
+        self.PC.set(self.cpu.PC)
+        self.H.set(self.cpu.H)
+        self.N.set(self.cpu.N)
+        self.Z.set(self.cpu.Z)
+        self.C.set(self.cpu.C)
+        self.OV.set(self.cpu.OV)
 
 
 class FlagWidget(Frame):
@@ -140,6 +145,8 @@ class FlagWidget(Frame):
 
         self.value = IntVar(self, value=0)
         'Call the set method of this IntVar with 0 or 1.'
+
+        self.set = self.value.set
 
         self.checkbox = Checkbutton(self, variable=self.value)
         self.checkbox.pack(side=LEFT)
