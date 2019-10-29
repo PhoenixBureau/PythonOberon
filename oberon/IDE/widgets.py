@@ -64,6 +64,7 @@ import tkFileDialog
 from glob import iglob
 from os import getcwd
 from os.path import exists, join, split, splitext
+from pickle import load
 
 
 class DebugApp(object):
@@ -223,6 +224,7 @@ class PickleJar(Frame):
         self.current_dir_entry.bind('<Button-3>', self.pick_save_dir)
 
         self.lb = ScrollingListbox(self.frame, font, height=6)
+        self.lb.listbox.bind('<Double-Button-1>', self.load_pickle)
 
         self.current_dir_entry.pack(expand=True, fill=X)
         self.lb.pack(expand=True, fill=BOTH)
@@ -233,6 +235,7 @@ class PickleJar(Frame):
         assert exists(save_dir)
         self.save_dir = save_dir
         self.current_dir.set(self.save_dir)
+        # The interesting bit is at the right end of the string.
         self.current_dir_entry.xview(len(self.save_dir))
 
     def populate_pickles(self):
@@ -256,6 +259,16 @@ class PickleJar(Frame):
         if save_dir:
             self.set_current_dir(save_dir)
             self.populate_pickles()
+
+    def load_pickle(self, event=None):
+        index = self.lb.listbox.curselection()
+        if not index:
+            return
+        pickle_fn = self.lb.listbox.get(index[0])
+        fn = join(self.save_dir, pickle_fn + '.pickle')
+        with open(fn, 'rb') as f:
+            new_cpu = load(f)
+        print new_cpu
 
 
 class ScrollingListbox(Frame):
