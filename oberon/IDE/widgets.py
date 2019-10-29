@@ -45,12 +45,18 @@ from Tkinter import (
     Scrollbar,
     StringVar,
 
+    BOTH,
+    LEFT,
+    RIGHT,
+    SUNKEN,
     E,
     N,
     S,
     LEFT,
     VERTICAL,
     W,
+    X,
+    Y,
     )
 import tkFont
 import tkFileDialog
@@ -69,7 +75,7 @@ class DebugApp(object):
         self.frame = Frame(self.tk)
         self.frame.pack()
 
-        self.register_frame = LabelFrame(self.frame, text='Registers')
+        self.register_frame = LabelFrame(self.frame, text='Registers', font=self.font)
         self.register_frame.pack()
 
         self.register_widgets = [
@@ -77,7 +83,7 @@ class DebugApp(object):
             for i in xrange(16)
             ]
 
-        self.specials = LabelFrame(self.frame, text='Specials')
+        self.specials = LabelFrame(self.frame, text='Specials', font=self.font)
         self.specials.pack()
 
         self.PC = self._register(self.specials, 'PC:')
@@ -89,6 +95,7 @@ class DebugApp(object):
         self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
 
         self.pj = PickleJar(self.frame, self.font, )
+        self.pj.pack()
 
     def _register(self, frame, register_number, column=0, row=0):
         regwidg = RegisterWidget(frame, register_number, self.font)
@@ -193,18 +200,19 @@ class RegisterWidget(Frame):
         self.set(self._value)
 
 
-class PickleJar(object):
+class PickleJar(Frame):
     '''Manage the directory of saved states.'''
 
-    def __init__(self, frame, font, save_dir=None):
-        self.frame = LabelFrame(frame, text='Saved States')
-        self.frame.pack()
+    def __init__(self, root, font, save_dir=None):
+        Frame.__init__(self, root)
+
+        self.frame = LabelFrame(root, text='Saved States', font=font)
+        self.frame.pack(expand=True, fill=BOTH)
 
         self.save_dir = getcwd() if save_dir is None else save_dir
         assert exists(self.save_dir)
 
         self.current_dir = StringVar(self.frame)
-        self.current_dir.set(self.save_dir)
         self.current_dir_entry = Entry(
             self.frame,
             font=font,
@@ -212,11 +220,11 @@ class PickleJar(object):
             state="readonly",
             width=24,
             )
+        self.current_dir.set(self.save_dir)
         self.current_dir_entry.xview(len(self.save_dir))
-        self.current_dir_entry.pack()
         self.current_dir_entry.bind('<Button-3>', self.pick_save_dir)
-
-        self.make_listbox(font).pack(expand=True, fill='both')
+        self.current_dir_entry.pack(expand=True, fill=X)
+        self.make_listbox(font).pack(expand=True, fill=BOTH)
         self.populate_pickles()
 
     def make_listbox(self, font):
@@ -232,7 +240,7 @@ class PickleJar(object):
             )
         self.lb_yScroll['command']= self.lb.yview
         self.lb.grid(row=0, column=0, sticky=N+E+W+S)
-        self.lb_yScroll.grid(row=0, column=1, sticky=N+S)
+        self.lb_yScroll.grid(row=0, column=1, sticky=N+E+S)
         return lb_frame
 
     def populate_pickles(self):
@@ -257,3 +265,23 @@ class PickleJar(object):
             self.current_dir.set(self.save_dir)
             self.current_dir_entry.xview(len(self.save_dir))
             self.populate_pickles()
+
+
+class ScrollingListbox(Frame):
+
+    def  __init__(self, root, font):
+        Frame.__init__(self, root, bd=2, relief=SUNKEN)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.variable = StringVar(self)
+        self.scrollbar = Scrollbar(self)
+        self.listbox = Listbox(
+            self,
+            bd=0,
+            listvariable=self.variable,
+            yscrollcommand=self.scrollbar.set,
+        )
+        self.scrollbar.config(command=self.listbox.yview)
+        self.listbox.grid(row=0, column=0, sticky=N+E+W+S)
+        self.scrollbar.grid(row=0, column=1, sticky=N+E+S)
+
