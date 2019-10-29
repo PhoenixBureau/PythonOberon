@@ -38,3 +38,14 @@ content begins to be drawn:
 
 (The `-i` option tells Python to drop into interactive REPL mode after
 the script has run.  You can interact with the risc object.)
+
+
+TODO
+--------------
+
+    [ ] Load/save pickles
+    [ ] Watch expressions
+    [ ] Breakpoints
+    [ ] RAM Inspector
+    [ ] RAM Map / symbol table
+    [ ] Reset w/ new disk|serial file(s)

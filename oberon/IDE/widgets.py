@@ -66,11 +66,19 @@ from os import getcwd
 from os.path import exists, join, split, splitext
 from pickle import load
 
+from oberon.IDE.newcpu import newcpu
+
 
 class DebugApp(object):
     '''damn'''
 
-    def __init__(self):
+    def __init__(self, cpu=None):
+
+        if cpu is None:
+            cpu = newcpu()
+            cpu.decode(0)  # Ensure that all attributes of the cpu have been created.
+        self.cpu = cpu
+
         self.tk = Tk()
         self.font = tkFont.Font(family='Courier', size=8)
         self.frame = Frame(self.tk)
@@ -95,8 +103,10 @@ class DebugApp(object):
         self.C = self._flag(self.specials, 'C:', column=1, row=1)
         self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
 
-        self.pj = PickleJar(self.frame, self.font, )
+        self.pj = PickleJar(self, self.font, )
         self.pj.pack()
+
+        self.copy_cpu_values()
 
     def _register(self, frame, register_number, column=0, row=0):
         regwidg = RegisterWidget(frame, register_number, self.font)
@@ -107,6 +117,11 @@ class DebugApp(object):
         flagwidg = FlagWidget(frame, label, self.font)
         flagwidg.grid(column=column, row=row, sticky=W)
         return flagwidg
+
+    def copy_cpu_values(self):
+        # Registers
+        for reg, regwidg in zip(self.cpu.R, self.register_widgets):
+            regwidg.set(reg)
 
 
 class FlagWidget(Frame):
@@ -138,7 +153,7 @@ class RegisterWidget(Frame):
         (lambda n: (lambda s:    '%s:%s'    % (       s[ :4], s[4: ]       ))('%08x' % n)),
         (lambda n: (lambda s: '%s:%s:%s:%s' % (s[:2], s[2:4], s[4:6], s[6:]))('%08x' % n)),
         '%i',
-        hex,
+        (lambda n: hex(n).rstrip('Ll')),
     ]
     '''\
     A list of format strings or callables that are used to convert
@@ -204,10 +219,11 @@ class RegisterWidget(Frame):
 class PickleJar(Frame):
     '''Manage the directory of saved states.'''
 
-    def __init__(self, root, font, save_dir=None):
-        Frame.__init__(self, root)
+    def __init__(self, app, font, save_dir=None):
+        Frame.__init__(self, app.frame)
+        self.app = app
 
-        self.frame = LabelFrame(root, text='Saved States', font=font)
+        self.frame = LabelFrame(self, text='Saved States', font=font)
         self.frame.pack(expand=True, fill=BOTH)
 
         self.current_dir = StringVar(self.frame)
@@ -268,7 +284,8 @@ class PickleJar(Frame):
         fn = join(self.save_dir, pickle_fn + '.pickle')
         with open(fn, 'rb') as f:
             new_cpu = load(f)
-        print new_cpu
+        self.app.cpu = new_cpu
+        self.app.copy_cpu_values()
 
 
 class ScrollingListbox(Frame):
