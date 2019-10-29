@@ -17,10 +17,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
-from oberon.IDE.widgets import DebugApp
+import oberon.IDE.widgets
 from sys import argv
 
 
-w = DebugApp()
+w = oberon.IDE.widgets.DebugApp()
 if '-n' not in argv:
     w.tk.mainloop()
+
+
+def newapp():
+    import oberon.IDE.widgets
+    reload(oberon.IDE.widgets)
+    return oberon.IDE.widgets.DebugApp()
