@@ -59,13 +59,12 @@ from Tkinter import (
     X,
     Y,
     )
-import tkFont
-import tkFileDialog
+import tkFont, tkFileDialog, tkMessageBox
 
 from glob import iglob
 from os import getcwd
 from os.path import exists, join, split, splitext
-from pickle import load
+from pickle import load, dump
 
 from oberon.IDE.newcpu import newcpu
 
@@ -125,7 +124,14 @@ class DebugApp(object):
             font=self.font,
             command=self.step,
         )
+        self.save_button = Button(
+            self.controls,
+            text='Save',
+            font=self.font,
+            command=self.pj.save_pickle,
+        )
         self.step_button.pack()
+        self.save_button.pack()
 
     def step(self, event=None):
         self.cpu.cycle()
@@ -316,6 +322,21 @@ class PickleJar(Frame):
             new_cpu = load(f)
         self.app.cpu = new_cpu
         self.app.copy_cpu_values()
+
+    def save_pickle(self, event=None):
+        fn = tkFileDialog.asksaveasfilename(
+            initialdir=self.save_dir,
+            initialfile='Untitled.pickle',
+            title='Save to...',
+            filetypes=(('Pickle files', '*.pickle'),),
+        )
+        if not fn:
+            return
+        print 'saving', fn
+        with open(fn, 'wb') as f:
+            dump(self.app.cpu, f)
+        # if the fn is in save_dir...
+        self.populate_pickles()
 
 
 class ScrollingListbox(Frame):

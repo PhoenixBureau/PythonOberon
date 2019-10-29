@@ -44,7 +44,7 @@ TODO
 --------------
 
     [X] Load pickles
-    [ ] Save pickles
+    [X] Save pickles
     [ ] Watch expressions
     [ ] Breakpoints
     [ ] RAM Inspector
