@@ -220,35 +220,25 @@ class PickleJar(Frame):
             state="readonly",
             width=24,
             )
+
         self.current_dir.set(self.save_dir)
         self.current_dir_entry.xview(len(self.save_dir))
-        self.current_dir_entry.bind('<Button-3>', self.pick_save_dir)
-        self.current_dir_entry.pack(expand=True, fill=X)
-        self.make_listbox(font).pack(expand=True, fill=BOTH)
-        self.populate_pickles()
 
-    def make_listbox(self, font):
-        lb_frame = Frame(self.frame)
-        self.lb_yScroll = Scrollbar(lb_frame, orient=VERTICAL)
-        self.lb_val = StringVar(lb_frame)
-        self.lb = Listbox(
-            lb_frame,
-            listvariable=self.lb_val,
-            font=font,
-            height=6,
-            yscrollcommand=self.lb_yScroll.set
-            )
-        self.lb_yScroll['command']= self.lb.yview
-        self.lb.grid(row=0, column=0, sticky=N+E+W+S)
-        self.lb_yScroll.grid(row=0, column=1, sticky=N+E+S)
-        return lb_frame
+        self.current_dir_entry.bind('<Button-3>', self.pick_save_dir)
+
+        self.lb = ScrollingListbox(self.frame, font, height=6)
+
+        self.current_dir_entry.pack(expand=True, fill=X)
+        self.lb.pack(expand=True, fill=BOTH)
+
+        self.populate_pickles()
 
     def populate_pickles(self):
         self.pickles = {
             self._per_pickle_files(f): f
             for f in iglob(join(self.save_dir, '*.pickle'))
         }
-        self.lb_val.set(' '.join(sorted(self.pickles)))
+        self.lb.variable.set(' '.join(sorted(self.pickles)))
 
     def _per_pickle_files(self, filename):
         _, fn = split(filename)
@@ -269,7 +259,7 @@ class PickleJar(Frame):
 
 class ScrollingListbox(Frame):
 
-    def  __init__(self, root, font):
+    def  __init__(self, root, font, **kw):
         Frame.__init__(self, root, bd=2, relief=SUNKEN)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -280,8 +270,8 @@ class ScrollingListbox(Frame):
             bd=0,
             listvariable=self.variable,
             yscrollcommand=self.scrollbar.set,
+            **kw
         )
         self.scrollbar.config(command=self.listbox.yview)
         self.listbox.grid(row=0, column=0, sticky=N+E+W+S)
         self.scrollbar.grid(row=0, column=1, sticky=N+E+S)
-
