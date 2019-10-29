@@ -81,7 +81,7 @@ class DebugApp(object):
         self.register_widgets = [
             self._register(self.register_frame, '%x:' % i, i // 8, i % 8)
             for i in xrange(16)
-            ]
+        ]
 
         self.specials = LabelFrame(self.frame, text='Specials', font=self.font)
         self.specials.pack()
@@ -209,9 +209,6 @@ class PickleJar(Frame):
         self.frame = LabelFrame(root, text='Saved States', font=font)
         self.frame.pack(expand=True, fill=BOTH)
 
-        self.save_dir = getcwd() if save_dir is None else save_dir
-        assert exists(self.save_dir)
-
         self.current_dir = StringVar(self.frame)
         self.current_dir_entry = Entry(
             self.frame,
@@ -219,10 +216,9 @@ class PickleJar(Frame):
             textvariable=self.current_dir,
             state="readonly",
             width=24,
-            )
+        )
 
-        self.current_dir.set(self.save_dir)
-        self.current_dir_entry.xview(len(self.save_dir))
+        self.set_current_dir(getcwd() if save_dir is None else save_dir)
 
         self.current_dir_entry.bind('<Button-3>', self.pick_save_dir)
 
@@ -233,6 +229,12 @@ class PickleJar(Frame):
 
         self.populate_pickles()
 
+    def set_current_dir(self, save_dir):
+        assert exists(save_dir)
+        self.save_dir = save_dir
+        self.current_dir.set(self.save_dir)
+        self.current_dir_entry.xview(len(self.save_dir))
+
     def populate_pickles(self):
         self.pickles = {
             self._per_pickle_files(f): f
@@ -240,7 +242,8 @@ class PickleJar(Frame):
         }
         self.lb.variable.set(' '.join(sorted(self.pickles)))
 
-    def _per_pickle_files(self, filename):
+    @staticmethod
+    def _per_pickle_files(filename):
         _, fn = split(filename)
         pickle_name, _ = splitext(fn)
         return pickle_name
@@ -251,9 +254,7 @@ class PickleJar(Frame):
             mustexist=True,
         )
         if save_dir:
-            self.save_dir = save_dir
-            self.current_dir.set(self.save_dir)
-            self.current_dir_entry.xview(len(self.save_dir))
+            self.set_current_dir(save_dir)
             self.populate_pickles()
 
 
