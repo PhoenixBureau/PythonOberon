@@ -47,7 +47,8 @@ TODO
     [X] Save pickles
     [ ] Watch expressions
     [ ] Breakpoints
-    [ ] RAM Inspector
+    [X] RAM Inspector
     [ ] RAM Map / symbol table
     [ ] Reset w/ new disk|serial file(s)
     [X] Step CPU button.
+    [ ] Switches & LEDs

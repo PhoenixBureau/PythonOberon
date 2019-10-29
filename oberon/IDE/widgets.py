@@ -45,12 +45,14 @@ from Tkinter import (
     Listbox,
     Scrollbar,
     StringVar,
+    Text,
 
     BOTH,
     LEFT,
     RIGHT,
     SUNKEN,
     E,
+    END,
     N,
     S,
     LEFT,
@@ -65,6 +67,7 @@ from glob import iglob
 from os import getcwd
 from os.path import exists, join, split, splitext
 from pickle import load, dump
+from StringIO import StringIO
 
 from oberon.IDE.newcpu import newcpu
 
@@ -90,7 +93,7 @@ class DebugApp(object):
         self.register_frame = LabelFrame(self.frame, text='Registers', font=self.font)
 
         self.register_widgets = [
-            self._register(self.register_frame, '%x:' % i, i // 8, i % 8)
+            self._register(self.register_frame, 'R%i' % i, i // 8, i % 8)
             for i in xrange(16)
         ]
 
@@ -107,13 +110,31 @@ class DebugApp(object):
         self.pj = PickleJar(self, self.font, )
 
         self._make_controls()
+        self._make_ram_inspector()
         
         self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
         self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
         self.pj.grid(column=0, row=2, **_DEFAULT_GRID_OPTS)
         self.controls.grid(column=1, row=2, **_DEFAULT_GRID_OPTS)
+        self.ram_inspector.grid(column=1, row=0, **_DEFAULT_GRID_OPTS)
 
         self.copy_cpu_values()
+
+    def _make_ram_inspector(self):
+        self.ram_inspector = LabelFrame(self.frame, text='RAM', font=self.font)
+        self._ram_text_widget = Text(
+            self.ram_inspector,
+            font=self.font,
+            height=13,
+            width=68,
+            )
+        self._ram_text_widget.pack(expand=True, fill=BOTH)
+
+    def _update_ram_inspector(self):
+        s = StringIO()
+        self.cpu.dump_mem(to_file=s, number=6)
+        self._ram_text_widget.delete('0.0', END)
+        self._ram_text_widget.insert(END, s.getvalue())
 
     def _make_controls(self):
         self.tk.bind('<space>', self.step)
@@ -156,6 +177,7 @@ class DebugApp(object):
         self.Z.set(self.cpu.Z)
         self.C.set(self.cpu.C)
         self.OV.set(self.cpu.OV)
+        self._update_ram_inspector()
 
 
 class FlagWidget(Frame):

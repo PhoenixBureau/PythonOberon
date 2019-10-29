@@ -358,13 +358,13 @@ class RISC(object):
     else:
       device.write(self.R[self.ira])
 
-  def dump_mem(self, to_file=None):
+  def dump_mem(self, to_file=None, number=10):
     if to_file is None:
       to_file = sys.stdout
     if self.PC < MemWords:
-      self.dump_ram(to_file=to_file)
+      self.dump_ram(to_file=to_file, number=number)
     else:
-      self.dump_rom(to_file=to_file)
+      self.dump_rom(to_file=to_file, number=number)
 
   def dump_ram(self, to_file, location=None, number=10):
     '''
