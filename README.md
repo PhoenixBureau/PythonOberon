@@ -50,3 +50,4 @@ TODO
     [ ] RAM Inspector
     [ ] RAM Map / symbol table
     [ ] Reset w/ new disk|serial file(s)
+    [X] Step CPU button.

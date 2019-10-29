@@ -35,6 +35,7 @@ and you can change the `font properties <https://effbot.org/tkinterbook/tkinter-
 from Tkinter import (
     Tk,
 
+    Button,
     Checkbutton,
     Entry,
     Frame,
@@ -69,6 +70,9 @@ from pickle import load
 from oberon.IDE.newcpu import newcpu
 
 
+_DEFAULT_GRID_OPTS = dict(sticky=N+E+W+S, padx=3, pady=3)
+
+
 class DebugApp(object):
     '''damn'''
 
@@ -85,7 +89,6 @@ class DebugApp(object):
         self.frame.pack()
 
         self.register_frame = LabelFrame(self.frame, text='Registers', font=self.font)
-        self.register_frame.pack()
 
         self.register_widgets = [
             self._register(self.register_frame, '%x:' % i, i // 8, i % 8)
@@ -93,7 +96,6 @@ class DebugApp(object):
         ]
 
         self.specials = LabelFrame(self.frame, text='Specials', font=self.font)
-        self.specials.pack()
 
         self.PC = self._register(self.specials, 'PC:')
         self.H = self._register(self.specials, 'H:', row=1)
@@ -104,8 +106,29 @@ class DebugApp(object):
         self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
 
         self.pj = PickleJar(self, self.font, )
-        self.pj.pack()
 
+        self._make_controls()
+        
+        self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
+        self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
+        self.pj.grid(column=0, row=2, **_DEFAULT_GRID_OPTS)
+        self.controls.grid(column=1, row=2, **_DEFAULT_GRID_OPTS)
+
+        self.copy_cpu_values()
+
+    def _make_controls(self):
+        self.tk.bind('<space>', self.step)
+        self.controls = Frame(self.frame)
+        self.step_button = Button(
+            self.controls,
+            text='Step',
+            font=self.font,
+            command=self.step,
+        )
+        self.step_button.pack()
+
+    def step(self, event=None):
+        self.cpu.cycle()
         self.copy_cpu_values()
 
     def _register(self, frame, register_number, column=0, row=0):

@@ -1,0 +1,13 @@
+# with open('filling_screen.pickle', 'wb') as f:
+#     pickle.dump(w.cpu, f)
+
+
+# from Tkinter import Toplevel
+# from oberon.IDE.widgets import ScrollingListbox
+
+# r = w.register_widgets[0]
+# r.set(255<<16)
+
+# T = Toplevel()
+# sl = ScrollingListbox(T, w.font)
+# sl.pack(expand=True, fill='both')
