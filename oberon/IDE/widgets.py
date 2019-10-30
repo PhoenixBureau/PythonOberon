@@ -114,6 +114,7 @@ class DebugApp(object):
         self._make_ram_inspector()
 
         self.breakpoints = Breakpoints(self.frame, self.font)
+        self._break = False
         
         self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
         self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
@@ -143,7 +144,7 @@ class DebugApp(object):
     def _make_controls(self):
         self.tk.bind('<Control-space>', self.step)
         self.controls = Frame(self.frame)
-        self.step_button = Button(self.controls, text='>', font=self.font, command=self.step)
+        self.step_button = Button(self.controls, text='>', font=self.font, command=lambda: self._step())
         self.step10_button = Button(self.controls, text='10>>', font=self.font, command=lambda: self._step(10))
         self.save_button = Button(self.controls, text='Save', font=self.font, command=self.pj.save_pickle)
         self.step_button.pack(side=LEFT)
@@ -151,12 +152,15 @@ class DebugApp(object):
         self.save_button.pack(side=LEFT)
 
     def step(self, event=None):
-        self._step()
+        if not self._break:
+            self._step()
 
     def _step(self, n=1):
+        self._break = False
         for _ in xrange(n):
             self.cpu.cycle()
             if self.breakpoints.check(self.cpu):
+                self._break = True
                 break
         self.copy_cpu_values()
 
