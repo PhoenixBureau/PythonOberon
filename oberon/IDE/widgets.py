@@ -70,6 +70,7 @@ from pickle import load, dump
 from StringIO import StringIO
 
 from oberon.IDE.newcpu import newcpu
+from oberon.risc import ROMStart
 
 
 _DEFAULT_GRID_OPTS = dict(sticky=N+E+W+S, padx=3, pady=3)
@@ -111,12 +112,15 @@ class DebugApp(object):
 
         self._make_controls()
         self._make_ram_inspector()
+
+        self.breakpoints = Breakpoints(self.frame, self.font)
         
         self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
         self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
         self.pj.grid(column=0, row=2, **_DEFAULT_GRID_OPTS)
         self.controls.grid(column=1, row=2, **_DEFAULT_GRID_OPTS)
         self.ram_inspector.grid(column=1, row=0, **_DEFAULT_GRID_OPTS)
+        self.breakpoints.grid(column=1, row=1, **_DEFAULT_GRID_OPTS)
 
         self.copy_cpu_values()
 
@@ -137,25 +141,23 @@ class DebugApp(object):
         self._ram_text_widget.insert(END, s.getvalue())
 
     def _make_controls(self):
-        self.tk.bind('<space>', self.step)
+        self.tk.bind('<Control-space>', self.step)
         self.controls = Frame(self.frame)
-        self.step_button = Button(
-            self.controls,
-            text='Step',
-            font=self.font,
-            command=self.step,
-        )
-        self.save_button = Button(
-            self.controls,
-            text='Save',
-            font=self.font,
-            command=self.pj.save_pickle,
-        )
-        self.step_button.pack()
-        self.save_button.pack()
+        self.step_button = Button(self.controls, text='>', font=self.font, command=self.step)
+        self.step10_button = Button(self.controls, text='10>>', font=self.font, command=lambda: self._step(10))
+        self.save_button = Button(self.controls, text='Save', font=self.font, command=self.pj.save_pickle)
+        self.step_button.pack(side=LEFT)
+        self.step10_button.pack(side=LEFT)
+        self.save_button.pack(side=LEFT)
 
     def step(self, event=None):
-        self.cpu.cycle()
+        self._step()
+
+    def _step(self, n=1):
+        for _ in xrange(n):
+            self.cpu.cycle()
+            if self.breakpoints.check(self.cpu):
+                break
         self.copy_cpu_values()
 
     def _register(self, frame, register_number, column=0, row=0):
@@ -178,6 +180,29 @@ class DebugApp(object):
         self.C.set(self.cpu.C)
         self.OV.set(self.cpu.OV)
         self._update_ram_inspector()
+
+
+class Breakpoints(Frame):
+
+    def __init__(self, root, font):
+        Frame.__init__(self, root)
+        self.frame = LabelFrame(self, text='Breakpoints', font=font)
+        self.text = Text(self.frame, font=font, height=5)
+        self.frame.pack(expand=True, fill=BOTH)
+        self.text.pack(expand=True, fill=BOTH)
+
+    def check(self, cpu):
+        d = dict(cpu.__dict__)
+        d['ROMStart'] = ROMStart
+
+        for e in self.text.get('0.0', END).splitlines():
+            if not e.strip(): continue  # filter blank lines.
+            if eval(e, d):
+                self.text['bg'] = 'red'
+                return True
+
+        self.text['bg'] = 'white'
+        return False
 
 
 class FlagWidget(Frame):
