@@ -46,7 +46,7 @@ TODO
     [X] Load pickles
     [X] Save pickles
     [ ] Watch expressions
-    [ ] Breakpoints
+    [X] Breakpoints
     [X] RAM Inspector
     [ ] RAM Map / symbol table
     [ ] Reset w/ new disk|serial file(s)

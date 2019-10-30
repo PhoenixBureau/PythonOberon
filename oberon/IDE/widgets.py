@@ -146,9 +146,11 @@ class DebugApp(object):
         self.controls = Frame(self.frame)
         self.step_button = Button(self.controls, text='>', font=self.font, command=lambda: self._step())
         self.step10_button = Button(self.controls, text='10>>', font=self.font, command=lambda: self._step(10))
+        self.step104_button = Button(self.controls, text='10^4>>', font=self.font, command=lambda: self._step(10**4))
         self.save_button = Button(self.controls, text='Save', font=self.font, command=self.pj.save_pickle)
         self.step_button.pack(side=LEFT)
         self.step10_button.pack(side=LEFT)
+        self.step104_button.pack(side=LEFT)
         self.save_button.pack(side=LEFT)
 
     def step(self, event=None):
