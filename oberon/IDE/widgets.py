@@ -170,6 +170,14 @@ class DebugApp(object):
         self.ram_inspector.update(self.cpu)
 
 
+class LabelText(LabelFrame):
+
+    def __init__(self, root, label, font, **kw):
+        LabelFrame.__init__(self, root, text=label, font=font)
+        self.text = Text(self, font=font, **kw)
+        self.text.pack(expand=True, fill=BOTH)
+
+
 class RAMInspector(LabelText):
 
     def __init__(self, root, font):
@@ -380,14 +388,6 @@ class PickleJar(Frame):
             dump(self.app.cpu, f)
         # if the fn is in save_dir...
         self.populate_pickles()
-
-
-class LabelText(LabelFrame):
-
-    def __init__(self, root, label, font, **kw):
-        LabelFrame.__init__(self, root, text=label, font=font)
-        self.text = Text(self, font=font, **kw)
-        self.text.pack(expand=True, fill=BOTH)
 
 
 class ScrollingListbox(Frame):
