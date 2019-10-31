@@ -46,6 +46,8 @@ def strfi(fn):
 
 def newcpu():
     cpu = make_cpu(strfi(DISKIMG), strfi(FILLSCR))
+    cpu.breakpoints = 'PC == 0'
+    cpu.watches = ''
     cpu.decode(0)  # Ensure that all attributes of the cpu have been created.
     return cpu
 

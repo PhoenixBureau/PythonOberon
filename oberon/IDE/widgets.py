@@ -123,6 +123,9 @@ class DebugApp(object):
         self.breakpoints.grid(column=1, row=1, **_DEFAULT_GRID_OPTS)
         self.watch.grid(column=2, row=1, **_DEFAULT_GRID_OPTS)
 
+        self.watch.reset_text(self.cpu.watches)
+        self.breakpoints.reset_text(self.cpu.breakpoints)
+
         self.copy_cpu_values()
 
     def _make_controls(self):
@@ -180,6 +183,10 @@ class LabelText(LabelFrame):
         self.text = Text(self, font=font, **kw)
         self.text.pack(expand=True, fill=BOTH)
 
+    def reset_text(self, text):
+        self.text.delete('0.0', END)
+        self.text.insert(END, text)
+
 
 class RAMInspector(LabelText):
 
@@ -189,8 +196,7 @@ class RAMInspector(LabelText):
     def update(self, cpu):
         s = StringIO()
         cpu.dump_mem(to_file=s, number=6)
-        self.text.delete('0.0', END)
-        self.text.insert(END, s.getvalue())
+        self.reset_text(s.getvalue())
 
 
 class Watch(LabelText):
@@ -205,7 +211,8 @@ class Watch(LabelText):
         d = dict(cpu.__dict__)
         d['ROMStart'] = ROMStart
 
-        exprs = self.text.get('0.0', END).splitlines()
+        text = cpu.watches = self.text.get('0.0', END).rstrip()
+        exprs = text.splitlines()
 
         # Only recreate watches if there aren't the same amount.
         # This is still inefficient, but fast enough, because you can't
@@ -232,6 +239,10 @@ class Watch(LabelText):
                 raise
             e.set(value)
 
+    def reset_text(self, text):
+        LabelText.reset_text(self, text)
+        self.watches = []
+
 
 class Breakpoints(LabelText):
 
@@ -241,13 +252,12 @@ class Breakpoints(LabelText):
     def check(self, cpu):
         d = dict(cpu.__dict__)
         d['ROMStart'] = ROMStart
-
-        for e in self.text.get('0.0', END).splitlines():
+        text = cpu.breakpoints = self.text.get('0.0', END).rstrip()
+        for e in text.splitlines():
             if not e.strip(): continue  # filter blank lines.
             if eval(e, d):
                 self.text['bg'] = 'red'
                 return True
-
         self.text['bg'] = 'white'
         return False
 
@@ -415,6 +425,8 @@ class PickleJar(Frame):
         with open(fn, 'rb') as f:
             new_cpu = load(f)
         self.app.cpu = new_cpu
+        self.app.watch.reset_text(new_cpu.watches)
+        self.app.breakpoints.reset_text(new_cpu.breakpoints)
         self.app.copy_cpu_values()
 
     def save_pickle(self, event=None):
