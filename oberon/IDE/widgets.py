@@ -198,23 +198,33 @@ class Watch(LabelText):
     def __init__(self, root, font):
         self.font = font
         LabelText.__init__(self, root, 'Watch', font, height=5, width=34)
+        self.text['wrap'] = 'none'  # TODO: scrollbars
         self.watches = []
 
     def update(self, cpu):
         d = dict(cpu.__dict__)
         d['ROMStart'] = ROMStart
 
-        for w in self.watches:
-            w.destroy()
-        self.watches = []
-
         exprs = self.text.get('0.0', END).splitlines()
-        for line_no, expr in enumerate(exprs, 1):
-            e = RegisterWidget(self.text, str(line_no), self.font)
-            self.watches.append(e)
-            self.text.window_create('%i.0' % line_no, window=e)
 
-        for e, expr in zip(self.watches, exprs):
+        # Only recreate watches if there aren't the same amount.
+        # This is still inefficient, but fast enough, because you can't
+        # Change the watches while holding down ctrl-space, eh?
+        if len(exprs) != len(self.watches):
+            for w in self.watches:
+                w.destroy()
+            self.watches = []
+            for line_no, expr in enumerate(exprs, 1):
+                e = RegisterWidget(self.text, str(line_no), self.font)
+                self.watches.append(e)
+                self.text.window_create('%i.0' % line_no, window=e)
+
+        for line_no, (e, expr) in enumerate(zip(self.watches, exprs), 1):
+            index = '%i.0' % line_no
+            if index != self.text.index(e):  # Re-position the widget.
+                self.text.window_create(index, window=e)
+            if not expr.strip():
+                continue
             try:
                 value = eval(expr, d)
             except:
