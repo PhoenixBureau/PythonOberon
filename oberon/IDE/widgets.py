@@ -112,14 +112,16 @@ class DebugApp(object):
         self._make_controls()
         self.ram_inspector = RAMInspector(self.frame, self.font)
         self.breakpoints = Breakpoints(self.frame, self.font)
+        self.watch = Watch(self.frame, self.font)
         self._break = False
         
         self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
         self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
         self.pj.grid(column=0, row=2, **_DEFAULT_GRID_OPTS)
         self.controls.grid(column=1, row=2, **_DEFAULT_GRID_OPTS)
-        self.ram_inspector.grid(column=1, row=0, **_DEFAULT_GRID_OPTS)
+        self.ram_inspector.grid(column=1, row=0, columnspan=2, **_DEFAULT_GRID_OPTS)
         self.breakpoints.grid(column=1, row=1, **_DEFAULT_GRID_OPTS)
+        self.watch.grid(column=2, row=1, **_DEFAULT_GRID_OPTS)
 
         self.copy_cpu_values()
 
@@ -168,6 +170,7 @@ class DebugApp(object):
         self.C.set(self.cpu.C)
         self.OV.set(self.cpu.OV)
         self.ram_inspector.update(self.cpu)
+        self.watch.update(self.cpu)
 
 
 class LabelText(LabelFrame):
@@ -190,10 +193,19 @@ class RAMInspector(LabelText):
         self.text.insert(END, s.getvalue())
 
 
+class Watch(LabelText):
+
+    def __init__(self, root, font):
+        LabelText.__init__(self, root, 'Watch', font, height=5, width=34)
+
+    def update(self, cpu):
+        pass
+
+
 class Breakpoints(LabelText):
 
     def __init__(self, root, font):
-        LabelText.__init__(self, root, 'Breakpoints', font, height=5)
+        LabelText.__init__(self, root, 'Breakpoints', font, height=5, width=34)
 
     def check(self, cpu):
         d = dict(cpu.__dict__)
