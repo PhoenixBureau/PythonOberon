@@ -83,6 +83,7 @@ class DebugApp(object):
         self.cpu = cpu if cpu is not None else newcpu()
 
         self.tk = Tk()
+        self.tk.title('Oberon RISC Emulator')
         self.font = tkFont.Font(family='Courier', size=8)
         self.frame = Frame(self.tk)
         self.frame.pack()
@@ -110,6 +111,9 @@ class DebugApp(object):
         self.breakpoints = Breakpoints(self.frame, self.font)
         self.watch = Watch(self.frame, self.font)
         self._break = False
+
+        # Bind from here to pass cpu.
+        self.watch.text.bind('<Button-3>', lambda _: self.watch.update(self.cpu))
         
         self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
         self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
@@ -192,10 +196,31 @@ class RAMInspector(LabelText):
 class Watch(LabelText):
 
     def __init__(self, root, font):
+        self.font = font
         LabelText.__init__(self, root, 'Watch', font, height=5, width=34)
+        self.watches = []
 
     def update(self, cpu):
-        pass
+        d = dict(cpu.__dict__)
+        d['ROMStart'] = ROMStart
+
+        for w in self.watches:
+            w.destroy()
+        self.watches = []
+
+        exprs = self.text.get('0.0', END).splitlines()
+        for line_no, expr in enumerate(exprs, 1):
+            e = RegisterWidget(self.text, str(line_no), self.font)
+            self.watches.append(e)
+            self.text.window_create('%i.0' % line_no, window=e)
+
+        for e, expr in zip(self.watches, exprs):
+            try:
+                value = eval(expr, d)
+            except:
+                # TODO: turn the watch red or something.
+                raise
+            e.set(value)
 
 
 class Breakpoints(LabelText):
