@@ -80,11 +80,7 @@ class DebugApp(object):
     '''damn'''
 
     def __init__(self, cpu=None):
-
-        if cpu is None:
-            cpu = newcpu()
-            cpu.decode(0)  # Ensure that all attributes of the cpu have been created.
-        self.cpu = cpu
+        self.cpu = cpu if cpu is not None else newcpu()
 
         self.tk = Tk()
         self.font = tkFont.Font(family='Courier', size=8)

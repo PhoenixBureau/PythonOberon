@@ -45,7 +45,9 @@ def strfi(fn):
 
 
 def newcpu():
-    return make_cpu(strfi(DISKIMG), strfi(FILLSCR))
+    cpu = make_cpu(strfi(DISKIMG), strfi(FILLSCR))
+    cpu.decode(0)  # Ensure that all attributes of the cpu have been created.
+    return cpu
 
 
 if __name__ == '__main__':
