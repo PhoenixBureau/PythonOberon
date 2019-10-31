@@ -170,14 +170,10 @@ class DebugApp(object):
         self.ram_inspector.update(self.cpu)
 
 
-class RAMInspector(Frame):
+class RAMInspector(LabelText):
 
     def __init__(self, root, font):
-        Frame.__init__(self, root)
-        self.frame = LabelFrame(self, text='RAM', font=font)
-        self.text = Text(self.frame, font=font, height=13, width=68)
-        self.frame.pack(expand=True, fill=BOTH)
-        self.text.pack(expand=True, fill=BOTH)
+        LabelText.__init__(self, root, 'RAM', font, height=13, width=68)
 
     def update(self, cpu):
         s = StringIO()
@@ -186,14 +182,10 @@ class RAMInspector(Frame):
         self.text.insert(END, s.getvalue())
 
 
-class Breakpoints(Frame):
+class Breakpoints(LabelText):
 
     def __init__(self, root, font):
-        Frame.__init__(self, root)
-        self.frame = LabelFrame(self, text='Breakpoints', font=font)
-        self.text = Text(self.frame, font=font, height=5)
-        self.frame.pack(expand=True, fill=BOTH)
-        self.text.pack(expand=True, fill=BOTH)
+        LabelText.__init__(self, root, 'Breakpoints', font, height=5)
 
     def check(self, cpu):
         d = dict(cpu.__dict__)
@@ -388,6 +380,14 @@ class PickleJar(Frame):
             dump(self.app.cpu, f)
         # if the fn is in save_dir...
         self.populate_pickles()
+
+
+class LabelText(LabelFrame):
+
+    def __init__(self, root, label, font, **kw):
+        LabelFrame.__init__(self, root, text=label, font=font)
+        self.text = Text(self, font=font, **kw)
+        self.text.pack(expand=True, fill=BOTH)
 
 
 class ScrollingListbox(Frame):
