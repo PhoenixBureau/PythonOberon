@@ -108,11 +108,9 @@ class DebugApp(object):
         self.C = self._flag(self.specials, 'C:', column=1, row=1)
         self.OV = self._flag(self.specials, 'OV:', column=2, row=1)
 
-        self.pj = PickleJar(self, self.font, )
-
+        self.pj = PickleJar(self, self.font)
         self._make_controls()
-        self._make_ram_inspector()
-
+        self.ram_inspector = RAMInspector(self.frame, self.font)
         self.breakpoints = Breakpoints(self.frame, self.font)
         self._break = False
         
@@ -124,22 +122,6 @@ class DebugApp(object):
         self.breakpoints.grid(column=1, row=1, **_DEFAULT_GRID_OPTS)
 
         self.copy_cpu_values()
-
-    def _make_ram_inspector(self):
-        self.ram_inspector = LabelFrame(self.frame, text='RAM', font=self.font)
-        self._ram_text_widget = Text(
-            self.ram_inspector,
-            font=self.font,
-            height=13,
-            width=68,
-            )
-        self._ram_text_widget.pack(expand=True, fill=BOTH)
-
-    def _update_ram_inspector(self):
-        s = StringIO()
-        self.cpu.dump_mem(to_file=s, number=6)
-        self._ram_text_widget.delete('0.0', END)
-        self._ram_text_widget.insert(END, s.getvalue())
 
     def _make_controls(self):
         self.tk.bind('<Control-space>', self.step)
@@ -185,7 +167,23 @@ class DebugApp(object):
         self.Z.set(self.cpu.Z)
         self.C.set(self.cpu.C)
         self.OV.set(self.cpu.OV)
-        self._update_ram_inspector()
+        self.ram_inspector.update(self.cpu)
+
+
+class RAMInspector(Frame):
+
+    def __init__(self, root, font):
+        Frame.__init__(self, root)
+        self.frame = LabelFrame(self, text='RAM', font=font)
+        self.text = Text(self.frame, font=font, height=13, width=68)
+        self.frame.pack(expand=True, fill=BOTH)
+        self.text.pack(expand=True, fill=BOTH)
+
+    def update(self, cpu):
+        s = StringIO()
+        cpu.dump_mem(to_file=s, number=6)
+        self.text.delete('0.0', END)
+        self.text.insert(END, s.getvalue())
 
 
 class Breakpoints(Frame):
