@@ -218,49 +218,33 @@ class Watch(LabelText):
         text = cpu.watches = self.text.get('0.0', END).rstrip()
         exprs = text.splitlines()
 
-        # If the user has manually deleted some widgets we need to remove
-        # them from our widgets.
-        still_in_text = set(self.text.window_names())
-        for widget in self.watches[:]:
-            if str(widget) not in still_in_text:
-                self.watches.remove(widget)
+        num_exprs, num_widgets, num_vis = len(exprs), len(self.watches), len(self.text.window_names())
 
-        num_exprs, num_widgets = len(exprs), len(self.watches)
-
-        if num_widgets > num_exprs:  # Delete extra widgets.
-            extra_widgets = self.watches[num_exprs:]
-            del self.watches[num_exprs:]
-            for w in extra_widgets: w.destroy()
-
-        elif num_widgets < num_exprs:  # Create additional widgets.
-            for line_no in xrange(1 + num_widgets, 1 + num_exprs):
-                e = RegisterWidget(self.text, str(line_no), self.font)
+        if not (num_exprs == num_widgets == num_vis):
+            for widget in self.watches:
+                widget.destroy()
+            del self.watches[:]
+            for line_no in xrange(1, 1 + num_exprs):
+                e = RegisterWidget(self.text, str(line_no) + ':', self.font)
                 self.watches.append(e)
                 self.text.window_create('%i.0' % line_no, window=e)
 
-        assert num_exprs == len(self.watches)
-
         for line_no, (e, expr) in enumerate(zip(self.watches, exprs), 1):
-            if not expr or expr.isspace():
-                e.set(0)
-                continue
-            self._reposition_widget(line_no, e)
             self._update_widget(d, line_no, e, expr)
 
     def _update_widget(self, d, line_no, e, expr):
+        if (not expr) or expr.isspace():
+            e.set(0)
+            return
         try:
             value = eval(expr, d)
         except:
             self._err_tag_line(line_no)
-            # raise
+            raise
         e.set(value)
 
     def _err_tag_line(self, line_no):
         self.text.tag_add(self.ERR, '%i.0' % line_no, '%i.0' % (line_no + 1))
-
-    def _reposition_widget(self, line_no, e):
-        index = '%i.0' % line_no
-        self.text.window_create(index, window=e)
 
     def reset_text(self, text):
         LabelText.reset_text(self, text)
