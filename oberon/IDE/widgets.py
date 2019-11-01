@@ -68,6 +68,7 @@ from os import getcwd
 from os.path import exists, join, split, splitext
 from pickle import load, dump
 from StringIO import StringIO
+from traceback import print_exc
 
 from oberon.IDE.newcpu import newcpu
 from oberon.risc import ROMStart
@@ -114,6 +115,7 @@ class DebugApp(object):
 
         # Bind from here to pass cpu.
         self.watch.text.bind('<Button-3>', lambda _: self.watch.update(self.cpu))
+        self.breakpoints.text.bind('<Button-3>', lambda _: self.breakpoints.check(self.cpu))
         
         self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
         self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
@@ -208,7 +210,7 @@ class Watch(LabelText):
         LabelText.__init__(self, root, 'Watch', font, height=5, width=34)
         self.text['wrap'] = 'none'  # TODO: scrollbars
         self.watches = []
-        self.text.tag_config(self.ERR, background='red')
+        self.text.tag_config(self.ERR, background='red', bgstipple='gray25')
 
     def update(self, cpu):
         d = dict(cpu.__dict__)
@@ -238,7 +240,8 @@ class Watch(LabelText):
             value = eval(expr, d)
         except:
             self._err_tag_line(line_no)
-            raise
+            print_exc()
+            value = 0
         e.set(value)
 
     def _err_tag_line(self, line_no):
@@ -251,20 +254,35 @@ class Watch(LabelText):
 
 class Breakpoints(LabelText):
 
+    BRK = 'break_break'  # Text tag names.
+    ERR = 'break_error'
+
     def __init__(self, root, font):
         LabelText.__init__(self, root, 'Breakpoints', font, height=5, width=34)
+        self.text.tag_config(self.BRK, background='orange')
+        self.text.tag_config(self.ERR, background='red', bgstipple='gray25')
 
     def check(self, cpu):
         d = dict(cpu.__dict__)
         d['ROMStart'] = ROMStart
+        self.text.tag_remove(self.BRK, '0.0', END)  # Clear any tags.
+        self.text.tag_remove(self.ERR, '0.0', END)
         text = cpu.breakpoints = self.text.get('0.0', END).rstrip()
-        for e in text.splitlines():
+        for line_no, e in enumerate(text.splitlines(), 1):
             if not e.strip(): continue  # filter blank lines.
-            if eval(e, d):
-                self.text['bg'] = 'red'
+            try:
+                value = eval(e, d)
+            except:
+                self._tag_line(line_no, self.ERR)
+                print_exc()
                 return True
-        self.text['bg'] = 'white'
+            if value:
+                self._tag_line(line_no, self.BRK)
+                return True
         return False
+
+    def _tag_line(self, line_no, tag):
+        self.text.tag_add(tag, '%i.0' % line_no, '%i.0' % (line_no + 1))
 
 
 class FlagWidget(Frame):
