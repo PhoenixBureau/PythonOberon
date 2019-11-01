@@ -218,12 +218,10 @@ class Watch(LabelText):
         text = cpu.watches = self.text.get('0.0', END).rstrip()
         exprs = text.splitlines()
 
-        num_exprs, num_widgets, num_vis = len(exprs), len(self.watches), len(self.text.window_names())
-
-        if not (num_exprs == num_widgets == num_vis):
-            for widget in self.watches:
-                widget.destroy()
-            del self.watches[:]
+        num_exprs = len(exprs)
+        if not (num_exprs == len(self.watches) == len(self.text.window_names())):
+            while self.watches:
+                self.watches.pop().destroy()
             for line_no in xrange(1, 1 + num_exprs):
                 e = RegisterWidget(self.text, str(line_no) + ':', self.font)
                 self.watches.append(e)
