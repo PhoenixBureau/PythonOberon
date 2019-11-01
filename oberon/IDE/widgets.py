@@ -201,43 +201,66 @@ class RAMInspector(LabelText):
 
 class Watch(LabelText):
 
+    ERR = 'watch_error'  # Text tag name.
+
     def __init__(self, root, font):
         self.font = font
         LabelText.__init__(self, root, 'Watch', font, height=5, width=34)
         self.text['wrap'] = 'none'  # TODO: scrollbars
         self.watches = []
+        self.text.tag_config(self.ERR, background='red')
 
     def update(self, cpu):
         d = dict(cpu.__dict__)
         d['ROMStart'] = ROMStart
 
+        self.text.tag_remove(self.ERR, '0.0', END)  # Clear any error tags.
         text = cpu.watches = self.text.get('0.0', END).rstrip()
         exprs = text.splitlines()
 
-        # Only recreate watches if there aren't the same amount.
-        # This is still inefficient, but fast enough, because you can't
-        # Change the watches while holding down ctrl-space, eh?
-        if len(exprs) != len(self.watches):
-            for w in self.watches:
-                w.destroy()
-            self.watches = []
-            for line_no, expr in enumerate(exprs, 1):
+        # If the user has manually deleted some widgets we need to remove
+        # them from our widgets.
+        still_in_text = set(self.text.window_names())
+        for widget in self.watches[:]:
+            if str(widget) not in still_in_text:
+                self.watches.remove(widget)
+
+        num_exprs, num_widgets = len(exprs), len(self.watches)
+
+        if num_widgets > num_exprs:  # Delete extra widgets.
+            extra_widgets = self.watches[num_exprs:]
+            del self.watches[num_exprs:]
+            for w in extra_widgets: w.destroy()
+
+        elif num_widgets < num_exprs:  # Create additional widgets.
+            for line_no in xrange(1 + num_widgets, 1 + num_exprs):
                 e = RegisterWidget(self.text, str(line_no), self.font)
                 self.watches.append(e)
                 self.text.window_create('%i.0' % line_no, window=e)
 
+        assert num_exprs == len(self.watches)
+
         for line_no, (e, expr) in enumerate(zip(self.watches, exprs), 1):
-            index = '%i.0' % line_no
-            if index != self.text.index(e):  # Re-position the widget.
-                self.text.window_create(index, window=e)
-            if not expr.strip():
+            if not expr or expr.isspace():
+                e.set(0)
                 continue
-            try:
-                value = eval(expr, d)
-            except:
-                # TODO: turn the watch red or something.
-                raise
-            e.set(value)
+            self._reposition_widget(line_no, e)
+            self._update_widget(d, line_no, e, expr)
+
+    def _update_widget(self, d, line_no, e, expr):
+        try:
+            value = eval(expr, d)
+        except:
+            self._err_tag_line(line_no)
+            # raise
+        e.set(value)
+
+    def _err_tag_line(self, line_no):
+        self.text.tag_add(self.ERR, '%i.0' % line_no, '%i.0' % (line_no + 1))
+
+    def _reposition_widget(self, line_no, e):
+        index = '%i.0' % line_no
+        self.text.window_create(index, window=e)
 
     def reset_text(self, text):
         LabelText.reset_text(self, text)
