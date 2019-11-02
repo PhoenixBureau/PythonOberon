@@ -111,6 +111,7 @@ class DebugApp(object):
         self.ram_inspector = RAMInspector(self.frame, self.font)
         self.breakpoints = Breakpoints(self.frame, self.font)
         self.watch = Watch(self.frame, self.font)
+        self.LEDs = LEDsAndSwitches(self, self.font)
         self._break = False
 
         # Bind from here to pass cpu.
@@ -124,6 +125,7 @@ class DebugApp(object):
         self.ram_inspector.grid(column=1, row=0, columnspan=2, **_DEFAULT_GRID_OPTS)
         self.breakpoints.grid(column=1, row=1, **_DEFAULT_GRID_OPTS)
         self.watch.grid(column=2, row=1, **_DEFAULT_GRID_OPTS)
+        self.LEDs.frame.grid(column=2, row=2, **_DEFAULT_GRID_OPTS)
 
         self.watch.reset_text(self.cpu.watches)
         self.breakpoints.reset_text(self.cpu.breakpoints)
@@ -176,6 +178,7 @@ class DebugApp(object):
         self.OV.set(self.cpu.OV)
         self.ram_inspector.update(self.cpu)
         self.watch.update(self.cpu)
+        self.LEDs.update(self.cpu)
 
 
 class LabelText(LabelFrame):
@@ -450,6 +453,7 @@ class PickleJar(Frame):
         self.app.cpu = new_cpu
         self.app.watch.reset_text(new_cpu.watches)
         self.app.breakpoints.reset_text(new_cpu.breakpoints)
+        self.app.LEDs._monkey_patch_LED_write(new_cpu)
         self.app.copy_cpu_values()
 
     def save_pickle(self, event=None):
@@ -466,6 +470,74 @@ class PickleJar(Frame):
             dump(self.app.cpu, f)
         # if the fn is in save_dir...
         self.populate_pickles()
+
+
+class LEDsAndSwitches(object):
+
+    def __init__(self, app, font):
+        self.app = app
+        self.frame = LabelFrame(
+            app.frame,
+            text='LEDs and Switches',
+            font=font,
+        )
+        self.LEDs = []
+        self.switches = []
+        for column in xrange(8):
+            LED_var = IntVar(self.frame)
+            LED = Checkbutton(
+                self.frame,
+                indicatoron=0,
+                selectcolor='#8080ff',
+                text=str(column),
+                variable=LED_var,
+            )
+            LED.bind('<Button-1>', lambda _: 'break')  # Output only.
+            LED.grid(row=0, column=7 - column)
+
+            switch_var = IntVar(self.frame)
+            switch = Checkbutton(
+                self.frame,
+                command=(lambda i=column: self._set_switch(i)),
+                variable=switch_var,
+            )
+            switch.grid(row=1, column=7 - column)
+
+            self.LEDs.append(LED_var)
+            self.switches.append(switch_var)
+        
+        self._monkey_patch_LED_write(self.app.cpu)
+
+    def _monkey_patch_LED_write(self, cpu):
+        # I hate to do it, but if I make a different class it will mess up
+        # serialization (pickles).  I would have to swap LEDs objects before
+        # and after saving the CPU.
+        # If I patch the method after the instance is created that doesn't
+        # "show up" in the serialized state.
+        cpu.io_ports[4].write = self.set_LEDs
+        
+        # Since we are initializing a new CPU here, let's reset our LEDs.
+        self.set_LEDs(0)
+
+    def update(self, cpu):
+        # Even though cpu should be self.app.cpu pass a cpu in.
+        self.set_switches(cpu.io_ports[4].switches)
+
+    def set_LEDs(self, value):
+        for i in xrange(8):
+            self.LEDs[i].set(bool(value & (1 << i)))
+
+    def set_switches(self, value):
+        for i in xrange(8):
+            self.switches[i].set(bool(value & (1 << i)))
+
+    def _set_switch(self, i):
+        assert 0 <= i < 8
+        if self.switches[i].get():  # Switch is on.
+            self.app.cpu.io_ports[4].switches |= 1 << i
+        else:
+            self.app.cpu.io_ports[4].switches &= 0xff ^ (1 << i)
+        print 'switches', bin(self.app.cpu.io_ports[4].switches)
 
 
 class ScrollingListbox(Frame):
