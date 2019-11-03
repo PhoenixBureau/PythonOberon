@@ -466,8 +466,10 @@ class PickleJar(Frame):
         if not fn:
             return
         print 'saving', fn
+        self.app.LEDs._unpatch(self.app.cpu)
         with open(fn, 'wb') as f:
             dump(self.app.cpu, f)
+        self.app.LEDs._monkey_patch_LED_write(self.app.cpu)
         # if the fn is in save_dir...
         self.populate_pickles()
 
@@ -509,15 +511,16 @@ class LEDsAndSwitches(object):
         self._monkey_patch_LED_write(self.app.cpu)
 
     def _monkey_patch_LED_write(self, cpu):
-        # I hate to do it, but if I make a different class it will mess up
-        # serialization (pickles).  I would have to swap LEDs objects before
-        # and after saving the CPU.
-        # If I patch the method after the instance is created that doesn't
-        # "show up" in the serialized state.
         cpu.io_ports[4].write = self.set_LEDs
-        
+
         # Since we are initializing a new CPU here, let's reset our LEDs.
         self.set_LEDs(0)
+
+    @staticmethod
+    def _unpatch(cpu):
+        device = cpu.io_ports[4]
+        if 'write' in device.__dict__:
+            del device.write
 
     def update(self, cpu):
         # Even though cpu should be self.app.cpu pass a cpu in.
