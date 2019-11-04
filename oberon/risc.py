@@ -28,7 +28,7 @@ import pdb, sys
 from time import time
 from struct import unpack
 from pprint import pformat
-from assembler import dis
+from disassembler import dis
 from util import (
   bint, blong,
   python_int_to_signed_int,

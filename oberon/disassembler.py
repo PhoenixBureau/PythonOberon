@@ -7,17 +7,12 @@ def dis(n):
     Take an integer and return a human-readable string description of the
     assembly instruction.
     '''
-    IR = bint(n)[32:0]
-    q = IR[30]
-    if not IR[31]:
-        if not q:
-            value = dis_F0(IR)
-        else:
-            value = dis_F1(IR)
-    elif not q:
-        value = dis_F2(IR)
-    else:
-        value = dis_F3(IR)
+    IR = bint(n)
+    k = IR[32:30]
+    if   k == 0: value = dis_F0(IR)
+    elif k == 1: value = dis_F1(IR)
+    elif k == 2: value = dis_F2(IR)
+    else:        value = dis_F3(IR)
     return value
 
 
@@ -60,7 +55,7 @@ def dis_F1(IR):
     u, v, a, b, op, imm = IR[29], IR[28], IR[28:24], IR[24:20], IR[20:16], IR[16:0]
     # Immediate values are extended to 32 bits with 16 v-bits to the left.
     if v:
-        imm &= 0xffff0000
+        imm |= 0xffff0000
 
     if ops_rev[op] == 'Mov':
         if u: imm <<= 16
