@@ -2,18 +2,16 @@ from oberon.util import bint, signed_int_to_python_int
 from oberon.assembler import cmps, opof, ops_rev
 
 
+INSTRUCTION_FORMATS = dis_F0, dis_F1, dis_F2, dis_F3
+
+
 def dis(n):
     '''
     Take an integer and return a human-readable string description of the
     assembly instruction.
     '''
     IR = bint(n)
-    k = IR[32:30]
-    if   k == 0: value = dis_F0(IR)
-    elif k == 1: value = dis_F1(IR)
-    elif k == 2: value = dis_F2(IR)
-    else:        value = dis_F3(IR)
-    return value
+    return INSTRUCTION_FORMATS[IR[32:30]](IR)
 
 
 def dis_F0(IR):
