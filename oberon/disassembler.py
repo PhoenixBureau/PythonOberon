@@ -16,10 +16,8 @@ def dis(n):
             value = dis_F1(IR)
     elif not q:
         value = dis_F2(IR)
-    elif not IR[29]:
-        value = dis_F3(IR)
     else:
-        value = dis_F3imm(IR)
+        value = dis_F3(IR)
     return value
 
 
@@ -96,13 +94,10 @@ def dis_F2(IR):
 def dis_F3(IR):
     link = ' and R[15] <- PC + 1' if IR[28] else ''
     op = cmps[int(IR[27:24]), int(IR[27])]
-    c = IR[4:0]
-    return 'BR %s R[%i]%s' % (op, c, link)
-
-
-def dis_F3imm(IR):
-    link = ' and R[15] <- PC + 1' if IR[28] else ''
-    op = cmps[int(IR[27:24]), int(IR[27])]
-    off = hex(signed_int_to_python_int(IR[24:0], width=24)).rstrip('L')
-    return 'BR %s %s immediate %s' % (op, off, link)
-
+    # I forget why int(...).
+    if not IR[29]:
+        value = 'BR %s R[%i]%s' % (op, IR[4:0], link)
+    else:
+        off = hex(signed_int_to_python_int(IR[24:0], width=24)).rstrip('L')
+        value = 'BR %s %s immediate %s' % (op, off, link)
+    return value
