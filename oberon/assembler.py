@@ -33,7 +33,7 @@ from util import signed, bint, signed_int_to_python_int
 
 
 ops = dict(
-  Mov = 0, Lsl = 1, Asr = 2, Ror= 3,
+  Mov = 0, Lsl = 1, Asr = 2, Ror = 3,
   And = 4, Ann = 5, Ior = 6, Xor = 7,
   Add = 8, Sub = 9, Mul = 10, Div = 11,
   Fad = 12, Fsb = 13, Fml = 14, Fdv = 15,
@@ -242,7 +242,7 @@ def dis_Mov(IR):
   if IR[0]: # i.e. irc[0]
     return 'Mov R%i <- (N,Z,C,OV, 0..01010000)' % (ira,)
   return 'Mov R%i <- H' % (ira,)
-  
+
 
 def dis_F1(IR):
   op, ira, irb = IR[20:16], IR[28:24], IR[24:20]
