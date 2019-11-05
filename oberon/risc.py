@@ -387,7 +387,7 @@ class RISC(object):
     upper = min((len(self.rom), location + number + 1))
     for i in range(lower, upper):
       h = '>' if i == location else ' '
-      print >> to_file, h, hex(i + ROMStart), dis(self.rom[i])
+      print >> to_file, '%s rom[0x%x] %s' % (h, i, dis(self.rom[i]))
 
   def view(self):
     '''

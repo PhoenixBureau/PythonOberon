@@ -2,9 +2,6 @@ from oberon.util import bint, signed_int_to_python_int
 from oberon.assembler import cmps, opof, ops_rev
 
 
-INSTRUCTION_FORMATS = dis_F0, dis_F1, dis_F2, dis_F3
-
-
 def dis(n):
     '''
     Take an integer and return a human-readable string description of the
@@ -81,7 +78,11 @@ def dis_F2(IR):
     a, b, off = IR[28:24], IR[24:20], IR[20:0]
     op, arrow = ('store', '->') if IR[29] else ('load', '<-')
     width = ' byte' if IR[28] else ''
-    return '%s R[%i] %s [R[%i] + 0x%x]%s' % (op, a, arrow, b, off, width)
+    if off:
+        value = '%s R[%i] %s ram[R[%i] + 0x%x]%s' % (op, a, arrow, b, off, width)
+    else:
+        value = '%s R[%i] %s ram[R[%i]]%s' % (op, a, arrow, b, width)
+    return value
 
 
 def dis_F3(IR):
@@ -94,3 +95,6 @@ def dis_F3(IR):
         off = hex(signed_int_to_python_int(IR[24:0], width=24)).rstrip('L')
         value = 'BR %s %s immediate %s' % (op, off, link)
     return value
+
+
+INSTRUCTION_FORMATS = dis_F0, dis_F1, dis_F2, dis_F3
