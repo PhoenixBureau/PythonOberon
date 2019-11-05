@@ -1,5 +1,5 @@
 import os, pickle, StringIO, time
-from oberon.assembler import dis
+from oberon.disassembler import dis
 from oberon.demo import make_arg_parser, make_cpu
 from oberon.demo import pump, cycle
 from oberon.risc import MemWords

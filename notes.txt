@@ -119,3 +119,18 @@ t = Tk()
 foo = Foo(t)
 foo.frame.pack()
 # t.mainloop()
+
+
+From asm:
+
+if __name__ == '__main__':
+  mem = {}
+  for i, instruction in enumerate((
+    Mov_imm(8, 1),
+    Mov_imm(1, 1),
+    Add(1, 1, 8),
+    Lsl_imm(1, 1, 2),
+    T_link(1),
+    )):
+    print instruction, bin(instruction), dis(instruction)
+    mem[i] = instruction
