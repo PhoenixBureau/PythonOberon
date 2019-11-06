@@ -71,10 +71,10 @@ from StringIO import StringIO
 from traceback import print_exc
 
 from oberon.IDE.newcpu import newcpu
-from oberon.risc import ROMStart
+from oberon.risc import ROMStart, MemSize, MemWords
 
 
-_DEFAULT_GRID_OPTS = dict(sticky=N+E+W+S, padx=3, pady=3)
+_DEFAULT_GRID_OPTS = dict(sticky=N+E+W+S, padx=1, pady=1, ipadx=3, ipady=3)
 
 
 class DebugApp(object):
@@ -118,14 +118,14 @@ class DebugApp(object):
         self.watch.text.bind('<Button-3>', lambda _: self.watch.update(self.cpu))
         self.breakpoints.text.bind('<Button-3>', lambda _: self.breakpoints.check(self.cpu))
         
-        self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
-        self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
-        self.pj.grid(column=0, row=2, **_DEFAULT_GRID_OPTS)
-        self.controls.grid(column=1, row=2, **_DEFAULT_GRID_OPTS)
-        self.ram_inspector.grid(column=1, row=0, columnspan=2, **_DEFAULT_GRID_OPTS)
-        self.breakpoints.grid(column=1, row=1, **_DEFAULT_GRID_OPTS)
-        self.watch.grid(column=2, row=1, **_DEFAULT_GRID_OPTS)
-        self.LEDs.frame.grid(column=2, row=2, **_DEFAULT_GRID_OPTS)
+        self.register_frame. grid(column=0, row=0,               **_DEFAULT_GRID_OPTS)
+        self.specials.       grid(column=0, row=1,               **_DEFAULT_GRID_OPTS)
+        self.LEDs.     frame.grid(column=0, row=2,               **_DEFAULT_GRID_OPTS)
+        self.pj.             grid(column=0, row=3,               **_DEFAULT_GRID_OPTS)
+        self.ram_inspector.  grid(column=1, row=0, columnspan=2, **_DEFAULT_GRID_OPTS)
+        self.breakpoints.    grid(column=1, row=1, rowspan=2,    **_DEFAULT_GRID_OPTS)
+        self.controls.       grid(column=1, row=3,               **_DEFAULT_GRID_OPTS)
+        self.watch.          grid(column=2, row=1, rowspan=2,    **_DEFAULT_GRID_OPTS)
 
         self.watch.reset_text(self.cpu.watches)
         self.breakpoints.reset_text(self.cpu.breakpoints)
@@ -185,7 +185,7 @@ class LabelText(LabelFrame):
 
     def __init__(self, root, label, font, **kw):
         LabelFrame.__init__(self, root, text=label, font=font)
-        self.text = Text(self, font=font, **kw)
+        self.text = Text(self, font=font, relief='flat', **kw)
         self.text.pack(expand=True, fill=BOTH)
 
     def reset_text(self, text):
