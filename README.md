@@ -53,3 +53,5 @@ TODO
     [X] Step CPU button.
     [X] Switches & LEDs
     [X] Save breakpoints & watches
+    [ ] Indicate when HALT'd.
+    [ ] Register display mode for records.

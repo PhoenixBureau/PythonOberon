@@ -14,7 +14,8 @@ from oberon.risc import (
 
 
 DISKIMG = resource_filename(__name__, '../disk.img')
-FILLSCR = resource_filename(__name__, '../../fillscreen.bin')
+# FILLSCR = resource_filename(__name__, '../../fillscreen.bin')
+FILLSCR = resource_filename(__name__, '../../joy_asmii.bin')
 
 
 def make_cpu(disk_image, serial=None):
