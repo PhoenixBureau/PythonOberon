@@ -116,7 +116,7 @@ class DebugApp(object):
 
         # Bind from here to pass cpu.
         self.watch.text.bind('<Button-3>', lambda _: self.watch.update(self.cpu))
-        self.breakpoints.text.bind('<Button-3>', lambda _: self.breakpoints.check(self.cpu))
+        self.breakpoints.text.bind('<Button-3>', lambda _: self.breakpoints.check(self.cpu, self.syms))
         
         self.register_frame. grid(column=0, row=0,               **_DEFAULT_GRID_OPTS)
         self.specials.       grid(column=0, row=1,               **_DEFAULT_GRID_OPTS)
@@ -129,6 +129,8 @@ class DebugApp(object):
 
         self.watch.reset_text(self.cpu.watches)
         self.breakpoints.reset_text(self.cpu.breakpoints)
+
+        self.syms = {}
 
         self.copy_cpu_values()
 
@@ -144,6 +146,16 @@ class DebugApp(object):
         self.step104_button.pack(side=LEFT)
         self.save_button.pack(side=LEFT)
 
+    def set_symbols(self, filename):
+        self.syms = {}
+        with open(filename, 'r') as f:
+            for line in f.read().splitlines():
+                line = line.strip()
+                if line:
+                    name, sep, address = line.partition('-')
+                    if sep:
+                        self.syms[int(address) >> 2] = name
+
     def step(self, event=None):
         if not self._break:
             self._step()
@@ -152,7 +164,7 @@ class DebugApp(object):
         self._break = False
         for _ in xrange(n):
             self.cpu.cycle()
-            if self.breakpoints.check(self.cpu):
+            if self.breakpoints.check(self.cpu, self.syms):
                 self._break = True
                 break
         self.copy_cpu_values()
@@ -176,7 +188,7 @@ class DebugApp(object):
         self.Z.set(self.cpu.Z)
         self.C.set(self.cpu.C)
         self.OV.set(self.cpu.OV)
-        self.ram_inspector.update(self.cpu)
+        self.ram_inspector.update(self.cpu, self.syms)
         self.watch.update(self.cpu)
         self.LEDs.update(self.cpu)
 
@@ -198,9 +210,9 @@ class RAMInspector(LabelText):
     def __init__(self, root, font):
         LabelText.__init__(self, root, 'RAM', font, height=13, width=68)
 
-    def update(self, cpu):
+    def update(self, cpu, syms):
         s = StringIO()
-        cpu.dump_mem(to_file=s, number=6)
+        cpu.dump_mem(to_file=s, number=6, syms=syms)
         self.reset_text(s.getvalue())
 
 
@@ -265,8 +277,10 @@ class Breakpoints(LabelText):
         self.text.tag_config(self.BRK, background='orange')
         self.text.tag_config(self.ERR, background='red', bgstipple='gray25')
 
-    def check(self, cpu):
+    def check(self, cpu, syms):
         d = dict(cpu.__dict__)
+        for addr, label in syms.iteritems():
+            d[label] = addr
         d['ROMStart'] = ROMStart
         self.text.tag_remove(self.BRK, '0.0', END)  # Clear any tags.
         self.text.tag_remove(self.ERR, '0.0', END)

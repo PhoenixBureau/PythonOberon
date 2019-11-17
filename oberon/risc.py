@@ -358,24 +358,28 @@ class RISC(object):
     else:
       device.write(self.R[self.ira])
 
-  def dump_mem(self, to_file=None, number=10):
+  def dump_mem(self, to_file=None, number=10, syms=None):
     if to_file is None:
       to_file = sys.stdout
     if self.PC < MemWords:
-      self.dump_ram(to_file=to_file, number=number)
+      self.dump_ram(to_file=to_file, number=number, syms=syms)
     else:
       self.dump_rom(to_file=to_file, number=number)
 
-  def dump_ram(self, to_file, location=None, number=10):
+  def dump_ram(self, to_file, location=None, number=10, syms=None):
     '''
     Debug function, print a disassembly of a span of RAM.
     '''
+    label_len = 8
     if location is None:
       location = self.PC
+    if syms is None:
+      syms = {}
     lower = max((0, location - number))
     for i in range(lower, location + number):
+      label = '%8s' % syms.get(i, ' ' * label_len)[:label_len]
       h = '>' if i == location else ' '
-      print >> to_file, h, hex(i), dis(self.ram[i << 2])
+      print >> to_file, h, label, hex(i), dis(self.ram[i << 2])
 
   def dump_rom(self, to_file, location=None, number=10):
     '''
