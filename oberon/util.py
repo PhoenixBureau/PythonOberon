@@ -119,7 +119,7 @@ def signed_int_to_python_int(i, width=32):
   b = 2**width
   if not (0 <= i < b):
     raise ValueError
-  if i < b / 2:
+  if i < b // 2:
     return i
   return i - b
 

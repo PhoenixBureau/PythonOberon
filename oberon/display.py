@@ -45,10 +45,10 @@ SIZE = WIDTH, HEIGHT = 1024, 768
 DISPLAY_START = 0xe7f00
 'RAM address of the start of the memory-mapped raster display.'
 
-DISPLAY_SIZE_IN_BYTES = WIDTH * HEIGHT / 8
+DISPLAY_SIZE_IN_BYTES = WIDTH * HEIGHT // 8
 'As the name implies, the number of bytes in the display portion of the RAM.'
 
-WORDS_IN_SCANLINE = WIDTH / 32
+WORDS_IN_SCANLINE = WIDTH // 32
 'The number of 32-bit words in one horizontal scan line of the display.'
 
 

@@ -4,7 +4,7 @@ import oberon.disassembler
 with open('joy_asm.bin', 'rb') as f:
     data = f.read()
 
-size_words = len(data) /  4
+size_words = len(data) //  4
 fmt = '<%ii' % size_words
 machine_code = struct.unpack(fmt, data)
 

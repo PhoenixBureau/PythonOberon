@@ -37,9 +37,9 @@ from .util import (
 
 
 IO_RANGE = 0x0FFFFFFC0
-ROMStart = 0xFFFFF800 / 4
+ROMStart = 0xFFFFF800 // 4
 MemSize = 0x00180000
-MemWords = MemSize / 4
+MemWords = MemSize // 4
 
 
 def log(message, *args):
@@ -366,10 +366,12 @@ class RISC(object):
     else:
       self.dump_rom(to_file=to_file, number=number)
 
-  def dump_ram(self, to_file, location=None, number=10, syms=None):
+  def dump_ram(self, to_file=None, location=None, number=10, syms=None):
     '''
     Debug function, print a disassembly of a span of RAM.
     '''
+    if to_file is None:
+      to_file = sys.stdout
     label_len = 8
     if location is None:
       location = self.PC
@@ -522,7 +524,7 @@ class Disk(object):
   '''
 
   SECTOR_SIZE = 512
-  SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
+  SECTOR_SIZE_WORDS = SECTOR_SIZE // 4
   STRUCT_FORMAT = '<%iI' % SECTOR_SIZE_WORDS
 
   diskCommand, diskRead, diskWrite, diskWriting = list(range(4))

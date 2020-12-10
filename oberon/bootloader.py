@@ -117,7 +117,7 @@ bootloader = (
 )
 'Machine code of the bootloader ROM.'
 
-ROMStart = 0xFFFFF800 / 4
+ROMStart = 0xFFFFF800 // 4
 'Address (in words, not bytes) of the start of the ROM.'
 
 
