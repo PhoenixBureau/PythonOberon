@@ -32,7 +32,7 @@ and you can change the `font properties <https://effbot.org/tkinterbook/tkinter-
 
 
 '''
-from Tkinter import (
+from tkinter import (
     Tk,
 
     Button,
@@ -61,13 +61,13 @@ from Tkinter import (
     X,
     Y,
     )
-import tkFont, tkFileDialog, tkMessageBox
+import tkinter.font, tkinter.filedialog, tkinter.messagebox
 
 from glob import iglob
 from os import getcwd
 from os.path import exists, join, split, splitext
 from pickle import load, dump
-from StringIO import StringIO
+from io import StringIO
 from traceback import print_exc
 
 from oberon.IDE.newcpu import newcpu
@@ -85,7 +85,7 @@ class DebugApp(object):
 
         self.tk = Tk()
         self.tk.title('Oberon RISC Emulator')
-        self.font = tkFont.Font(family='Courier', size=8)
+        self.font = tkinter.font.Font(family='Courier', size=8)
         self.frame = Frame(self.tk)
         self.frame.pack()
 
@@ -93,7 +93,7 @@ class DebugApp(object):
 
         self.register_widgets = [
             self._register(self.register_frame, 'R%i' % i, i // 8, i % 8)
-            for i in xrange(16)
+            for i in range(16)
         ]
 
         self.specials = LabelFrame(self.frame, text='Specials', font=self.font)
@@ -162,7 +162,7 @@ class DebugApp(object):
 
     def _step(self, n=1):
         self._break = False
-        for _ in xrange(n):
+        for _ in range(n):
             self.cpu.cycle()
             if self.breakpoints.check(self.cpu, self.syms):
                 self._break = True
@@ -239,7 +239,7 @@ class Watch(LabelText):
         if not (num_exprs == len(self.watches) == len(self.text.window_names())):
             while self.watches:
                 self.watches.pop().destroy()
-            for line_no in xrange(1, 1 + num_exprs):
+            for line_no in range(1, 1 + num_exprs):
                 e = RegisterWidget(self.text, str(line_no) + ':', self.font)
                 self.watches.append(e)
                 self.text.window_create('%i.0' % line_no, window=e)
@@ -279,7 +279,7 @@ class Breakpoints(LabelText):
 
     def check(self, cpu, syms):
         d = dict(cpu.__dict__)
-        for addr, label in syms.iteritems():
+        for addr, label in syms.items():
             d[label] = addr
         d['ROMStart'] = ROMStart
         self.text.tag_remove(self.BRK, '0.0', END)  # Clear any tags.
@@ -381,7 +381,7 @@ class RegisterWidget(Frame):
 
         formatter = self.FORMATS[self.current_format]
 
-        if isinstance(formatter, basestring):
+        if isinstance(formatter, str):
             label = formatter % (value,)
         elif callable(formatter):
             label = formatter(value)
@@ -448,7 +448,7 @@ class PickleJar(Frame):
         return pickle_name
 
     def pick_save_dir(self, event=None):
-        save_dir = tkFileDialog.askdirectory(
+        save_dir = tkinter.filedialog.askdirectory(
             initialdir=self.save_dir,
             mustexist=True,
         )
@@ -471,7 +471,7 @@ class PickleJar(Frame):
         self.app.copy_cpu_values()
 
     def save_pickle(self, event=None):
-        fn = tkFileDialog.asksaveasfilename(
+        fn = tkinter.filedialog.asksaveasfilename(
             initialdir=self.save_dir,
             initialfile='Untitled.pickle',
             title='Save to...',
@@ -479,7 +479,7 @@ class PickleJar(Frame):
         )
         if not fn:
             return
-        print 'saving', fn
+        print('saving', fn)
         self.app.LEDs._unpatch(self.app.cpu)
         with open(fn, 'wb') as f:
             dump(self.app.cpu, f)
@@ -499,7 +499,7 @@ class LEDsAndSwitches(object):
         )
         self.LEDs = []
         self.switches = []
-        for column in xrange(8):
+        for column in range(8):
             LED_var = IntVar(self.frame)
             LED = Checkbutton(
                 self.frame,
@@ -541,11 +541,11 @@ class LEDsAndSwitches(object):
         self.set_switches(cpu.io_ports[4].switches)
 
     def set_LEDs(self, value):
-        for i in xrange(8):
+        for i in range(8):
             self.LEDs[i].set(bool(value & (1 << i)))
 
     def set_switches(self, value):
-        for i in xrange(8):
+        for i in range(8):
             self.switches[i].set(bool(value & (1 << i)))
 
     def _set_switch(self, i):
@@ -554,7 +554,7 @@ class LEDsAndSwitches(object):
             self.app.cpu.io_ports[4].switches |= 1 << i
         else:
             self.app.cpu.io_ports[4].switches &= 0xff ^ (1 << i)
-        print 'switches', bin(self.app.cpu.io_ports[4].switches)
+        print('switches', bin(self.app.cpu.io_ports[4].switches))
 
 
 class ScrollingListbox(Frame):

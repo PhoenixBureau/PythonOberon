@@ -19,6 +19,7 @@
 #
 import oberon.IDE.widgets
 from sys import argv
+import importlib
 
 
 w = oberon.IDE.widgets.DebugApp()
@@ -31,5 +32,5 @@ if '-n' not in argv:
 
 def newapp():
     import oberon.IDE.widgets
-    reload(oberon.IDE.widgets)
+    importlib.reload(oberon.IDE.widgets)
     return oberon.IDE.widgets.DebugApp()

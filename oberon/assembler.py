@@ -29,7 +29,7 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
-from util import signed, bint, signed_int_to_python_int
+from .util import signed, bint, signed_int_to_python_int
 
 
 ops = dict(
@@ -40,7 +40,7 @@ ops = dict(
   )
 'Operation names mapped to their values in instructions.'
 
-ops_rev = dict((v, k) for k, v in ops.iteritems())
+ops_rev = dict((v, k) for k, v in ops.items())
 
 
 ##  ((cc == 0) & N | // MI, PL

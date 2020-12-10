@@ -379,7 +379,7 @@ class RISC(object):
     for i in range(lower, location + number):
       label = '%8s' % syms.get(i, ' ' * label_len)[:label_len]
       h = '>' if i == location else ' '
-      print >> to_file, h, label, hex(i), dis(self.ram[i << 2])
+      print(h, label, hex(i), dis(self.ram[i << 2]), file=to_file)
 
   def dump_rom(self, to_file, location=None, number=10):
     '''
@@ -391,7 +391,7 @@ class RISC(object):
     upper = min((len(self.rom), location + number + 1))
     for i in range(lower, upper):
       h = '>' if i == location else ' '
-      print >> to_file, '%s rom[0x%x] %s' % (h, i, dis(self.rom[i]))
+      print('%s rom[0x%x] %s' % (h, i, dis(self.rom[i])), file=to_file)
 
   def view(self):
     '''
@@ -525,7 +525,7 @@ class Disk(object):
   SECTOR_SIZE_WORDS = SECTOR_SIZE / 4
   STRUCT_FORMAT = '<%iI' % SECTOR_SIZE_WORDS
 
-  diskCommand, diskRead, diskWrite, diskWriting = range(4)
+  diskCommand, diskRead, diskWrite, diskWriting = list(range(4))
 
   def __init__(self, image_file):
     self.state = self.diskCommand
@@ -747,7 +747,7 @@ class SerialStatus(object):
   def read(self):
     return 1
 
-  def write(write, word):
+  def write(self, word):
     2/0
 
 

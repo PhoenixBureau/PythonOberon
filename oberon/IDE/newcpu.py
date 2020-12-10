@@ -1,5 +1,5 @@
 from pkg_resources import resource_filename
-from StringIO import StringIO
+from io import StringIO
 from oberon.bootloader import bootloader
 from oberon.risc import (
     ByteAddressed32BitRAM,
@@ -56,7 +56,7 @@ def newcpu():
 if __name__ == '__main__':
     import pickle
     cpu = newcpu()
-    for _ in xrange(100):
+    for _ in range(100):
         cpu.cycle()
     with open('default+100.pickle', 'wb') as f:
         pickle.dump(cpu, f)

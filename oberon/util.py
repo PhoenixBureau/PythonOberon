@@ -68,7 +68,7 @@ class binary_addressing_mixin(object):
 
 
 #class bint(binary_addressing_mixin, int): pass
-class blong(binary_addressing_mixin, long): pass
+class blong(binary_addressing_mixin, int): pass
 bint = blong
 
 

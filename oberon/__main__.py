@@ -21,7 +21,7 @@ from .demo import cycle, make_arg_parser, make_cpu
 
 
 args = make_arg_parser().parse_args()
-print('Using disk image file', args.disk_image.name)
+print(('Using disk image file', args.disk_image.name))
 cpu = make_cpu(args.disk_image, args.serial_in)
 # Details begin to be painted around 6.5M cycles.
 cycle(cpu, 8000000)

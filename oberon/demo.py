@@ -114,5 +114,5 @@ def cycle(cpu, limit):
 
         if not n % 10000:
             pump()
-            print >> stderr, n
+            print(n, file=stderr)
         n += 1
