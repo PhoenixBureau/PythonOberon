@@ -32,7 +32,7 @@ try:
   import pygame
   from pygame.locals import *
 except ImportError:
-  print >> stderr, 'Unable to import pygame.'
+  print('Unable to import pygame.', file=stderr) 
   PYGAME = False
 else:
   PYGAME = True

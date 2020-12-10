@@ -124,4 +124,4 @@ ROMStart = 0xFFFFF800 / 4
 if __name__ == '__main__':
   from disassembler import dis
   for i, instruction in enumerate(bootloader):
-    print '0x%08x - 0x%04x : %s' % (i + ROMStart, i, dis(instruction))
+    print('0x%08x - 0x%04x : %s' % (i + ROMStart, i, dis(instruction)))

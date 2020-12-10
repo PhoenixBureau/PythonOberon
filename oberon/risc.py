@@ -28,8 +28,8 @@ import pdb, sys
 from time import time
 from struct import unpack
 from pprint import pformat
-from disassembler import dis
-from util import (
+from .disassembler import dis
+from .util import (
   bint, blong,
   python_int_to_signed_int,
   signed_int_to_python_int,
@@ -402,11 +402,11 @@ class RISC(object):
     kw = self.__dict__.copy()
     kw['A'] = self.R[self.ira]
     #print '- ' * 40
-    print 'PC: 0x%(PC)04x ---' % kw, dis(int(self.IR))
+    print('PC: 0x%(PC)04x ---' % kw, dis(int(self.IR)))
     if self.STR:
-      print '            Storing', '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw
+      print('            Storing', '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw)
     elif self.LDR:
-      print '            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
+      print('            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw)
     # Print the registers.
     # for i in range(0, 16, 2):
     #   reg0, reg1 = self.R[i], self.R[i + 1]
@@ -691,7 +691,7 @@ class LEDs(object):
     return self.switches
 
   def write(self, word):
-    print 'LEDs', bin(word)[2:]
+    print('LEDs', bin(word)[2:])
 
 
 class FakeSPI(object):
