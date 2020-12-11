@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = u'PythonOberon'
+project = u'Python Oberon'
 copyright = u'2019, Simon Forman'
 author = u'Simon Forman'
 
