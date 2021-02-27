@@ -518,7 +518,7 @@ class Disk(object):
   Disk
 
   (I cribbed most of this from
-  `pdewacht/oberon-risc-emu <https://github.com/pdewacht/oberon-risc-emu>`
+  `pdewacht/oberon-risc-emu <https://github.com/pdewacht/oberon-risc-emu>`_
   .  I'm not exactly sure how it works but it does work, well enough to
   load the Oberon OS from the disk image.)
   '''
