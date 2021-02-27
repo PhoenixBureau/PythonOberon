@@ -1,5 +1,5 @@
 from pkg_resources import resource_filename
-from io import StringIO
+from io import BytesIO
 from oberon.bootloader import bootloader
 from oberon.risc import (
     ByteAddressed32BitRAM,
@@ -40,9 +40,9 @@ def make_cpu(disk_image, serial=None):
 
 
 def strfi(fn):
-    # Files can't be pickled, but StringIO objects can.
+    # Files can't be pickled, but BytesIO objects can.
     with open(fn, 'rb') as file_obj:
-        return StringIO(file_obj.read())
+        return BytesIO(file_obj.read())
 
 
 def newcpu():
