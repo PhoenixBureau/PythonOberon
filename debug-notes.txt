@@ -1,0 +1,154 @@
+PS C:\Users\sforman\Desktop\src\PythonOberon> ipython --gui=tk -i -m oberon.IDE -- -n
+Python 2.7.13 |Anaconda 4.3.1 (64-bit)| (default, Dec 19 2016, 13:29:36) [MSC v.1500 64 bit (AMD64)]
+Type "copyright", "credits" or "license" for more information.
+
+IPython 5.1.0 -- An enhanced Interactive Python.
+?         -> Introduction and overview of IPython's features.
+%quickref -> Quick reference.
+help      -> Python's own help system.
+object?   -> Details about 'object', use 'object??' for extra details.
+
+In [1]: saving C:/Users/sforman/Desktop/src/PythonOberon/looksgoodsofar.pickle
+saving C:/Users/sforman/Desktop/src/PythonOberon/looksgoodsofar.pickle
+saving C:/Users/sforman/Desktop/src/PythonOberon/at-i-eh.pickle
+In [1]: w.cpu.ram[0x364]
+Out[1]: 1066795012L
+
+In [2]: e = w.cpu.ram[0x364]
+
+In [3]: hex(e)
+Out[3]: '0x3f960004L'
+
+In [4]: f = w.cpu.ram[0x364 + 4]
+
+In [5]: hex(f)
+Out[5]: '0x3eac0000L'
+
+In [6]: e>>15
+Out[6]: 32556L
+
+In [7]: hex(_)
+Out[7]: '0x7f2cL'
+
+In [8]: from oberon.util import python_int_to_signed_int
+
+In [9]: from oberon.util import python_int_to_signed_int, signed_int_to_python_int
+
+In [10]: signed_int_to_python_int(32556, 15)
+Out[10]: -212
+
+In [11]: 0x364-212
+Out[11]: 656
+
+In [12]: hex(_)
+Out[12]: '0x290'
+
+In [13]: w.syms[0x290]
+---------------------------------------------------------------------------
+KeyError                                  Traceback (most recent call last)
+C:\Users\sforman\Desktop\src\PythonOberon\oberon\IDE\__main__.py in <module>()
+----> 1 w.syms[0x290]
+
+KeyError: 656
+
+In [14]: w.syms
+Out[14]: 
+{7: 'reset',
+ 14: 'main',
+ 17: 'unpack[',
+ 25: ']unpack',
+ 35: 'push',
+ 44: 'jpel',
+ 45: 'done',
+ 48: 'cons',
+ 49: 'unpack[',
+ 57: ']unpack',
+ 58: 'unpack[',
+ 66: ']unpack',
+ 86: 'dup',
+ 90: 'i',
+ 91: 'unpack[',
+ 99: ']unpack',
+ 104: 'unpack[',
+ 112: ']unpack',
+ 140: 'unpack[',
+ 148: ']unpack',
+ 161: 'new',
+ 164: 'swap',
+ 165: 'unpack[',
+ 173: ']unpack',
+ 174: 'unpack[',
+ 182: ']unpack',
+ 204: 'unit',
+ 209: 'x',
+ 214: 'swons',
+ 219: 'dodef',
+ 231: 'expression'}
+
+In [15]: 0x364-212
+Out[15]: 656
+
+In [16]: _>>2
+Out[16]: 164
+
+In [17]: w.syms[0x290>>2]
+Out[17]: 'swap'
+
+In [18]: signed_int_to_python_int(f>>15, 15)
+Out[18]: -680L
+
+In [19]: 0x364 + 4 -680
+Out[19]: 192
+
+In [20]: w.syms[192>>2]
+Out[20]: 'cons'
+
+In [21]: # so the expression @ w.cpu.ram[0x364] is correct.
+
+In [22]: # It points to swap and cons.
+
+In [23]: hex(192)
+Out[23]: '0xc0'
+
+In [24]: expr_addr = 0x3a8
+
+In [25]: w.cpu.ram[expr_addr]
+Out[25]: 1054867456L
+
+In [26]: expr = w.cpu.ram[expr_addr]
+
+In [27]: bin(expr)
+Out[27]: '0b111110111000000000000000000000'
+
+In [28]: len(_)-2
+Out[28]: 30
+
+In [29]: signed_int_to_python_int(expr>>15, 15)
+Out[29]: -576L
+
+In [30]: expr_addr-576
+Out[30]: 360
+
+In [31]: hex(_)
+Out[31]: '0x168'
+
+In [32]: w.syms[360>>2]
+Out[32]: 'i'
+
+# So that's okay.
+
+In [33]: 
+
+
+==============================================
+
+
+store R[7] -> ram[R[0]]
+R[0]==0xfec
+R[7]==0x386a73bc
+
+z = w.cpu.ram[0xfec]
+head_offset = signed_int_to_python_int(z>>15, 15)
+head_addr = 0xfec + head_offset
+tail_offset = signed_int_to_python_int(z & (2**16 - 1), 15)
+tail_addr = 0xfec + tail_offset

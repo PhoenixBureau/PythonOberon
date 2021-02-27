@@ -43,3 +43,6 @@ venv/
 
 # VSCode
 .vscode/
+
+
+*.pickle
