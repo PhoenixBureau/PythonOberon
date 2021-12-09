@@ -147,14 +147,13 @@ class DebugApp(object):
         self.save_button.pack(side=LEFT)
 
     def set_symbols(self, filename):
-        self.syms = {}
+        syms = {}
         with open(filename, 'r') as f:
-            for line in f.read().splitlines():
-                line = line.strip()
-                if line:
-                    name, sep, address = line.partition('-')
-                    if sep:
-                        self.syms[int(address) >> 2] = name
+            for line in f:
+                name, sep, address = line.strip().partition('-')
+                if sep:
+                    syms[int(address) >> 2] = name
+        self.syms = syms
 
     def step(self, event=None):
         if not self._break:
@@ -541,12 +540,16 @@ class LEDsAndSwitches(object):
         self.set_switches(cpu.io_ports[4].switches)
 
     def set_LEDs(self, value):
-        for i in range(8):
-            self.LEDs[i].set(bool(value & (1 << i)))
+        i = 1
+        for led in self.LEDs:
+            led.set(bool(value & i))
+            i <<= 1
 
     def set_switches(self, value):
-        for i in range(8):
-            self.switches[i].set(bool(value & (1 << i)))
+        i = 1
+        for switch in self.switches:
+            switch.set(bool(value & i))
+            i <<= 1
 
     def _set_switch(self, i):
         assert 0 <= i < 8
