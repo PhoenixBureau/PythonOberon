@@ -18,7 +18,7 @@ class Context(dict):
     if item in self.symbol_table:
       it = self.symbol_table[item]
       if isinstance(it, LabelThunk):
-        print 'assigning label %s -> %#06x' % (item, value)
+        print('assigning label %s -> %#06x' % (item, value))
         self.symbol_table[item] = value
       else:
         raise RuntimeError("Can't reassign labels %s" % (item,))
@@ -28,7 +28,7 @@ class Context(dict):
     try:
       return dict.__getitem__(self, item)
     except KeyError:
-      print 'New unassigned label:', item
+      print('New unassigned label:', item)
       thunk = self[item] = self.symbol_table[item] = LabelThunk(item)
       return thunk
 
@@ -104,7 +104,7 @@ class Assembler(object):
           self.context[name] = value
 
   def __call__(self, text):
-    exec text in self.context
+    exec(text, self.context)
     del self.context['__builtins__']
     return self.program
 
@@ -119,7 +119,7 @@ class Assembler(object):
       self.here += reserves
 
   def _name_of_label_thunk(self, thunk):
-    for name, value in self.symbol_table.iteritems():
+    for name, value in self.symbol_table.items():
       if value is thunk:
         return name
     raise RuntimeError('No name for thunk %s' % (thunk,))
@@ -128,7 +128,7 @@ class Assembler(object):
     if thunk in self.fixups: # defaultdict!
       for addr in self.fixups.pop(thunk):
         fix = self.program[addr][0]
-        print 'fixing', thunk, 'at', hex(addr), 'to', hex(value), 'using', fix
+        print('fixing', thunk, 'at', hex(addr), 'to', hex(value), 'using', fix)
         temp, self.here = self.here, addr
         try:
           fix(value)
@@ -443,5 +443,5 @@ if __name__ == '__main__':
       e = ASM.dis(i)
     except:
       e = repr(i)
-    print hex(addr), e
+    print(hex(addr), e)
   #  print hex(addr), (p[addr])
