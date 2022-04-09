@@ -1,9 +1,3 @@
-######from tkinter import *
-######from tkinter import ttk
-######
-######
-######t = ttk.Treeview()
-######t.pack(expand=True, fill=BOTH)
 ######t['columns'] = tuple('abc')
 ######for a, b in zip('abc', 'ABC'):
 ######    t.column(a, anchor=CENTER, width=8)
@@ -31,6 +25,7 @@ import tkinter.ttk as ttk
 
 
 class App(object):
+
     def __init__(self, master, path):
         self.nodes = dict()
         frame = tk.Frame(master)
@@ -55,7 +50,7 @@ class App(object):
         node = self.tree.insert(parent, 'end', text=text, open=False)
         if os.path.isdir(abspath):
             self.nodes[node] = abspath
-            # Insert a child node to give this node an "open arrow"
+            # Insert a child node to give this node an "open arrow",
             # we have a node handy, so reuse it.  It will be deleted
             # from the children when the user clicks to open, so no
             # problem.  (It's just a little confusing.)
@@ -66,7 +61,11 @@ class App(object):
         abspath = self.nodes.pop(node, None)
         if abspath:
             self.tree.delete(self.tree.get_children(node))
-            for p in sorted(os.listdir(abspath)):
+            for p in sorted(
+                os.listdir(abspath),
+                # Dirs first, then by name.
+                key=lambda p_: (not os.path.isdir(os.path.join(abspath, p_)), p_)
+                ):
                 self.insert_node(node, p, os.path.join(abspath, p))
 
 
