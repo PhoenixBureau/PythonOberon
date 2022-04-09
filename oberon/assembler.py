@@ -29,7 +29,7 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
-from .util import signed, bint, signed_int_to_python_int
+from .util import signed, bint, signed_int_to_python_int, python_int_to_signed_int
 
 
 ops = dict(
@@ -72,7 +72,16 @@ cmps = {
 }
 
 
+# Move instructions
+
 def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
+def Mov_imm(a, K, v=0, u=0): return make_F1(u, v, 0, a, 0, K)
+
+
+# Arithmetic/Logic instructions
+
+_mark = set(dir()) ; _mark.add('_mark')
+
 def Lsl(a, b, c, u=0): return make_F0(u, 1, a, b, c)
 def Asr(a, b, c, u=0): return make_F0(u, 2, a, b, c)
 def Ror(a, b, c, u=0): return make_F0(u, 3, a, b, c)
@@ -85,7 +94,6 @@ def Sub(a, b, c, u=0): return make_F0(u, 9, a, b, c)
 def Mul(a, b, c, u=0): return make_F0(u, 10, a, b, c)
 def Div(a, b, c, u=0): return make_F0(u, 11, a, b, c)
 
-def Mov_imm(a, K, v=0, u=0): return make_F1(u, v, 0, a, 0, K)
 def Lsl_imm(a, b, K, v=0, u=0): return make_F1(u, v, 1, a, b, K)
 def Asr_imm(a, b, K, v=0, u=0): return make_F1(u, v, 2, a, b, K)
 def Ror_imm(a, b, K, v=0, u=0): return make_F1(u, v, 3, a, b, K)
@@ -97,6 +105,21 @@ def Add_imm(a, b, K, v=0, u=0): return make_F1(u, v, 8, a, b, K)
 def Sub_imm(a, b, K, v=0, u=0): return make_F1(u, v, 9, a, b, K)
 def Mul_imm(a, b, K, v=0, u=0): return make_F1(u, v, 10, a, b, K)
 def Div_imm(a, b, K, v=0, u=0): return make_F1(u, v, 11, a, b, K)
+
+ARITH_LOGIC = sorted(name for name in locals() if name not in _mark)
+
+
+#  RAM instructions
+
+def Load_word(a, b, offset=0): return make_F2(0, 0, a, b, offset)
+def Load_byte(a, b, offset=0): return make_F2(0, 1, a, b, offset)
+def Store_word(a, b, offset=0): return make_F2(1, 0, a, b, offset)
+def Store_byte(a, b, offset=0): return make_F2(1, 1, a, b, offset)
+
+
+#  Branch instructions
+
+_mark = set(dir()) ; _mark.add('_mark')
 
 def MI(c): return make_F3(0, c)
 def PL(c): return make_F3(0, c, True)
@@ -132,6 +155,26 @@ def GT_link(c): return make_F3(6, c, True, True)
 def T_link(c): return make_F3(7, c, v=True)
 def F_link(c): return make_F3(7, c, True, True)
 
+def MI_imm(offset): return make_F3_imm(0, offset)
+def PL_imm(offset): return make_F3_imm(0, offset, True)
+def EQ_imm(offset): return make_F3_imm(1, offset)
+def NE_imm(offset): return make_F3_imm(1, offset, True)
+def CS_imm(offset): return make_F3_imm(2, offset)
+def CC_imm(offset): return make_F3_imm(2, offset, True)
+def VS_imm(offset): return make_F3_imm(3, offset)
+def VC_imm(offset): return make_F3_imm(3, offset, True)
+def LS_imm(offset): return make_F3_imm(4, offset)
+def HI_imm(offset): return make_F3_imm(4, offset, True)
+def LT_imm(offset): return make_F3_imm(5, offset)
+def GE_imm(offset): return make_F3_imm(5, offset, True)
+def LE_imm(offset): return make_F3_imm(6, offset)
+def GT_imm(offset): return make_F3_imm(6, offset, True)
+def T_imm(offset): return make_F3_imm(7, offset)
+def F_imm(offset): return make_F3_imm(7, offset, True)
+
+BRANCH = sorted(name for name in locals() if name not in _mark)
+
+
 #  ((cc == 0) & N | // MI, PL
 #   (cc == 1) & Z | // EQ, NE
 #   (cc == 2) & C | // CS, CC
@@ -140,6 +183,24 @@ def F_link(c): return make_F3(7, c, True, True)
 #   (cc == 5) & S | // LT, GE
 #   (cc == 6) & (S|Z) | // LE, GT
 #   (cc == 7)); // T, F
+
+
+def dis(n):
+  '''
+  Take an integer and return a human-readable string description of the
+  assembly instruction.
+  '''
+  IR = bint(n)[32:0]
+  p, q = IR[31], IR[30]
+  if not p:
+    if not q:
+      return dis_F0(IR)
+    return dis_F1(IR)
+  if not q:
+    return dis_F2(IR)
+  if not IR[29]:
+    return dis_F3(IR)
+  return dis_F3imm(IR)
 
 
 def make_F0(u, op, a, b, c):
@@ -171,7 +232,23 @@ def make_F1(u, v, op, a, b, K):
     (a << 24) +
     (b << 20) +
     (op << 16) +
-    signed(K)
+    python_int_to_signed_int(K, 16)
+    )
+
+
+def make_F2(u, v, a, b, offset):
+  assert bool(u) == u, repr(u)
+  assert bool(v) == v, repr(v)
+  assert 0 <= a < 0x10, repr(a)
+  assert 0 <= b < 0x10, repr(b)
+  assert 0 <= abs(offset) < 2**20, repr(offset)
+  return bint(
+    (1 << 31) + 
+    (u << 29) +
+    (v << 28) +
+    (a << 24) +
+    (b << 20) +
+    python_int_to_signed_int(offset, 20)
     )
 
 
@@ -190,5 +267,141 @@ def make_F3(cond, c, invert=False, v=False):
     )
 
 
+def make_F3_imm(cond, offset, invert=False, v=False):
+  # v = True -> PC to be stored in register R15
+  assert 0 <= cond < 0x111, repr(cond)
+  assert 0 <= abs(offset) < 2**24, repr(offset)
+  assert bool(invert) == invert, repr(invert)
+  assert bool(v) == v, repr(v)
+  return bint(
+    (0b111 << 29) + # set p, q, u
+    (v << 28) +
+    (invert << 27) +
+    (cond << 24) +
+    python_int_to_signed_int(offset, 24)
+    )
+
+
 def opof(op):
   return ops_rev[int(op)]
+
+
+def dis_F0(IR):
+  op, ira, irb, irc = IR[20:16], IR[28:24], IR[24:20], IR[4:0]
+  u = IR[29]
+  if not op: # Mov
+    return dis_Mov(IR)
+  return '%s R%i <- R%i R%i (u: %s)' % (
+    opof(op),
+    ira, irb, irc,
+    u,
+    )
+
+
+def dis_Mov(IR):
+  ira = IR[28:24]
+  q = IR[30]
+  u = IR[29]
+  if q: # immediate
+    imm = IR[16:0]
+    if u:
+      imm = imm << 16
+    else:
+      v = IR[28]
+      if v:
+        imm = 0xffff0000 + imm
+    return 'Mov R%i <- 0x%08x' % (ira, imm)
+  if not u:
+    return 'Mov R%i <- R%i' % (ira, IR[4:0])
+  if IR[0]: # i.e. irc[0]
+    return 'Mov R%i <- (N,Z,C,OV, 0..01010000)' % (ira,)
+  return 'Mov R%i <- H' % (ira,)
+  
+
+def dis_F1(IR):
+  op, ira, irb = IR[20:16], IR[28:24], IR[24:20]
+  u = IR[29]
+  v = IR[28]
+  imm = IR[16:0]
+  if not op: # Mov
+    return dis_Mov(IR)
+##    return '%s R%i <- %i (u: %s, v: %s)' % (
+##      opof(op), ira, imm, u, v)
+  return '%s R%i <- R%i %i (u: %s, v: %s)' % (
+    opof(op), ira, irb, imm, u, v)
+
+
+def dis_F2(IR):
+  op = 'Store' if IR[29] else 'Load'
+  arrow = '->' if IR[29] else '<-'
+  width = ' byte' if IR[28] else ''
+  ira = IR[28:24]
+  irb = IR[24:20]
+  off = IR[20:0]
+  return '%s R%i %s [R%i + 0x%08x]%s' % (op, ira, arrow, irb, off, width)
+
+
+def dis_F3(IR):
+  link = '_link' if IR[28] else ''
+  invert = int(IR[27])
+  cc = int(IR[27:24])
+  op = cmps[cc, invert]
+  irc = IR[4:0]
+  return 'BR%s %s [R%i]' % (link, op, irc)
+
+
+def dis_F3imm(IR):
+  link = '_link' if IR[28] else ''
+  invert = int(IR[27])
+  cc = int(IR[27:24])
+  op = cmps[cc, invert]
+  off = signed_int_to_python_int(IR[24:0], width=24)
+  return 'BR%s %s 0x%08x' % (link, op, off)
+
+
+if __name__ == '__main__':
+  print('#==-----------------------------------------------------------------------------')
+  print('#  Arithmetic/Logic instructions\n')
+
+  for name in ARITH_LOGIC:
+    if name.endswith('_imm'):
+      template = '''\
+  @deco(ASM.%s)
+  def %s(self, a, b, K, v=0, u=0): pass
+'''
+    else:
+      template = '''\
+  def %s(self, a, b, c, u=0):
+    self.program[self.here] = ASM.%s(a, b, c, u)
+    self.here += 4
+'''
+    print(template % (name, name))
+
+  print('#==-----------------------------------------------------------------------------')
+  print('#  Branch instructions\n')
+
+
+  for name in BRANCH:
+    if name.endswith('_imm'):
+      template = '''\
+  @deco0(ASM.%s)
+  def %s(self, offset): pass
+'''
+    else:
+      template = '''\
+  def %s(self, c):
+    self.program[self.here] = ASM.%s(c)
+    self.here += 4
+'''
+    print(template % (name, name))
+
+  mem = {}
+  for i, instruction in enumerate((
+    Mov_imm(8, 1),
+    Mov_imm(1, 1),
+    Add(1, 1, 8),
+    Lsl_imm(1, 1, 2),
+    T_link(1),
+    )):
+    print(instruction, bin(instruction), dis(instruction))
+    mem[i] = instruction

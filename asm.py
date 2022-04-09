@@ -1,5 +1,5 @@
 from collections import defaultdict
-import assembler as ASM
+import oberon.assembler as ASM
 
 
 class LabelThunk(object):
@@ -96,6 +96,7 @@ class Assembler(object):
     self.here = 0
 
     self.context = Context(self.symbol_table)
+    self.context['print'] = print
 
     for name in dir(Assembler):
       if not name.startswith('_'):
