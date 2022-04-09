@@ -1,7 +1,7 @@
-print 'Start'
+print('Start')
 
-from display import DISPLAY_START
-from util import signed_int_to_python_int
+from oberon.display import DISPLAY_START
+from oberon.util import signed_int_to_python_int
 
 N = 24575
 
@@ -40,8 +40,8 @@ label(HALT) ; T_imm(HALT)
 #r0 = 0
 #label(some_data, 40)
 #Mov(r0, 4)
-print 'End'
-print
+print('End')
+print(
 '''
 import struct
 data = struct.pack('I'*len(program), *program)
@@ -54,3 +54,4 @@ binary = struct.unpack('I'*(len(data) / 4), data)
 
 
 '''
+)
