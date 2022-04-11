@@ -33,15 +33,43 @@ from oberon.util import signed, bint, signed_int_to_python_int, python_int_to_si
 
 
 class LabelThunk:
-    """
+    '''
     Stand for an address that will be determined later.
-    """
+    '''
 
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
         return "<LabelThunk %s>" % (self.name,)
+
+
+class Context(dict):
+    '''
+    Execution namespace for asm code.
+    '''
+
+    def __init__(self, symbol_table):
+        dict.__init__(self)
+        self.symbol_table = symbol_table
+
+    def __setitem__(self, item, value):
+        if item in self.symbol_table:
+            it = self.symbol_table[item]
+            if isinstance(it, LabelThunk):
+                print('# assigning label %s -> %#06x' % (item, value))
+                self.symbol_table[item] = value
+            else:
+                raise RuntimeError("Can't reassign labels %s" % (item,))
+        dict.__setitem__(self, item, value)
+
+    def __getitem__(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            print('# New unassigned label:', item)
+            thunk = self[item] = self.symbol_table[item] = LabelThunk(item)
+            return thunk
 
 
 ops = dict(
@@ -255,7 +283,7 @@ def make_F2(u, v, a, b, offset):
     assert 0 <= b < 0x10, repr(b)
     assert 0 <= abs(offset) < 2**20, repr(offset)
     return bint(
-        (1 << 31) + 
+        (1 << 31) +
         (u << 29) +
         (v << 28) +
         (a << 24) +
@@ -328,7 +356,7 @@ def dis_Mov(IR):
     if IR[0]: # i.e. irc[0]
         return 'Mov R%i <- (N,Z,C,OV, 0..01010000)' % (ira,)
     return 'Mov R%i <- H' % (ira,)
-    
+
 
 def dis_F1(IR):
     op, ira, irb = IR[20:16], IR[28:24], IR[24:20]
