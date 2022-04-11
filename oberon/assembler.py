@@ -29,7 +29,7 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
-from .util import signed, bint, signed_int_to_python_int, python_int_to_signed_int
+from util import signed, bint, signed_int_to_python_int, python_int_to_signed_int
 
 
 ops = dict(

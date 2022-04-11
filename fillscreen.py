@@ -1,4 +1,4 @@
-print('Start')
+print('# Start')
 
 from oberon.display import DISPLAY_START
 from oberon.util import signed_int_to_python_int
@@ -40,18 +40,19 @@ label(HALT) ; T_imm(HALT)
 #r0 = 0
 #label(some_data, 40)
 #Mov(r0, 4)
-print('End')
-print(
-'''
-import struct
-data = struct.pack('I'*len(program), *program)
-with open('fillscreen.bin', 'w') as f:
-  f.write(data)
-
-with open('fillscreen.bin') as f:
-  data = f.read()
-binary = struct.unpack('I'*(len(data) / 4), data)
-
-
-'''
-)
+print('# End')
+print()
+##print(
+##'''
+##import struct
+##data = struct.pack('I'*len(program), *program)
+##with open('fillscreen.bin', 'w') as f:
+##  f.write(data)
+##
+##with open('fillscreen.bin') as f:
+##  data = f.read()
+##binary = struct.unpack('I'*(len(data) / 4), data)
+##
+##
+##'''
+##)
