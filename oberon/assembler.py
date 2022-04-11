@@ -29,7 +29,176 @@ There's also a simple "disassembler" for Wirth RISC binary machine codes.
 Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
+from collections import defaultdict
 from oberon.util import signed, bint, signed_int_to_python_int, python_int_to_signed_int
+
+
+class ASM:
+
+    @staticmethod
+    def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
+    @staticmethod
+    def Mov_imm(a, K, v=0, u=0): return make_F1(u, v, 0, a, 0, K)
+
+    # Arithmetic/Logic instructions
+
+    @staticmethod
+    def Lsl(a, b, c, u=0): return make_F0(u, 1, a, b, c)
+    @staticmethod
+    def Asr(a, b, c, u=0): return make_F0(u, 2, a, b, c)
+    @staticmethod
+    def Ror(a, b, c, u=0): return make_F0(u, 3, a, b, c)
+    @staticmethod
+    def And(a, b, c, u=0): return make_F0(u, 4, a, b, c)
+    @staticmethod
+    def Ann(a, b, c, u=0): return make_F0(u, 5, a, b, c)
+    @staticmethod
+    def Ior(a, b, c, u=0): return make_F0(u, 6, a, b, c)
+    @staticmethod
+    def Xor(a, b, c, u=0): return make_F0(u, 7, a, b, c)
+    @staticmethod
+    def Add(a, b, c, u=0): return make_F0(u, 8, a, b, c)
+    @staticmethod
+    def Sub(a, b, c, u=0): return make_F0(u, 9, a, b, c)
+    @staticmethod
+    def Mul(a, b, c, u=0): return make_F0(u, 10, a, b, c)
+    @staticmethod
+    def Div(a, b, c, u=0): return make_F0(u, 11, a, b, c)
+
+    @staticmethod
+    def Lsl_imm(a, b, K, v=0, u=0): return make_F1(u, v, 1, a, b, K)
+    @staticmethod
+    def Asr_imm(a, b, K, v=0, u=0): return make_F1(u, v, 2, a, b, K)
+    @staticmethod
+    def Ror_imm(a, b, K, v=0, u=0): return make_F1(u, v, 3, a, b, K)
+    @staticmethod
+    def And_imm(a, b, K, v=0, u=0): return make_F1(u, v, 4, a, b, K)
+    @staticmethod
+    def Ann_imm(a, b, K, v=0, u=0): return make_F1(u, v, 5, a, b, K)
+    @staticmethod
+    def Ior_imm(a, b, K, v=0, u=0): return make_F1(u, v, 6, a, b, K)
+    @staticmethod
+    def Xor_imm(a, b, K, v=0, u=0): return make_F1(u, v, 7, a, b, K)
+    @staticmethod
+    def Add_imm(a, b, K, v=0, u=0): return make_F1(u, v, 8, a, b, K)
+    @staticmethod
+    def Sub_imm(a, b, K, v=0, u=0): return make_F1(u, v, 9, a, b, K)
+    @staticmethod
+    def Mul_imm(a, b, K, v=0, u=0): return make_F1(u, v, 10, a, b, K)
+    @staticmethod
+    def Div_imm(a, b, K, v=0, u=0): return make_F1(u, v, 11, a, b, K)
+
+    #  RAM instructions
+
+    @staticmethod
+    def Load_word(a, b, offset=0): return make_F2(0, 0, a, b, offset)
+    @staticmethod
+    def Load_byte(a, b, offset=0): return make_F2(0, 1, a, b, offset)
+    @staticmethod
+    def Store_word(a, b, offset=0): return make_F2(1, 0, a, b, offset)
+    @staticmethod
+    def Store_byte(a, b, offset=0): return make_F2(1, 1, a, b, offset)
+
+    #  Branch instructions
+
+    @staticmethod
+    def MI(c): return make_F3(0, c)
+    @staticmethod
+    def PL(c): return make_F3(0, c, True)
+    @staticmethod
+    def EQ(c): return make_F3(1, c)
+    @staticmethod
+    def NE(c): return make_F3(1, c, True)
+    @staticmethod
+    def CS(c): return make_F3(2, c)
+    @staticmethod
+    def CC(c): return make_F3(2, c, True)
+    @staticmethod
+    def VS(c): return make_F3(3, c)
+    @staticmethod
+    def VC(c): return make_F3(3, c, True)
+    @staticmethod
+    def LS(c): return make_F3(4, c)
+    @staticmethod
+    def HI(c): return make_F3(4, c, True)
+    @staticmethod
+    def LT(c): return make_F3(5, c)
+    @staticmethod
+    def GE(c): return make_F3(5, c, True)
+    @staticmethod
+    def LE(c): return make_F3(6, c)
+    @staticmethod
+    def GT(c): return make_F3(6, c, True)
+    @staticmethod
+    def T(c): return make_F3(7, c)
+    @staticmethod
+    def F(c): return make_F3(7, c, True)
+
+    @staticmethod
+    def MI_link(c): return make_F3(0, c, v=True)
+    @staticmethod
+    def PL_link(c): return make_F3(0, c, True, True)
+    @staticmethod
+    def EQ_link(c): return make_F3(1, c, v=True)
+    @staticmethod
+    def NE_link(c): return make_F3(1, c, True, True)
+    @staticmethod
+    def CS_link(c): return make_F3(2, c, v=True)
+    @staticmethod
+    def CC_link(c): return make_F3(2, c, True, True)
+    @staticmethod
+    def VS_link(c): return make_F3(3, c, v=True)
+    @staticmethod
+    def VC_link(c): return make_F3(3, c, True, True)
+    @staticmethod
+    def LS_link(c): return make_F3(4, c, v=True)
+    @staticmethod
+    def HI_link(c): return make_F3(4, c, True, True)
+    @staticmethod
+    def LT_link(c): return make_F3(5, c, v=True)
+    @staticmethod
+    def GE_link(c): return make_F3(5, c, True, True)
+    @staticmethod
+    def LE_link(c): return make_F3(6, c, v=True)
+    @staticmethod
+    def GT_link(c): return make_F3(6, c, True, True)
+    @staticmethod
+    def T_link(c): return make_F3(7, c, v=True)
+    @staticmethod
+    def F_link(c): return make_F3(7, c, True, True)
+
+    @staticmethod
+    def MI_imm(offset): return make_F3_imm(0, offset)
+    @staticmethod
+    def PL_imm(offset): return make_F3_imm(0, offset, True)
+    @staticmethod
+    def EQ_imm(offset): return make_F3_imm(1, offset)
+    @staticmethod
+    def NE_imm(offset): return make_F3_imm(1, offset, True)
+    @staticmethod
+    def CS_imm(offset): return make_F3_imm(2, offset)
+    @staticmethod
+    def CC_imm(offset): return make_F3_imm(2, offset, True)
+    @staticmethod
+    def VS_imm(offset): return make_F3_imm(3, offset)
+    @staticmethod
+    def VC_imm(offset): return make_F3_imm(3, offset, True)
+    @staticmethod
+    def LS_imm(offset): return make_F3_imm(4, offset)
+    @staticmethod
+    def HI_imm(offset): return make_F3_imm(4, offset, True)
+    @staticmethod
+    def LT_imm(offset): return make_F3_imm(5, offset)
+    @staticmethod
+    def GE_imm(offset): return make_F3_imm(5, offset, True)
+    @staticmethod
+    def LE_imm(offset): return make_F3_imm(6, offset)
+    @staticmethod
+    def GT_imm(offset): return make_F3_imm(6, offset, True)
+    @staticmethod
+    def T_imm(offset): return make_F3_imm(7, offset)
+    @staticmethod
+    def F_imm(offset): return make_F3_imm(7, offset, True)
 
 
 class LabelThunk:
@@ -72,6 +241,398 @@ class Context(dict):
             return thunk
 
 
+def deco(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
+
+    def inner(method):
+
+        def wrapper(self, a, b, K, v=0, u=0):
+
+            if isinstance(K, LabelThunk):
+
+                # For thunks build a function to do fix up.
+                def fixup(value):
+                    wrapper(self, a, b, value, v, u)
+
+                instruction = (fixup,)
+                self.fixups[K].append(self.here)
+
+            else:  # Otherwise just make the bits now.
+                instruction = bits_maker(a, b, K, v=v, u=u)
+
+            self.program[self.here] = instruction
+            self.here += 4
+
+        return wrapper
+
+    return inner
+
+
+def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
+
+    def inner(method):
+
+        def wrapper(self, offset):
+
+            if isinstance(offset, LabelThunk):
+
+                def fixup(value):
+                    wrapper(self, value)
+                instruction = (fixup,)
+                self.fixups[offset].append(self.here)
+
+            else:
+                if offset % 4:
+                    raise RuntimeError('bad offset %r' % (offset,))
+                offset = (offset - self.here) / 4 - 1
+                instruction = bits_maker(offset)
+
+            self.program[self.here] = instruction
+            self.here += 4
+
+        return wrapper
+
+    return inner
+
+
+class Assembler(object):
+
+    def __init__(self):
+        self.program = {}
+        self.symbol_table = {}
+        self.fixups = defaultdict(list)
+        self.here = 0
+
+        self.context = Context(self.symbol_table)
+        self.context['print'] = print
+
+        for name in dir(Assembler):
+            if not name.startswith('_'):
+                value = getattr(self, name)
+                if callable(value):
+                    self.context[name] = value
+
+    def __call__(self, text):
+        exec(text, self.context)
+        del self.context['__builtins__']
+        return self.program
+
+    def label(self, thunk, reserves=0):
+        if not isinstance(thunk, LabelThunk):
+            raise RuntimeError('already assigned')
+        name = self._name_of_label_thunk(thunk)
+        self.context[name] = self.here
+        self._fix(thunk, self.here)
+        if reserves:
+            assert reserves > 0, repr(reserves)
+            self.here += reserves
+
+    def _name_of_label_thunk(self, thunk):
+        for name, value in self.symbol_table.items():
+            if value is thunk:
+                return name
+        raise RuntimeError('No name for thunk %s' % (thunk,))
+
+    def _fix(self, thunk, value):
+        if thunk in self.fixups: # defaultdict!
+            for addr in self.fixups.pop(thunk):
+                fix = self.program[addr][0]
+                print('# fixing', thunk, 'at', hex(addr), 'to', hex(value), 'using', fix)
+                temp, self.here = self.here, addr
+                try:
+                    fix(value)
+                finally:
+                    self.here = temp
+
+#==-----------------------------------------------------------------------------
+#  Move instructions
+
+    def Mov(self, a, c, u=0):
+        self.program[self.here] = ASM.Mov(a, c, u)
+        self.here += 4
+
+    def Mov_imm(self, a, K, v=0, u=0):
+        self.program[self.here] = ASM.Mov_imm(a, K, v, u)
+        self.here += 4
+
+#==-----------------------------------------------------------------------------
+#  RAM instructions
+
+    def Load_byte(self, a, b, offset=0):
+        self.program[self.here] = ASM.Load_byte(a, b, offset)
+        self.here += 4
+
+    def Load_word(self, a, b, offset=0):
+        self.program[self.here] = ASM.Load_word(a, b, offset)
+        self.here += 4
+
+    def Store_byte(self, a, b, offset=0):
+        self.program[self.here] = ASM.Store_byte(a, b, offset)
+        self.here += 4
+
+    def Store_word(self, a, b, offset=0):
+        self.program[self.here] = ASM.Store_word(a, b, offset)
+        self.here += 4
+
+#==-----------------------------------------------------------------------------
+#  Arithmetic/Logic instructions
+
+    def Add(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Add(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Add_imm)
+    def Add_imm(self, a, b, K, v=0, u=0): pass
+
+    def And(self, a, b, c, u=0):
+        self.program[self.here] = ASM.And(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.And_imm)
+    def And_imm(self, a, b, K, v=0, u=0): pass
+
+    def Ann(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Ann(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Ann_imm)
+    def Ann_imm(self, a, b, K, v=0, u=0): pass
+
+    def Asr(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Asr(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Asr_imm)
+    def Asr_imm(self, a, b, K, v=0, u=0): pass
+
+    def Div(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Div(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Div_imm)
+    def Div_imm(self, a, b, K, v=0, u=0): pass
+
+    def Ior(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Ior(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Ior_imm)
+    def Ior_imm(self, a, b, K, v=0, u=0): pass
+
+    def Lsl(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Lsl(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Lsl_imm)
+    def Lsl_imm(self, a, b, K, v=0, u=0): pass
+
+    def Mul(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Mul(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Mul_imm)
+    def Mul_imm(self, a, b, K, v=0, u=0): pass
+
+    def Ror(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Ror(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Ror_imm)
+    def Ror_imm(self, a, b, K, v=0, u=0): pass
+
+    def Sub(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Sub(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Sub_imm)
+    def Sub_imm(self, a, b, K, v=0, u=0): pass
+
+    def Xor(self, a, b, c, u=0):
+        self.program[self.here] = ASM.Xor(a, b, c, u)
+        self.here += 4
+
+    @deco(ASM.Xor_imm)
+    def Xor_imm(self, a, b, K, v=0, u=0): pass
+
+#==-----------------------------------------------------------------------------
+#  Branch instructions
+
+    def CC(self, c):
+        self.program[self.here] = ASM.CC(c)
+        self.here += 4
+
+    @deco0(ASM.CC_imm)
+    def CC_imm(self, offset): pass
+
+    def CC_link(self, c):
+        self.program[self.here] = ASM.CC_link(c)
+        self.here += 4
+
+    def CS(self, c):
+        self.program[self.here] = ASM.CS(c)
+        self.here += 4
+
+    @deco0(ASM.CS_imm)
+    def CS_imm(self, offset): pass
+
+    def CS_link(self, c):
+        self.program[self.here] = ASM.CS_link(c)
+        self.here += 4
+
+    def EQ(self, c):
+        self.program[self.here] = ASM.EQ(c)
+        self.here += 4
+
+    @deco0(ASM.EQ_imm)
+    def EQ_imm(self, offset): pass
+
+    def EQ_link(self, c):
+        self.program[self.here] = ASM.EQ_link(c)
+        self.here += 4
+
+    def F(self, c):
+        self.program[self.here] = ASM.F(c)
+        self.here += 4
+
+    @deco0(ASM.F_imm)
+    def F_imm(self, offset): pass
+
+    def F_link(self, c):
+        self.program[self.here] = ASM.F_link(c)
+        self.here += 4
+
+    def GE(self, c):
+        self.program[self.here] = ASM.GE(c)
+        self.here += 4
+
+    @deco0(ASM.GE_imm)
+    def GE_imm(self, offset): pass
+
+    def GE_link(self, c):
+        self.program[self.here] = ASM.GE_link(c)
+        self.here += 4
+
+    def GT(self, c):
+        self.program[self.here] = ASM.GT(c)
+        self.here += 4
+
+    @deco0(ASM.GT_imm)
+    def GT_imm(self, offset): pass
+
+    def GT_link(self, c):
+        self.program[self.here] = ASM.GT_link(c)
+        self.here += 4
+
+    def HI(self, c):
+        self.program[self.here] = ASM.HI(c)
+        self.here += 4
+
+    @deco0(ASM.HI_imm)
+    def HI_imm(self, offset): pass
+
+    def HI_link(self, c):
+        self.program[self.here] = ASM.HI_link(c)
+        self.here += 4
+
+    def LE(self, c):
+        self.program[self.here] = ASM.LE(c)
+        self.here += 4
+
+    @deco0(ASM.LE_imm)
+    def LE_imm(self, offset): pass
+
+    def LE_link(self, c):
+        self.program[self.here] = ASM.LE_link(c)
+        self.here += 4
+
+    def LS(self, c):
+        self.program[self.here] = ASM.LS(c)
+        self.here += 4
+
+    @deco0(ASM.LS_imm)
+    def LS_imm(self, offset): pass
+
+    def LS_link(self, c):
+        self.program[self.here] = ASM.LS_link(c)
+        self.here += 4
+
+    def LT(self, c):
+        self.program[self.here] = ASM.LT(c)
+        self.here += 4
+
+    @deco0(ASM.LT_imm)
+    def LT_imm(self, offset): pass
+
+    def LT_link(self, c):
+        self.program[self.here] = ASM.LT_link(c)
+        self.here += 4
+
+    def MI(self, c):
+        self.program[self.here] = ASM.MI(c)
+        self.here += 4
+
+    @deco0(ASM.MI_imm)
+    def MI_imm(self, offset): pass
+
+    def MI_link(self, c):
+        self.program[self.here] = ASM.MI_link(c)
+        self.here += 4
+
+    def NE(self, c):
+        self.program[self.here] = ASM.NE(c)
+        self.here += 4
+
+    @deco0(ASM.NE_imm)
+    def NE_imm(self, offset): pass
+
+    def NE_link(self, c):
+        self.program[self.here] = ASM.NE_link(c)
+        self.here += 4
+
+    def PL(self, c):
+        self.program[self.here] = ASM.PL(c)
+        self.here += 4
+
+    @deco0(ASM.PL_imm)
+    def PL_imm(self, offset): pass
+
+    def PL_link(self, c):
+        self.program[self.here] = ASM.PL_link(c)
+        self.here += 4
+
+    def T(self, c):
+        self.program[self.here] = ASM.T(c)
+        self.here += 4
+
+    @deco0(ASM.T_imm)
+    def T_imm(self, offset): pass
+
+    def T_link(self, c):
+        self.program[self.here] = ASM.T_link(c)
+        self.here += 4
+
+    def VC(self, c):
+        self.program[self.here] = ASM.VC(c)
+        self.here += 4
+
+    @deco0(ASM.VC_imm)
+    def VC_imm(self, offset): pass
+
+    def VC_link(self, c):
+        self.program[self.here] = ASM.VC_link(c)
+        self.here += 4
+
+    def VS(self, c):
+        self.program[self.here] = ASM.VS(c)
+        self.here += 4
+
+    @deco0(ASM.VS_imm)
+    def VS_imm(self, offset): pass
+
+    def VS_link(self, c):
+        self.program[self.here] = ASM.VS_link(c)
+        self.here += 4
+
+
 ops = dict(
     Mov = 0, Lsl = 1, Asr = 2, Ror = 3,
     And = 4, Ann = 5, Ior = 6, Xor = 7,
@@ -110,137 +671,6 @@ cmps = {
     (7, 0): 'T',
     (7, 1): 'F',
 }
-
-
-# Move instructions
-
-def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
-def Mov_imm(a, K, v=0, u=0): return make_F1(u, v, 0, a, 0, K)
-
-
-# Arithmetic/Logic instructions
-
-_mark = set(dir()) ; _mark.add('_mark')
-
-def Lsl(a, b, c, u=0): return make_F0(u, 1, a, b, c)
-def Asr(a, b, c, u=0): return make_F0(u, 2, a, b, c)
-def Ror(a, b, c, u=0): return make_F0(u, 3, a, b, c)
-def And(a, b, c, u=0): return make_F0(u, 4, a, b, c)
-def Ann(a, b, c, u=0): return make_F0(u, 5, a, b, c)
-def Ior(a, b, c, u=0): return make_F0(u, 6, a, b, c)
-def Xor(a, b, c, u=0): return make_F0(u, 7, a, b, c)
-def Add(a, b, c, u=0): return make_F0(u, 8, a, b, c)
-def Sub(a, b, c, u=0): return make_F0(u, 9, a, b, c)
-def Mul(a, b, c, u=0): return make_F0(u, 10, a, b, c)
-def Div(a, b, c, u=0): return make_F0(u, 11, a, b, c)
-
-def Lsl_imm(a, b, K, v=0, u=0): return make_F1(u, v, 1, a, b, K)
-def Asr_imm(a, b, K, v=0, u=0): return make_F1(u, v, 2, a, b, K)
-def Ror_imm(a, b, K, v=0, u=0): return make_F1(u, v, 3, a, b, K)
-def And_imm(a, b, K, v=0, u=0): return make_F1(u, v, 4, a, b, K)
-def Ann_imm(a, b, K, v=0, u=0): return make_F1(u, v, 5, a, b, K)
-def Ior_imm(a, b, K, v=0, u=0): return make_F1(u, v, 6, a, b, K)
-def Xor_imm(a, b, K, v=0, u=0): return make_F1(u, v, 7, a, b, K)
-def Add_imm(a, b, K, v=0, u=0): return make_F1(u, v, 8, a, b, K)
-def Sub_imm(a, b, K, v=0, u=0): return make_F1(u, v, 9, a, b, K)
-def Mul_imm(a, b, K, v=0, u=0): return make_F1(u, v, 10, a, b, K)
-def Div_imm(a, b, K, v=0, u=0): return make_F1(u, v, 11, a, b, K)
-
-ARITH_LOGIC = sorted(name for name in locals() if name not in _mark)
-
-
-#  RAM instructions
-
-def Load_word(a, b, offset=0): return make_F2(0, 0, a, b, offset)
-def Load_byte(a, b, offset=0): return make_F2(0, 1, a, b, offset)
-def Store_word(a, b, offset=0): return make_F2(1, 0, a, b, offset)
-def Store_byte(a, b, offset=0): return make_F2(1, 1, a, b, offset)
-
-
-#  Branch instructions
-
-_mark = set(dir()) ; _mark.add('_mark')
-
-def MI(c): return make_F3(0, c)
-def PL(c): return make_F3(0, c, True)
-def EQ(c): return make_F3(1, c)
-def NE(c): return make_F3(1, c, True)
-def CS(c): return make_F3(2, c)
-def CC(c): return make_F3(2, c, True)
-def VS(c): return make_F3(3, c)
-def VC(c): return make_F3(3, c, True)
-def LS(c): return make_F3(4, c)
-def HI(c): return make_F3(4, c, True)
-def LT(c): return make_F3(5, c)
-def GE(c): return make_F3(5, c, True)
-def LE(c): return make_F3(6, c)
-def GT(c): return make_F3(6, c, True)
-def T(c): return make_F3(7, c)
-def F(c): return make_F3(7, c, True)
-
-def MI_link(c): return make_F3(0, c, v=True)
-def PL_link(c): return make_F3(0, c, True, True)
-def EQ_link(c): return make_F3(1, c, v=True)
-def NE_link(c): return make_F3(1, c, True, True)
-def CS_link(c): return make_F3(2, c, v=True)
-def CC_link(c): return make_F3(2, c, True, True)
-def VS_link(c): return make_F3(3, c, v=True)
-def VC_link(c): return make_F3(3, c, True, True)
-def LS_link(c): return make_F3(4, c, v=True)
-def HI_link(c): return make_F3(4, c, True, True)
-def LT_link(c): return make_F3(5, c, v=True)
-def GE_link(c): return make_F3(5, c, True, True)
-def LE_link(c): return make_F3(6, c, v=True)
-def GT_link(c): return make_F3(6, c, True, True)
-def T_link(c): return make_F3(7, c, v=True)
-def F_link(c): return make_F3(7, c, True, True)
-
-def MI_imm(offset): return make_F3_imm(0, offset)
-def PL_imm(offset): return make_F3_imm(0, offset, True)
-def EQ_imm(offset): return make_F3_imm(1, offset)
-def NE_imm(offset): return make_F3_imm(1, offset, True)
-def CS_imm(offset): return make_F3_imm(2, offset)
-def CC_imm(offset): return make_F3_imm(2, offset, True)
-def VS_imm(offset): return make_F3_imm(3, offset)
-def VC_imm(offset): return make_F3_imm(3, offset, True)
-def LS_imm(offset): return make_F3_imm(4, offset)
-def HI_imm(offset): return make_F3_imm(4, offset, True)
-def LT_imm(offset): return make_F3_imm(5, offset)
-def GE_imm(offset): return make_F3_imm(5, offset, True)
-def LE_imm(offset): return make_F3_imm(6, offset)
-def GT_imm(offset): return make_F3_imm(6, offset, True)
-def T_imm(offset): return make_F3_imm(7, offset)
-def F_imm(offset): return make_F3_imm(7, offset, True)
-
-BRANCH = sorted(name for name in locals() if name not in _mark)
-
-
-#  ((cc == 0) & N | // MI, PL
-#   (cc == 1) & Z | // EQ, NE
-#   (cc == 2) & C | // CS, CC
-#   (cc == 3) & OV | // VS, VC
-#   (cc == 4) & (C|Z) | // LS, HI
-#   (cc == 5) & S | // LT, GE
-#   (cc == 6) & (S|Z) | // LE, GT
-#   (cc == 7)); // T, F
-
-
-def dis(n):
-    '''
-    Take an integer and return a human-readable string description of the
-    assembly instruction.
-    '''
-    IR = bint(n)[32:0]
-    p, q = IR[31], IR[30]
-    if not p:
-        if not q:
-            return dis_F0(IR)
-        return dis_F1(IR)
-    if not q:
-        return dis_F2(IR)
-    if not IR[29]:
-        return dis_F3(IR)
-    return dis_F3imm(IR)
 
 
 def make_F0(u, op, a, b, c):
@@ -324,124 +754,3 @@ def make_F3_imm(cond, offset, invert=False, v=False):
 
 def opof(op):
     return ops_rev[int(op)]
-
-
-def dis_F0(IR):
-    op, ira, irb, irc = IR[20:16], IR[28:24], IR[24:20], IR[4:0]
-    u = IR[29]
-    if not op: # Mov
-        return dis_Mov(IR)
-    return '%s R%i <- R%i R%i (u: %s)' % (
-        opof(op),
-        ira, irb, irc,
-        u,
-        )
-
-
-def dis_Mov(IR):
-    ira = IR[28:24]
-    q = IR[30]
-    u = IR[29]
-    if q: # immediate
-        imm = IR[16:0]
-        if u:
-            imm = imm << 16
-        else:
-            v = IR[28]
-            if v:
-                imm = 0xffff0000 + imm
-        return 'Mov R%i <- 0x%08x' % (ira, imm)
-    if not u:
-        return 'Mov R%i <- R%i' % (ira, IR[4:0])
-    if IR[0]: # i.e. irc[0]
-        return 'Mov R%i <- (N,Z,C,OV, 0..01010000)' % (ira,)
-    return 'Mov R%i <- H' % (ira,)
-
-
-def dis_F1(IR):
-    op, ira, irb = IR[20:16], IR[28:24], IR[24:20]
-    u = IR[29]
-    v = IR[28]
-    imm = IR[16:0]
-    if not op: # Mov
-        return dis_Mov(IR)
-##    return '%s R%i <- %i (u: %s, v: %s)' % (
-##      opof(op), ira, imm, u, v)
-    return '%s R%i <- R%i %i (u: %s, v: %s)' % (
-        opof(op), ira, irb, imm, u, v)
-
-
-def dis_F2(IR):
-    op = 'Store' if IR[29] else 'Load'
-    arrow = '->' if IR[29] else '<-'
-    width = ' byte' if IR[28] else ''
-    ira = IR[28:24]
-    irb = IR[24:20]
-    off = IR[20:0]
-    return '%s R%i %s [R%i + 0x%08x]%s' % (op, ira, arrow, irb, off, width)
-
-
-def dis_F3(IR):
-    link = '_link' if IR[28] else ''
-    invert = int(IR[27])
-    cc = int(IR[27:24])
-    op = cmps[cc, invert]
-    irc = IR[4:0]
-    return 'BR%s %s [R%i]' % (link, op, irc)
-
-
-def dis_F3imm(IR):
-    link = '_link' if IR[28] else ''
-    invert = int(IR[27])
-    cc = int(IR[27:24])
-    op = cmps[cc, invert]
-    off = signed_int_to_python_int(IR[24:0], width=24)
-    return 'BR%s %s 0x%08x' % (link, op, off)
-
-
-if __name__ == '__main__':
-    print('#==-----------------------------------------------------------------------------')
-    print('#  Arithmetic/Logic instructions\n')
-
-    for name in ARITH_LOGIC:
-        if name.endswith('_imm'):
-            template = '''\
-    @deco(ASM.%s)
-    def %s(self, a, b, K, v=0, u=0): pass
-'''
-        else:
-            template = '''\
-    def %s(self, a, b, c, u=0):
-        self.program[self.here] = ASM.%s(a, b, c, u)
-        self.here += 4
-'''
-        print(template % (name, name))
-
-    print('#==-----------------------------------------------------------------------------')
-    print('#  Branch instructions\n')
-
-
-    for name in BRANCH:
-        if name.endswith('_imm'):
-            template = '''\
-    @deco0(ASM.%s)
-    def %s(self, offset): pass
-'''
-        else:
-            template = '''\
-    def %s(self, c):
-        self.program[self.here] = ASM.%s(c)
-        self.here += 4
-'''
-        print(template % (name, name))
-
-    mem = {}
-    for i, instruction in enumerate((
-        Mov_imm(8, 1),
-        Mov_imm(1, 1),
-        Add(1, 1, 8),
-        Lsl_imm(1, 1, 2),
-        T_link(1),
-        )):
-        print(instruction, bin(instruction), dis(instruction))
-        mem[i] = instruction

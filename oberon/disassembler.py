@@ -1,5 +1,5 @@
-from util import bint, signed_int_to_python_int
-from assembler import cmps, opof, ops_rev
+from oberon.util import bint, signed_int_to_python_int
+from oberon.assembler import cmps, opof, ops_rev
 
 
 def dis(n):
