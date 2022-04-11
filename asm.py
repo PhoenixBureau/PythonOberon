@@ -2,13 +2,6 @@ from collections import defaultdict
 import oberon.assembler as ASM
 
 
-class LabelThunk(object):
-  def __init__(self, name):
-    self.name = name
-  def __repr__(self):
-    return '<LabelThunk %s>' % (self.name,)
-
-
 class Context(dict):
 
   def __init__(self, symbol_table):
