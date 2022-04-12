@@ -30,7 +30,7 @@ Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
 from collections import defaultdict
-from oberon.util import bint, python_int_to_signed_int
+from oberon.util import bint, s_to_u_32
 
 
 class ASM:
@@ -286,7 +286,9 @@ def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
             else:
                 if offset % 4:
                     raise RuntimeError('bad offset %r' % (offset,))
-                offset = (offset - self.here) / 4 - 1
+                offset = (offset - self.here) // 4 - 1
+                if offset < 0:
+                    offset = s_to_u_32(offset) & 0xfffff # 2**20 -1
                 instruction = bits_maker(offset)
 
             self.program[self.here] = instruction
@@ -700,7 +702,7 @@ def make_F1(u, v, op, a, b, K):
     assert ops['Mov'] <= op <= ops['Div'], repr(op)
     assert 0 <= a < 0x10, repr(a)
     assert 0 <= b < 0x10, repr(b)
-    assert 0 <= abs(K) < 2**16, repr(K)
+    assert 0 <= K < 2**16, repr(K)
     return bint(
         (1 << 30) + # set q
         (u << 29) +
@@ -708,7 +710,7 @@ def make_F1(u, v, op, a, b, K):
         (a << 24) +
         (b << 20) +
         (op << 16) +
-        python_int_to_signed_int(K, 16)
+        K
         )
 
 
@@ -717,14 +719,14 @@ def make_F2(u, v, a, b, offset):
     assert bool(v) == v, repr(v)
     assert 0 <= a < 0x10, repr(a)
     assert 0 <= b < 0x10, repr(b)
-    assert 0 <= abs(offset) < 2**20, repr(offset)
+    assert 0 <= offset < 2**20, repr(offset)
     return bint(
         (1 << 31) +
         (u << 29) +
         (v << 28) +
         (a << 24) +
         (b << 20) +
-        python_int_to_signed_int(offset, 20)
+        offset
         )
 
 
@@ -746,7 +748,7 @@ def make_F3(cond, c, invert=False, v=False):
 def make_F3_imm(cond, offset, invert=False, v=False):
     # v = True -> PC to be stored in register R15
     assert 0 <= cond < 0x111, repr(cond)
-    assert 0 <= abs(offset) < 2**24, repr(offset)
+    assert 0 <= offset < 2**24, repr(offset)
     assert bool(invert) == invert, repr(invert)
     assert bool(v) == v, repr(v)
     return bint(
@@ -754,7 +756,7 @@ def make_F3_imm(cond, offset, invert=False, v=False):
         (v << 28) +
         (invert << 27) +
         (cond << 24) +
-        python_int_to_signed_int(offset, 24)
+        offset
         )
 
 

@@ -1,13 +1,12 @@
 print('# Start')
 
 from oberon.display import DISPLAY_START
-from oberon.util import signed_int_to_python_int
 
 N = 24575
 
 
 def HIGH(i):
-  return i >> 16
+  return (i >> 16) & 0xFFFF
 
 
 def LOW(i):
@@ -15,8 +14,8 @@ def LOW(i):
 
 
 def move_immediate_word_to_register(reg, word):
-  Mov_imm(reg, signed_int_to_python_int(HIGH(word), 16), u=1)
-  Ior_imm(reg, reg, signed_int_to_python_int(LOW(word), 16))
+  Mov_imm(reg, HIGH(word), u=1)
+  Ior_imm(reg, reg, LOW(word))
 
 
 a = 0

@@ -124,16 +124,11 @@ def signed_int_to_python_int(i, width=32):
   return i - b
 
 
-# The following pair of functions do the same thing as the above pair,
-# but only for values of thirty-two bits.
+def u_to_s_16(g): return unpack('<h', pack('<H', g))[0]
+def s_to_u_16(g): return unpack('<H', pack('<h', g))[0]
+def u_to_s_32(g): return unpack('<i', pack('<I', g))[0]
+def s_to_u_32(g): return unpack('<I', pack('<i', g))[0]
 
-
-##def unsigned_to_signed(g):
-##  return unpack('<i', pack('<I', g))[0]
-
-
-##def signed_to_unsigned(g):
-##  return unpack('<I', pack('<i', g))[0]
 
 
 def signed(n, bits=16):
