@@ -30,10 +30,13 @@ Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
 from collections import defaultdict
-from oberon.util import signed, bint, signed_int_to_python_int, python_int_to_signed_int
+from oberon.util import bint, python_int_to_signed_int
 
 
 class ASM:
+    '''
+    Collect the individual bit-pattern generator functions.
+    '''
 
     @staticmethod
     def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
@@ -243,7 +246,7 @@ class Context(dict):
 
 def deco(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
 
-    def inner(method):
+    def inner(_method):
 
         def wrapper(self, a, b, K, v=0, u=0):
 
@@ -269,7 +272,7 @@ def deco(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
 
 def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
 
-    def inner(method):
+    def inner(_method):
 
         def wrapper(self, offset):
 
@@ -294,7 +297,10 @@ def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
     return inner
 
 
-class Assembler(object):
+class Assembler:
+    '''
+    Assembler
+    '''
 
     def __init__(self):
         self.program = {}
