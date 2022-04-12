@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#    Copyright © 2019 Simon Forman
+#    Copyright © 2019, 2022 Simon Forman
 #
 #    This file is part of PythonOberon
 #
@@ -450,18 +450,11 @@ class Assembler:
     def label(self, thunk, reserves=0):
         if not isinstance(thunk, LabelThunk):
             raise RuntimeError('already assigned')
-        name = self._name_of_label_thunk(thunk)
-        self.context[name] = self.here
+        self.context[thunk.name] = self.here
         self._fix(thunk, self.here)
         if reserves:
             assert reserves > 0, repr(reserves)
             self.here += reserves
-
-    def _name_of_label_thunk(self, thunk):
-        for name, value in self.symbol_table.items():
-            if value is thunk:
-                return name
-        raise RuntimeError('No name for thunk %s' % (thunk,))
 
     def _fix(self, thunk, value):
         if thunk in self.fixups: # defaultdict!
@@ -474,8 +467,8 @@ class Assembler:
                 finally:
                     self.here = temp
 
-#==-----------------------------------------------------------------------------
-#  Move instructions
+    #==------------------------------------------------------------------
+    #  Move instructions
 
     def Mov(self, a, c, u=0):
         self.program[self.here] = ASM.Mov(a, c, u)
@@ -485,8 +478,8 @@ class Assembler:
         self.program[self.here] = ASM.Mov_imm(a, K, v, u)
         self.here += 4
 
-#==-----------------------------------------------------------------------------
-#  RAM instructions
+    #==------------------------------------------------------------------
+    #  RAM instructions
 
     def Load_byte(self, a, b, offset=0):
         self.program[self.here] = ASM.Load_byte(a, b, offset)
@@ -504,8 +497,8 @@ class Assembler:
         self.program[self.here] = ASM.Store_word(a, b, offset)
         self.here += 4
 
-#==-----------------------------------------------------------------------------
-#  Arithmetic/Logic instructions
+    #==------------------------------------------------------------------
+    #  Arithmetic/Logic instructions
 
     def Add(self, a, b, c, u=0):
         self.program[self.here] = ASM.Add(a, b, c, u)
@@ -584,8 +577,8 @@ class Assembler:
     @deco(ASM.Xor_imm)
     def Xor_imm(self, a, b, K, v=0, u=0): pass
 
-#==-----------------------------------------------------------------------------
-#  Branch instructions
+    #==------------------------------------------------------------------
+    #  Branch instructions
 
     def CC(self, c):
         self.program[self.here] = ASM.CC(c)
