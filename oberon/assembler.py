@@ -204,6 +204,129 @@ class ASM:
     def F_imm(offset): return make_F3_imm(7, offset, True)
 
 
+ops = dict(
+    Mov = 0, Lsl = 1, Asr = 2, Ror = 3,
+    And = 4, Ann = 5, Ior = 6, Xor = 7,
+    Add = 8, Sub = 9, Mul = 10, Div = 11,
+    Fad = 12, Fsb = 13, Fml = 14, Fdv = 15,
+    )
+'Operation names mapped to their values in instructions.'
+
+ops_rev = dict((v, k) for k, v in ops.items())
+
+
+##  ((cc == 0) & N | // MI, PL
+##   (cc == 1) & Z | // EQ, NE
+##   (cc == 2) & C | // CS, CC
+##   (cc == 3) & OV | // VS, VC
+##   (cc == 4) & (C|Z) | // LS, HI
+##   (cc == 5) & S | // LT, GE
+##   (cc == 6) & (S|Z) | // LE, GT
+##   (cc == 7)); // T, F
+
+cmps = {
+    (0, 0): 'MI',
+    (0, 1): 'PL',
+    (1, 0): 'EQ',
+    (1, 1): 'NE',
+    (2, 0): 'CS',
+    (2, 1): 'CC',
+    (3, 0): 'VS',
+    (3, 1): 'VC',
+    (4, 0): 'LS',
+    (4, 1): 'HI',
+    (5, 0): 'LT',
+    (5, 1): 'GE',
+    (6, 0): 'LE',
+    (6, 1): 'GT',
+    (7, 0): 'T',
+    (7, 1): 'F',
+}
+
+
+def make_F0(u, op, a, b, c):
+    assert bool(u) == u, repr(u)
+    assert ops['Mov'] <= op <= ops['Div'], repr(op)
+    assert 0 <= a < 0x10, repr(a)
+    assert 0 <= b < 0x10, repr(b)
+    assert 0 <= c < 0x10, repr(c)
+    return bint(
+        (u << 29) +
+        (a << 24) +
+        (b << 20) +
+        (op << 16) +
+        c
+        )
+
+
+def make_F1(u, v, op, a, b, K):
+    assert bool(u) == u, repr(u)
+    assert bool(v) == v, repr(v)
+    assert ops['Mov'] <= op <= ops['Div'], repr(op)
+    assert 0 <= a < 0x10, repr(a)
+    assert 0 <= b < 0x10, repr(b)
+    assert 0 <= K < 2**16, repr(K)
+    return bint(
+        (1 << 30) + # set q
+        (u << 29) +
+        (v << 28) +
+        (a << 24) +
+        (b << 20) +
+        (op << 16) +
+        K
+        )
+
+
+def make_F2(u, v, a, b, offset):
+    assert bool(u) == u, repr(u)
+    assert bool(v) == v, repr(v)
+    assert 0 <= a < 0x10, repr(a)
+    assert 0 <= b < 0x10, repr(b)
+    assert 0 <= offset < 2**20, repr(offset)
+    return bint(
+        (1 << 31) +
+        (u << 29) +
+        (v << 28) +
+        (a << 24) +
+        (b << 20) +
+        offset
+        )
+
+
+def make_F3(cond, c, invert=False, v=False):
+    # v = True -> PC to be stored in register R15
+    assert 0 <= cond < 0x111, repr(cond)
+    assert 0 <= c < 0x10, repr(c)
+    assert bool(invert) == invert, repr(invert)
+    assert bool(v) == v, repr(v)
+    return bint(
+        (0b11 << 30) + # set p, q
+        (v << 28) +
+        (invert << 27) +
+        (cond << 24) +
+        c
+        )
+
+
+def make_F3_imm(cond, offset, invert=False, v=False):
+    # v = True -> PC to be stored in register R15
+    assert 0 <= cond < 0x111, repr(cond)
+    assert 0 <= offset < 2**24, repr(offset)
+    assert bool(invert) == invert, repr(invert)
+    assert bool(v) == v, repr(v)
+    return bint(
+        (0b111 << 29) + # set p, q, u
+        (v << 28) +
+        (invert << 27) +
+        (cond << 24) +
+        offset
+        )
+
+
+def opof(op):
+    return ops_rev[int(op)]
+
+
 class LabelThunk:
     '''
     Stand for an address that will be determined later.
@@ -639,126 +762,3 @@ class Assembler:
     def VS_link(self, c):
         self.program[self.here] = ASM.VS_link(c)
         self.here += 4
-
-
-ops = dict(
-    Mov = 0, Lsl = 1, Asr = 2, Ror = 3,
-    And = 4, Ann = 5, Ior = 6, Xor = 7,
-    Add = 8, Sub = 9, Mul = 10, Div = 11,
-    Fad = 12, Fsb = 13, Fml = 14, Fdv = 15,
-    )
-'Operation names mapped to their values in instructions.'
-
-ops_rev = dict((v, k) for k, v in ops.items())
-
-
-##  ((cc == 0) & N | // MI, PL
-##   (cc == 1) & Z | // EQ, NE
-##   (cc == 2) & C | // CS, CC
-##   (cc == 3) & OV | // VS, VC
-##   (cc == 4) & (C|Z) | // LS, HI
-##   (cc == 5) & S | // LT, GE
-##   (cc == 6) & (S|Z) | // LE, GT
-##   (cc == 7)); // T, F
-
-cmps = {
-    (0, 0): 'MI',
-    (0, 1): 'PL',
-    (1, 0): 'EQ',
-    (1, 1): 'NE',
-    (2, 0): 'CS',
-    (2, 1): 'CC',
-    (3, 0): 'VS',
-    (3, 1): 'VC',
-    (4, 0): 'LS',
-    (4, 1): 'HI',
-    (5, 0): 'LT',
-    (5, 1): 'GE',
-    (6, 0): 'LE',
-    (6, 1): 'GT',
-    (7, 0): 'T',
-    (7, 1): 'F',
-}
-
-
-def make_F0(u, op, a, b, c):
-    assert bool(u) == u, repr(u)
-    assert ops['Mov'] <= op <= ops['Div'], repr(op)
-    assert 0 <= a < 0x10, repr(a)
-    assert 0 <= b < 0x10, repr(b)
-    assert 0 <= c < 0x10, repr(c)
-    return bint(
-        (u << 29) +
-        (a << 24) +
-        (b << 20) +
-        (op << 16) +
-        c
-        )
-
-
-def make_F1(u, v, op, a, b, K):
-    assert bool(u) == u, repr(u)
-    assert bool(v) == v, repr(v)
-    assert ops['Mov'] <= op <= ops['Div'], repr(op)
-    assert 0 <= a < 0x10, repr(a)
-    assert 0 <= b < 0x10, repr(b)
-    assert 0 <= K < 2**16, repr(K)
-    return bint(
-        (1 << 30) + # set q
-        (u << 29) +
-        (v << 28) +
-        (a << 24) +
-        (b << 20) +
-        (op << 16) +
-        K
-        )
-
-
-def make_F2(u, v, a, b, offset):
-    assert bool(u) == u, repr(u)
-    assert bool(v) == v, repr(v)
-    assert 0 <= a < 0x10, repr(a)
-    assert 0 <= b < 0x10, repr(b)
-    assert 0 <= offset < 2**20, repr(offset)
-    return bint(
-        (1 << 31) +
-        (u << 29) +
-        (v << 28) +
-        (a << 24) +
-        (b << 20) +
-        offset
-        )
-
-
-def make_F3(cond, c, invert=False, v=False):
-    # v = True -> PC to be stored in register R15
-    assert 0 <= cond < 0x111, repr(cond)
-    assert 0 <= c < 0x10, repr(c)
-    assert bool(invert) == invert, repr(invert)
-    assert bool(v) == v, repr(v)
-    return bint(
-        (0b11 << 30) + # set p, q
-        (v << 28) +
-        (invert << 27) +
-        (cond << 24) +
-        c
-        )
-
-
-def make_F3_imm(cond, offset, invert=False, v=False):
-    # v = True -> PC to be stored in register R15
-    assert 0 <= cond < 0x111, repr(cond)
-    assert 0 <= offset < 2**24, repr(offset)
-    assert bool(invert) == invert, repr(invert)
-    assert bool(v) == v, repr(v)
-    return bint(
-        (0b111 << 29) + # set p, q, u
-        (v << 28) +
-        (invert << 27) +
-        (cond << 24) +
-        offset
-        )
-
-
-def opof(op):
-    return ops_rev[int(op)]
