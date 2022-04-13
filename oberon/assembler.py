@@ -30,7 +30,22 @@ Currently only the crudest decoding is performed on a single instruction
 (no extra information is used, in particular symbols are not supported.)
 '''
 from collections import defaultdict
+from struct import pack
+
 from oberon.util import bint, s_to_u_32
+
+
+def assemble_file(in_fn, out_fn):
+    with open(in_fn, 'rb') as f:
+        text = f.read()
+    code = compile(text, in_fn, 'exec')
+    p = Assembler()(code)
+    N = max(p) + 4
+    data = pack(f'<{N//4}I', *(
+        p.get(n, 0) for n in range(0, N, 4)
+        ))
+    with open(out_fn, 'wb') as f:
+        f.write(data)
 
 
 class ASM:

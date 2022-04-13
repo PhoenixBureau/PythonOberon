@@ -18,6 +18,12 @@
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
 from oberon.assembler import cmps, opof, ops_rev
+from oberon.util import bint
+
+'''
+while True:
+    print(dis(int((2**32 - 1) * random.random())))
+'''
 
 
 def dis(n):
@@ -33,7 +39,7 @@ def dis_F0(IR):
     if ops_rev[op] == 'Mov':
         value = dis_Mov0(u, IR[28], a, c)
     else:
-        value = f'{opof(op)({a}, {b}, {c}, u={u})}'
+        value = f'{opof(op)}({a}, {b}, {c}, u={u})'
     return value
 
 
