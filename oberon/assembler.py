@@ -40,12 +40,39 @@ def assemble_file(in_fn, out_fn):
         text = f.read()
     code = compile(text, in_fn, 'exec')
     p = Assembler()(code)
-    N = max(p) + 4
-    data = pack(f'<{N//4}I', *(
-        p.get(n, 0) for n in range(0, N, 4)
-        ))
+
+    # This is the bootloader function that will load the binary over teh serial line:
+    #
+    #  PROCEDURE LoadFromLine;
+    #    VAR len, adr, dat: INTEGER;
+    #  BEGIN RecInt(len);
+    #    WHILE len > 0 DO
+    #      RecInt(adr);
+    #      REPEAT RecInt(dat); SYSTEM.PUT(adr, dat); adr := adr + 4; len := len - 4 UNTIL len = 0;
+    #      RecInt(len)
+    #    END
+    #  END LoadFromLine;
+    #
+    # It reads a (4-byte) int length and drops into a while loop
+    # the loop reads a (4-byte) int address at which to store
+    # the following data.
+    # Then a second loop (repeat) is started to read the data.
+    # It reads a 4-byte word, stores it to the RAM, then
+    # increments the address and decrements the length, each by
+    # four!  So the length is counting bytes, not words!  N.B.
+    # Once the repeat loop is done patching RAM it reads one more
+    # (4-byte) int length and the while loop restarts if the
+    # length is non-zero, otherwise we're done and the machine
+    # boots from there.
+
+    P = [p.get(n, 0) for n in range(0, max(p) + 4, 4)]  # Fill holes with zero.
+    P.insert(0, len(P) * 4)
+    P.insert(1, 0)  # address
+    P.append(0)  # stop loading
+    data = pack(f'<{len(P)}I', *P)
     with open(out_fn, 'wb') as f:
         f.write(data)
+
 
 
 class ASM:
