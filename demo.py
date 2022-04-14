@@ -5,14 +5,19 @@ from oberon.disassembler import dis
 
 assemble_file('fillscreen.py', 'FILLED.bin')
 
-with open('FILLED.bin', 'rb') as f:
-    data = f.read()
 
-j = unpack(f'<{len(data)//4}I', data)
+def foo(fn):
+    with open(fn, 'rb') as f:
+        data = f.read()
+    j = unpack(f'<{len(data)//4}I', data)
+    print(fn)
+    for i, n in enumerate(j):
+        print(f'    {i:-2} 0x{i*4:02x} 0x{n:08x} {dis(n)}')
 
-print('\n'.join(dis(n) for n in j))
 
-
+foo('FILLED.bin')
+print()
+foo('fillscreen.bin')
 
 
 ##from oberon.display import DISPLAY_START
