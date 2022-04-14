@@ -24,6 +24,10 @@ c = 2
 D = DISPLAY_START + N * 4
 pattern = 0x33333333
 
+Mov(0, 0, u=False)  # No-op.
+T_imm(main)
+label(_reserved, reserves=36)
+label(main)
 move_immediate_word_to_register(a, pattern)
 move_immediate_word_to_register(b, D)
 Mov_imm(c, N + 1)

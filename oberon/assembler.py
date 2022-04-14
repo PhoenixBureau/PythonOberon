@@ -453,7 +453,7 @@ def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
                     raise RuntimeError('bad offset %r' % (offset,))
                 offset = (offset - self.here) // 4 - 1
                 if offset < 0:
-                    offset = s_to_u_32(offset) & 0xfffff # 2**20 -1
+                    offset = s_to_u_32(offset) & 0xffffff # 2**24 -1
                 instruction = bits_maker(offset)
 
             self.program[self.here] = instruction
