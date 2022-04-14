@@ -24,7 +24,6 @@ c = 2
 D = DISPLAY_START + N * 4
 pattern = 0x33333333
 
-Mov(0, 0, u=False)  # No-op.
 T_imm(main)
 label(_reserved, reserves=36)
 label(main)
