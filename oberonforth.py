@@ -15,6 +15,7 @@ codeword = 1
 IP = 14       # (%esi)
 Dstack = 10
 Rstack = 12
+R0, R1 = 0, 1
 
 
 def NEXT():
@@ -48,6 +49,18 @@ def POPRSP(reg):
     '''pop top of return stack to reg'''
     Load_word(reg, Rstack)      # reg <- RAM[Rstack]
     Add_imm(Rstack, Rstack, 4)  # Rstack += 4
+
+
+def PUSH(reg):
+    '''push reg onto stack'''
+    Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4
+    Store_word(Dstack, reg)     # reg -> RAM[Dstack]
+
+
+def POP(reg):
+    '''pop top of stack to reg'''
+    Load_word(reg, Dstack)      # reg <- RAM[Dstack]
+    Add_imm(Dstack, Dstack, 4)  # Dstack += 4
 
 
 T_imm(main)
@@ -107,37 +120,82 @@ dw(QUIT)  # IP starts pointing here so this RAM address must
 ##
 
 
+F_IMMED = 0x80
+F_HIDDEN = 0x20
+F_LENMASK = 0x1f
+
+
 LINK = 0
 
 
-def defword(name, label, flags=0):
+def defword(name, LABEL, flags=0):
+    assert isinstance(name, bytes)
     dw(LINK)
     LINK = HERE() - 4
-
     name_len = len(name)
     assert name_len < 32, repr(name)
-
     name_bytes = [name_len]
     name_bytes.extend(name)  # Converts bytes to [int].
     while len(name_bytes) % 4: name_bytes.append(0)
     for i in range(0, len(name_bytes), 4):
         a, b, c, d = name_bytes[i:i+4]
         dw(a<<24 + b<<16 + c<<8 + d)
+    label(LABEL)
     dw(DOCOL)
 
 
+## Example:
+##
+##    defword(b'double', DOUBLE)
+##    dw(DUP),
+##    dw(PLUS),
+##    dw(EXIT)
+
+##
+## 648         Similarly I want a way to write words written in assembly language.  There will be quite a few
+## 649         of these to start with because, well, everything has to start in assembly before there's
+## 650         enough "infrastructure" to be able to start writing FORTH words, but also I want to define
+## 651         some common FORTH words in assembly language for speed, even though I could write them in FORTH.
+## 652 
+## 653         This is what DUP looks like in memory:
+## 654 
+## 655           pointer to previous word
+## 656            ^
+## 657            |
+## 658         +--|------+---+---+---+---+------------+
+## 659         | LINK    | 3 | D | U | P | code_DUP ---------------------> points to the assembly
+## 660         +---------+---+---+---+---+------------+                    code used to write DUP,
+## 661            ^       len              codeword                        which ends with NEXT.
+## 662            |
+## 663           LINK in next word
+## 664 
+## 665         Again, for brevity in writing the header I'm going to write an assembler macro called defcode.
+## 666         As with defword above, don't worry about the complicated details of the macro.
+##
+
+
+def defcode(name, LABEL, flags=0):
+    assert isinstance(name, bytes)
+    global LINK
+    dw(LINK)
+    LINK = HERE() - 4
+    name_len = len(name)
+    assert name_len < 32, repr(name)
+    name_bytes = [name_len]
+    name_bytes.extend(name)  # Converts bytes to [int].
+    while len(name_bytes) % 4: name_bytes.append(0)
+    for i in range(0, len(name_bytes), 4):
+        a, b, c, d = name_bytes[i:i+4]
+        dw((a<<24) + (b<<16) + (c<<8) + d)
+    label(LABEL)
+    dw(HERE() + 4)  # codeword, points to ASM immediately following.
+
+
+defcode(b'DROP', DROP)
+POP(R0)  # drop top of stack
+NEXT()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+label(QUIT)
 

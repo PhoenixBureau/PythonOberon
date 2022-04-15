@@ -477,6 +477,10 @@ class Assembler:
 
         self.context = Context(self.symbol_table)
         self.context['print'] = print
+        self.context['len'] = len
+        self.context['bytes'] = bytes
+        self.context['range'] = range
+        self.context['isinstance'] = isinstance
 
         for name in dir(Assembler):
             if not name.startswith('_'):
@@ -489,7 +493,7 @@ class Assembler:
         del self.context['__builtins__']
         return self.program
 
-    def dw(data):
+    def dw(self, data):
         if isinstance(data, LabelThunk):
             self.fixups[data].append(self.here)
             def fixup(value, h=self.here):
@@ -532,7 +536,13 @@ class Assembler:
         self.here += 4
 
     def Mov_imm(self, a, K, v=0, u=0):
-        self.program[self.here] = ASM.Mov_imm(a, K, v, u)
+        if isinstance(K, LabelThunk):
+            self.fixups[K].append(self.here)
+            def fixup(value, h=self.here):
+                self.program[h] = ASM.Mov_imm(a, value, v, u)
+            self.program[self.here] = (fixup,)
+        else:
+            self.program[self.here] = ASM.Mov_imm(a, K, v, u)
         self.here += 4
 
     #==------------------------------------------------------------------
