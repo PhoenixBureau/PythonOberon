@@ -51,23 +51,10 @@ def POP(reg):
     Add_imm(Dstack, Dstack, 4)  # Dstack += 4
 
 
-def defword(name, LABEL, flags=0):
-    assert isinstance(name, bytes)
-    dw(LINK)
-    LINK = HERE() - 4
-    name_len = len(name)
-    assert name_len < 32, repr(name)
-    name_bytes = [name_len]
-    name_bytes.extend(name)  # Converts bytes to [int].
-    while len(name_bytes) % 4: name_bytes.append(0)
-    for i in range(0, len(name_bytes), 4):
-        a, b, c, d = name_bytes[i:i+4]
-        dw((a<<24) + (b<<16) + (c<<8) + d)
-    label(LABEL)
-    dw(DOCOL)
-
-
-def defcode(name, LABEL, flags=0):
+def def_(name, LABEL, flags=0):
+    '''
+    Set up dictionary link, name field, and label for word definitions.
+    '''
     assert isinstance(name, bytes)
     global LINK
     dw(LINK)
@@ -81,7 +68,22 @@ def defcode(name, LABEL, flags=0):
         a, b, c, d = name_bytes[i:i+4]
         dw((a<<24) + (b<<16) + (c<<8) + d)
     label(LABEL)
-    dw(HERE() + 4)  # codeword, points to ASM immediately following.
+
+
+def defword(name, LABEL, flags=0):
+    '''
+    Define a colon word.
+    '''
+    def_(name, LABEL, flags)
+    dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter.
+
+
+def defcode(name, LABEL, flags=0):
+    '''
+    Define a primitive ASM word.
+    '''
+    def_(name, LABEL, flags)
+    dw(HERE() + 4)  # codeword points to ASM immediately following.
 
 
 T_imm(main)
