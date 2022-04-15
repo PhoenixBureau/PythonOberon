@@ -768,4 +768,5 @@ class Serial(object):
       # There are bits in the high bytes!
       print(f'\nwoot! 0x{word:08x}')
     else:
-      print(chr(word & 0xf), end='')
+      print(chr(word & 0xff), end='')
+      sys.stdout.flush()  # damnit

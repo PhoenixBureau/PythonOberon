@@ -1,12 +1,13 @@
+from oberon.util import s_to_u_32
 
 # Put these anywhere...
 DATA_STACK = 0x4000
 RETURN_STACK = 0x6000
 
 # Registers
-R0, R1 = 0, 1
-next_function = 2
-codeword = 3
+R0, R1, R2 = 0, 1, 2
+next_function = 3
+codeword = 4
 IP = 14
 Dstack = 10
 Rstack = 12
@@ -15,6 +16,10 @@ Rstack = 12
 F_IMMED = 0x80
 F_HIDDEN = 0x20
 F_LENMASK = 0x1f
+
+# I/O
+SERIAL_PORT = s_to_u_32(-56)  # io_ports[8]
+SERIAL_STATUS = s_to_u_32(-52)  # io_ports[12]
 
 # Dictionary 
 LINK = 0
@@ -30,7 +35,7 @@ def NEXT():
 def PUSHRSP(reg):
     '''push reg on to return stack'''
     Sub_imm(Rstack, Rstack, 4)  # Rstack -= 4
-    Store_word(Rstack, reg)     # reg -> RAM[Rstack]
+    Store_word(reg, Rstack)     # reg -> RAM[Rstack]
 
 
 def POPRSP(reg):
@@ -42,7 +47,7 @@ def POPRSP(reg):
 def PUSH(reg):
     '''push reg onto stack'''
     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4
-    Store_word(Dstack, reg)     # reg -> RAM[Dstack]
+    Store_word(reg, Dstack)     # reg -> RAM[Dstack]
 
 
 def POP(reg):
@@ -86,6 +91,23 @@ def defcode(name, LABEL, flags=0):
     dw(HERE() + 4)  # codeword points to ASM immediately following.
 
 
+def HIGH(i):
+  return (i >> 16) & 0xFFFF
+
+
+def LOW(i):
+  return i & 0xFFFF
+
+
+def move_immediate_word_to_register(reg, word):
+  Mov_imm(reg, HIGH(word), u=1)
+  Ior_imm(reg, reg, LOW(word))
+
+
+negative_offset_24 = lambda n: s_to_u_32(n) & 0xffffff
+negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
+
+
 T_imm(main)
 label(_reserved, reserves=36)
 
@@ -99,10 +121,13 @@ label(main)
 Mov_imm(Dstack, DATA_STACK)
 Mov_imm(Rstack, RETURN_STACK)
 Mov_imm(IP, cold_start)
+Mov_imm(R1, 38)  # ASCII '&'
+PUSH(R1)
 NEXT()
 
 label(cold_start)
-dw(QUIT)  # IP starts pointing here so this RAM address must
+dw(EMIT)
+#dw(QUIT)  # IP starts pointing here so this RAM address must
           # contain the address of the codeword of QUIT.
 
 defcode(b'DROP', DROP)
@@ -119,5 +144,61 @@ Add_imm(IP, IP, 4)                  # IP += 4
 PUSH(R0)
 NEXT()
 
+defcode(b'EMIT', EMIT)
+# Get TOS into a R0.
+POP(R0)
+# Busy-wait on serial ready.
+move_immediate_word_to_register(R1, SERIAL_STATUS)
+Load_word(R2, R1, 0)
+EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
+# R0 -> RAM[SERIAL_PORT]
+Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+NEXT()
+
 
 label(QUIT)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
