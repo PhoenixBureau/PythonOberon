@@ -489,6 +489,21 @@ class Assembler:
         del self.context['__builtins__']
         return self.program
 
+    def dw(data):
+        if isinstance(data, LabelThunk):
+            self.fixups[data].append(self.here)
+            def fixup(value, h=self.here):
+                assert 0 <= value < 2**32, repr(value)
+                self.program[h] = value
+            self.program[self.here] = (fixup,)
+        else:
+            assert 0 <= data < 2**32, repr(data)
+            self.program[self.here] = data
+        self.here += 4
+
+    def HERE(self):
+        return self.here
+
     def label(self, thunk, reserves=0):
         if not isinstance(thunk, LabelThunk):
             raise RuntimeError('already assigned')

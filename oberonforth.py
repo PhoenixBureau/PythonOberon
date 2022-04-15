@@ -83,6 +83,57 @@ label(cold_start)
 dw(QUIT)  # IP starts pointing here so this RAM address must
           # contain the address of the codeword of QUIT.
 
+##
+## 580         BUILT-IN WORDS ----------------------------------------------------------------------
+## 581 
+## 582         Remember our dictionary entries (headers)?  Let's bring those together with the codeword
+## 583         and data words to see how : DOUBLE DUP + ; really looks in memory.
+## 584 
+## 585           pointer to previous word
+## 586            ^
+## 587            |
+## 588         +--|------+---+---+---+---+---+---+---+---+------------+------------+------------+------------+
+## 589         | LINK    | 6 | D | O | U | B | L | E | 0 | DOCOL      | DUP        | +          | EXIT       |
+## 590         +---------+---+---+---+---+---+---+---+---+------------+--|---------+------------+------------+
+## 591            ^       len                         pad  codeword      |
+## 592            |                                                      V
+## 593           LINK in next word                             points to codeword of DUP
+## 594         
+## 595         Initially we can't just write ": DOUBLE DUP + ;" (ie. that literal string) here because we
+## 596         don't yet have anything to read the string, break it up at spaces, parse each word, etc. etc.
+## 597         So instead we will have to define built-in words using the GNU assembler data constructors
+## 598         (like .int, .byte, .string, .ascii and so on -- look them up in the gas info page if you are
+## 599         unsure of them).
+##
+
+
+LINK = 0
+
+
+def defword(name, label, flags=0):
+    dw(LINK)
+    LINK = HERE() - 4
+
+    name_len = len(name)
+    assert name_len < 32, repr(name)
+
+    name_bytes = [name_len]
+    name_bytes.extend(name)  # Converts bytes to [int].
+    while len(name_bytes) % 4: name_bytes.append(0)
+    for i in range(0, len(name_bytes), 4):
+        a, b, c, d = name_bytes[i:i+4]
+        dw(a<<24 + b<<16 + c<<8 + d)
+    dw(DOCOL)
+
+
+
+
+
+
+
+
+
+
 
 
 
