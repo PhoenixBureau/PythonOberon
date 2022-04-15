@@ -764,4 +764,8 @@ class Serial(object):
     return ord(self.input_file.read(1))
 
   def write(self, word):
-    1/0
+    if word & 0xffffff00:
+      # There are bits in the high bytes!
+      print(f'\nwoot! 0x{word:08x}')
+    else:
+      print(chr(word & 0xf), end='')
