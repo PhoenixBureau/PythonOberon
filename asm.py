@@ -11,19 +11,20 @@ p = a(asm)
 ##print(pformat(p))
 #print 'a.here:', a.here
 print()
+a.print_program()
 
-program = []
-for addr in sorted(p):
-    i = p[addr]
-    program.append(i)
-    try:
-        e = ASM.dis(i)
-    except:
-        e = repr(i)
-    f = dis(i)
-    b = f'{bin(i)[2:]:0>32}'
-    print(f)
+##program = []
+##for addr in range(0, max(p)+4, 4):
+##    if addr not in p:
+##        print(f'0x{addr:04x} 0x00000000')
+##        continue
+##    i = p[addr]
+##    if addr in a.data_addrs:
+##        print(f'0x{addr:04x} 0x{i:08x}')
+##        continue
+##    print(f'0x{addr:04x} {dis(i)}')
 
+##    b = f'{bin(i)[2:]:0>32}'
 #    print(f'ram[0x00{hex(addr)[2:]:0>2}] = 0b_{b[:4]}_{b[4:8]}_{b[8:12]}_{b[12:16]}_{b[16:32]} # {e}')
 #    print(f'ram[0x00{hex(addr)[2:]:0>2}] = 0b_{b[:4]}_{b[4:8]}_{b[8:12]}_{b[12:16]}_{b[16:28]}_{b[28:32]} # {e}')
 ##    print(f'ram[0x00{hex(addr)[2:]:0>2}] = 0b_{b[:8]}_{b[8:16]}_{b[16:24]}_{b[24:32]} # {e} - {f}')

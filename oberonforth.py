@@ -10,8 +10,8 @@ DATA_STACK = 0x4000
 RETURN_STACK = 0x6000
 
 # Registers
-next_function = 1
-codeword = 1
+next_function = 2
+codeword = 3
 IP = 14       # (%esi)
 Dstack = 10
 Rstack = 12
@@ -192,7 +192,19 @@ def defcode(name, LABEL, flags=0):
 
 
 defcode(b'DROP', DROP)
-POP(R0)  # drop top of stack
+Add_imm(Dstack, Dstack, 4)  # drop top of stack
+NEXT()
+
+
+defcode(b'EXIT', EXIT)
+POPRSP(IP)
+NEXT()
+
+
+defcode(b'LIT', LIT)
+Load_word(R0, IP)
+Add_imm(IP, IP, 4)                  # IP += 4
+PUSH(R0)
 NEXT()
 
 

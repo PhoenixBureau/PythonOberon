@@ -472,6 +472,7 @@ class Assembler:
     def __init__(self):
         self.program = {}
         self.symbol_table = {}
+        self.data_addrs = set()
         self.fixups = defaultdict(list)
         self.here = 0
 
@@ -488,6 +489,30 @@ class Assembler:
                 if callable(value):
                     self.context[name] = value
 
+    def print_program(self):
+        from oberon.disassembler import dis
+        max_label_length = max(map(len, self.symbol_table))
+        blank_prefix = ' ' * (2 + max_label_length)
+        addrs_to_labels = {
+            addr: label
+            for label, addr in self.symbol_table.items()
+            }
+        for addr in range(0, max(self.program) + 4, 4):
+            try:
+                label = addrs_to_labels[addr]
+            except KeyError:
+                prefix = blank_prefix
+            else:
+                prefix = ' ' * (max_label_length - len(label)) + label + ': '
+            if addr not in self.program:
+                print(f'{prefix}0x{addr:05x} 0x00000000')
+                continue
+            i = self.program[addr]
+            if addr in self.data_addrs:
+                print(f'{prefix}0x{addr:05x} 0x{i:08x}')
+                continue
+            print(f'{prefix}0x{addr:05x} {dis(i)}')
+
     def __call__(self, text):
         exec(text, self.context)
         del self.context['__builtins__']
@@ -503,6 +528,7 @@ class Assembler:
         else:
             assert 0 <= data < 2**32, repr(data)
             self.program[self.here] = data
+        self.data_addrs.add(self.here)
         self.here += 4
 
     def HERE(self):
