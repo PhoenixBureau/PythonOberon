@@ -1,0 +1,174 @@
+# New unassigned label: main
+# New unassigned label: _reserved
+# assigning label _reserved -> 0x0004
+# New unassigned label: DOCOL
+# assigning label DOCOL -> 0x0028
+# assigning label main -> 0x0044
+# fixing <LabelThunk main> at 0x0 to 0x44 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x80159fb80>
+# New unassigned label: cold_start
+# assigning label cold_start -> 0x006c
+# fixing <LabelThunk cold_start> at 0x4c to 0x6c using <function Assembler.Mov_imm.<locals>.fixup at 0x80159fb80>
+# New unassigned label: EMIT
+# New unassigned label: DROP
+# assigning label DROP -> 0x007c
+# New unassigned label: EXIT
+# assigning label EXIT -> 0x00a0
+# New unassigned label: LIT
+# assigning label LIT -> 0x00c4
+# New unassigned label: KEY
+# assigning label KEY -> 0x00f0
+# assigning label EMIT -> 0x012c
+# fixing <LabelThunk EMIT> at 0x6c to 0x12c using <function Assembler.dw.<locals>.fixup at 0x80159fb80>
+# New unassigned label: SWAP
+# assigning label SWAP -> 0x0168
+# New unassigned label: LATEST
+# New unassigned label: LATEST_var
+# assigning label LATEST -> 0x01a0
+# assigning label LATEST_var -> 0x01c0
+# fixing <LabelThunk LATEST_var> at 0x1a4 to 0x1c0 using <function Assembler.Mov_imm.<locals>.fixup at 0x80159fb80>
+# New unassigned label: QUIT
+# assigning label QUIT -> 0x01c4
+# New unassigned label: main
+# New unassigned label: _reserved
+# assigning label _reserved -> 0x0004
+# New unassigned label: DOCOL
+# assigning label DOCOL -> 0x0028
+# assigning label main -> 0x0044
+# fixing <LabelThunk main> at 0x0 to 0x44 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x8015c74c0>
+# New unassigned label: cold_start
+# assigning label cold_start -> 0x006c
+# fixing <LabelThunk cold_start> at 0x4c to 0x6c using <function Assembler.Mov_imm.<locals>.fixup at 0x8015c74c0>
+# New unassigned label: EMIT
+# New unassigned label: DROP
+# assigning label DROP -> 0x007c
+# New unassigned label: EXIT
+# assigning label EXIT -> 0x00a0
+# New unassigned label: LIT
+# assigning label LIT -> 0x00c4
+# New unassigned label: KEY
+# assigning label KEY -> 0x00f0
+# assigning label EMIT -> 0x012c
+# fixing <LabelThunk EMIT> at 0x6c to 0x12c using <function Assembler.dw.<locals>.fixup at 0x8015c74c0>
+# New unassigned label: SWAP
+# assigning label SWAP -> 0x0168
+# New unassigned label: LATEST
+# New unassigned label: LATEST_var
+# assigning label LATEST -> 0x01a0
+# assigning label LATEST_var -> 0x01c0
+# fixing <LabelThunk LATEST_var> at 0x1a4 to 0x1c0 using <function Assembler.Mov_imm.<locals>.fixup at 0x80159faf0>
+# New unassigned label: QUIT
+# assigning label QUIT -> 0x01c4
+
+            0x00000 T_imm(0x10)
+ _reserved: 0x00004 0x00000000
+            0x00008 0x00000000
+            0x0000c 0x00000000
+            0x00010 0x00000000
+            0x00014 0x00000000
+            0x00018 0x00000000
+            0x0001c 0x00000000
+            0x00020 0x00000000
+            0x00024 0x00000000
+     DOCOL: 0x00028 Sub_imm(12, 12, 0x4, u=False, v=False)
+            0x0002c Store_word(14, 12)
+            0x00030 Add_imm(14, 3, 0x4, u=False, v=False)
+            0x00034 Load_word(3, 14)
+            0x00038 Load_word(4, 3)
+            0x0003c Add_imm(14, 14, 0x4, u=False, v=False)
+            0x00040 T(4)
+      main: 0x00044 Mov_imm(10, 0x4000, u=False, v=False)
+            0x00048 Mov_imm(12, 0x6000, u=False, v=False)
+            0x0004c Mov_imm(14, 0x6c, u=False, v=False)
+            0x00050 Mov_imm(1, 0x26, u=False, v=False)
+            0x00054 Sub_imm(10, 10, 0x4, u=False, v=False)
+            0x00058 Store_word(1, 10)
+            0x0005c Load_word(3, 14)
+            0x00060 Load_word(4, 3)
+            0x00064 Add_imm(14, 14, 0x4, u=False, v=False)
+            0x00068 T(4)
+cold_start: 0x0006c 0x0000012c
+            0x00070 0x00000000
+            0x00074 0x0444524f
+            0x00078 0x50000000
+      DROP: 0x0007c 0x00000080
+            0x00080 Add_imm(10, 10, 0x4, u=False, v=False)
+            0x00084 Load_word(3, 14)
+            0x00088 Load_word(4, 3)
+            0x0008c Add_imm(14, 14, 0x4, u=False, v=False)
+            0x00090 T(4)
+            0x00094 0x00000070
+            0x00098 0x04455849
+            0x0009c 0x54000000
+      EXIT: 0x000a0 0x000000a4
+            0x000a4 Load_word(14, 12)
+            0x000a8 Add_imm(12, 12, 0x4, u=False, v=False)
+            0x000ac Load_word(3, 14)
+            0x000b0 Load_word(4, 3)
+            0x000b4 Add_imm(14, 14, 0x4, u=False, v=False)
+            0x000b8 T(4)
+            0x000bc 0x00000094
+            0x000c0 0x034c4954
+       LIT: 0x000c4 0x000000c8
+            0x000c8 Load_word(0, 14)
+            0x000cc Add_imm(14, 14, 0x4, u=False, v=False)
+            0x000d0 Sub_imm(10, 10, 0x4, u=False, v=False)
+            0x000d4 Store_word(0, 10)
+            0x000d8 Load_word(3, 14)
+            0x000dc Load_word(4, 3)
+            0x000e0 Add_imm(14, 14, 0x4, u=False, v=False)
+            0x000e4 T(4)
+            0x000e8 0x000000bc
+            0x000ec 0x034b4559
+       KEY: 0x000f0 0x000000f4
+            0x000f4 Mov_imm(1, 0xffff, u=True, v=False)
+            0x000f8 Ior_imm(1, 1, 0xffcc, u=False, v=False)
+            0x000fc Load_word(2, 1)
+            0x00100 EQ_imm(0x3fffbd)
+            0x00104 Load_word(0, 1, offset=0xffffc)
+            0x00108 Sub_imm(10, 10, 0x4, u=False, v=False)
+            0x0010c Store_word(0, 10)
+            0x00110 Load_word(3, 14)
+            0x00114 Load_word(4, 3)
+            0x00118 Add_imm(14, 14, 0x4, u=False, v=False)
+            0x0011c T(4)
+            0x00120 0x000000e8
+            0x00124 0x04454d49
+            0x00128 0x54000000
+      EMIT: 0x0012c 0x00000130
+            0x00130 Load_word(0, 10)
+            0x00134 Add_imm(10, 10, 0x4, u=False, v=False)
+            0x00138 Mov_imm(1, 0xffff, u=True, v=False)
+            0x0013c Ior_imm(1, 1, 0xffcc, u=False, v=False)
+            0x00140 Load_word(2, 1)
+            0x00144 EQ_imm(0x3fffac)
+            0x00148 Store_word(0, 1, offset=0xffffc)
+            0x0014c Load_word(3, 14)
+            0x00150 Load_word(4, 3)
+            0x00154 Add_imm(14, 14, 0x4, u=False, v=False)
+            0x00158 T(4)
+            0x0015c 0x00000120
+            0x00160 0x04535741
+            0x00164 0x50000000
+      SWAP: 0x00168 0x0000016c
+            0x0016c Load_word(0, 10)
+            0x00170 Add_imm(10, 10, 0x4, u=False, v=False)
+            0x00174 Load_word(1, 10)
+            0x00178 Store_word(0, 10)
+            0x0017c Sub_imm(10, 10, 0x4, u=False, v=False)
+            0x00180 Store_word(1, 10)
+            0x00184 Load_word(3, 14)
+            0x00188 Load_word(4, 3)
+            0x0018c Add_imm(14, 14, 0x4, u=False, v=False)
+            0x00190 T(4)
+            0x00194 0x0000015c
+            0x00198 0x064c4154
+            0x0019c 0x45535400
+    LATEST: 0x001a0 0x000001a4
+            0x001a4 Mov_imm(0, 0x1c0, u=False, v=False)
+            0x001a8 Sub_imm(10, 10, 0x4, u=False, v=False)
+            0x001ac Store_word(0, 10)
+            0x001b0 Load_word(3, 14)
+            0x001b4 Load_word(4, 3)
+            0x001b8 Add_imm(14, 14, 0x4, u=False, v=False)
+            0x001bc T(4)
+LATEST_var: 0x001c0 0x0000015c

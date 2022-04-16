@@ -183,6 +183,9 @@ PUSH(R1)
 NEXT()
 
 defvar(b'LATEST', LATEST, initial=LINK)
+# Later link to actual last value/label.
+
+
 
 label(QUIT)
 
