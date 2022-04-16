@@ -476,8 +476,10 @@ class Assembler:
         self.here = 0
 
         self.context = Context(self.symbol_table)
+        # wtf w/ builtins?
         self.context['print'] = print
         self.context['len'] = len
+        self.context['ord'] = ord
         self.context['globals'] = globals
         self.context['bytes'] = bytes
         self.context['range'] = range

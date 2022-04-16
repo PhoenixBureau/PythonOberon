@@ -8,6 +8,7 @@ RETURN_STACK = 0x6000
 R0, R1, R2 = 0, 1, 2
 next_function = 3
 codeword = 4
+word_counter = 5
 IP = 14
 Dstack = 10
 Rstack = 12
@@ -204,9 +205,11 @@ label(WORD_BUFFER, reserves=32)
 
 defcode(b'WORD', WORD)
 Mov_imm(R1, _KEY)
+label(_word_key)
 T_link(R1)
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
-
+Sub_imm(R2, R0, ord(' '))
+EQ_imm(_word_key)
 
 
 label(QUIT)
