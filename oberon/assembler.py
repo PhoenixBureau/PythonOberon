@@ -25,6 +25,7 @@ Assembler
 '''
 from collections import defaultdict
 from struct import pack
+from pickle import dump
 
 from oberon.util import bint, s_to_u_32
 
@@ -68,9 +69,9 @@ def assemble_file(in_fn, out_fn, sym_fn=None):
     with open(out_fn, 'wb') as f:
         f.write(data)
 
-##    if sym_fn is not None:
-##        with open(sym_fn, 'w', encoding='UTF_8') as f:
-##            pass
+    if sym_fn is not None:
+        with open(sym_fn, 'wb') as f:
+            dump((a.symbol_table, a.data_addrs), f)
 
 
 

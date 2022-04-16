@@ -4,7 +4,8 @@ from pprint import pformat
 
 fn = '/usr/home/sforman/src/PythonOberon/oberonforth.py'
 ofn = '/usr/home/sforman/src/PythonOberon/oberonforth.bin'
-assemble_file(fn, ofn)
+pfn = '/usr/home/sforman/src/PythonOberon/oberonforth.symbols'
+assemble_file(fn, ofn, pfn)
 
 a = Assembler()
 p = a(compile(open(fn).read(), fn, 'exec'))
