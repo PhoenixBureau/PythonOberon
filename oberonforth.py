@@ -9,6 +9,7 @@ R0, R1, R2 = 0, 1, 2
 next_function = 3
 codeword = 4
 word_counter = 5
+word_pointer = 6
 IP = 14
 Dstack = 10
 Rstack = 12
@@ -204,41 +205,51 @@ T(15)  # return
 label(WORD_BUFFER, reserves=32)
 
 defcode(b'WORD', WORD)
+
+# call _KEY
 Mov_imm(R1, _KEY)
 label(_word_key)
 T_link(R1)
+
+# Get a byte from the serial port.
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+
+# Is it a space char?
 Sub_imm(R2, R0, ord(' '))
-EQ_imm(_word_key)
+EQ_imm(_word_key)  # then get another char
+
+# Set up buffer and counter.
+label(_a_key)
+Mov_imm(word_pointer, WORD_BUFFER)
+Mov_imm(word_counter, 0)
+
+# I think we're going to want to put the length in the first
+# byte of the buffer to make word-by-word comparison easier?
+# (For finding words in the dictionary.)
+
+# Have we overflowed the buffer yet?
+label(_find_length)
+Sub_imm(R2, word_counter, 32)
+EQ_imm(_a_key)  # then reset word and try again.
+
+# Save the char to the buffer
+Store_byte(R0, word_pointer)
+Add_imm(word_pointer, word_pointer, 1)
+Add_imm(word_counter, word_counter, 1)
+
+# Get the next character, breaking if it's a space.
+T_link(R1)  # Still points to _KEY
+Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+# Is it a space char?
+Sub_imm(R2, R0, ord(' '))
+NE_imm(_find_length)  # No, keep getting chars to the buffer
+
+# Otherwise, if it's a space, push the length and return.
+PUSH(word_counter)
+NEXT()
 
 
 label(QUIT)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
