@@ -164,14 +164,18 @@ PUSH(R0)
 NEXT()
 
 defcode(b'KEY', KEY)
-busywait_on_serial_ready()
+##busywait_on_serial_ready()
+Mov_imm(R1, _KEY)
+T_link(R1)
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 PUSH(R0)
 NEXT()
 
 defcode(b'EMIT', EMIT)
 POP(R0)
-busywait_on_serial_ready()
+##busywait_on_serial_ready()
+Mov_imm(R1, _KEY)
+T_link(R1)
 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 NEXT()
 
@@ -184,6 +188,24 @@ NEXT()
 
 defvar(b'LATEST', LATEST, initial=LINK)
 # Later link to actual last value/label.
+
+
+label(_KEY)
+# subroutine to busywait on serial port status.
+# Sets R1 to point to SERIAL_STATUS i/o port.
+# Clobbers R2.
+move_immediate_word_to_register(R1, SERIAL_STATUS)
+Load_word(R2, R1, 0)
+EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
+T(15)  # return
+
+
+label(WORD_BUFFER, reserves=32)
+
+defcode(b'WORD', WORD)
+Mov_imm(R1, _KEY)
+T_link(R1)
+Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
 
 
