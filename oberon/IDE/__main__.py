@@ -23,7 +23,7 @@ import importlib
 
 
 w = oberon.IDE.widgets.DebugApp()
-w.font['family'] = 'Iosevka Term'
+w.font['family'] = 'Inconsolata'
 w.font['size'] = 12
 ##w.set_symbols('./symbols.txt')
 if '-n' not in argv:
