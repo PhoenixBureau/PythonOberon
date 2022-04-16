@@ -22,12 +22,6 @@
 Assembler
 =========================================
 
-A very simple "assembler".  Really it's just a collection of routines to
-generate binary order codes for debugging.
-
-There's also a simple "disassembler" for Wirth RISC binary machine codes.
-Currently only the crudest decoding is performed on a single instruction
-(no extra information is used, in particular symbols are not supported.)
 '''
 from collections import defaultdict
 from struct import pack
@@ -35,11 +29,12 @@ from struct import pack
 from oberon.util import bint, s_to_u_32
 
 
-def assemble_file(in_fn, out_fn):
+def assemble_file(in_fn, out_fn, sym_fn=None):
     with open(in_fn, 'rb') as f:
         text = f.read()
     code = compile(text, in_fn, 'exec')
-    p = Assembler()(code)
+    a = Assembler()
+    p = a(code)
 
     # This is the bootloader function that will load the binary over teh serial line:
     #
@@ -72,6 +67,10 @@ def assemble_file(in_fn, out_fn):
     data = pack(f'<{len(P)}I', *P)
     with open(out_fn, 'wb') as f:
         f.write(data)
+
+##    if sym_fn is not None:
+##        with open(sym_fn, 'w', encoding='UTF_8') as f:
+##            pass
 
 
 
@@ -479,6 +478,7 @@ class Assembler:
         self.context = Context(self.symbol_table)
         self.context['print'] = print
         self.context['len'] = len
+        self.context['globals'] = globals
         self.context['bytes'] = bytes
         self.context['range'] = range
         self.context['isinstance'] = isinstance

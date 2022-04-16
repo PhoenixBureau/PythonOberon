@@ -91,17 +91,36 @@ def defcode(name, LABEL, flags=0):
     dw(HERE() + 4)  # codeword points to ASM immediately following.
 
 
+def defvar(name, LABEL, flags=0, initial=0):
+    '''
+    Define a variable word.
+    '''
+    LABEL_var = globals()[LABEL.name + '_var']
+    defcode(name, LABEL, flags)
+    Mov_imm(R0, LABEL_var)
+    PUSH(R0)
+    NEXT()
+    label(LABEL_var)
+    dw(initial)
+
+
 def HIGH(i):
-  return (i >> 16) & 0xFFFF
+    return (i >> 16) & 0xFFFF
 
 
 def LOW(i):
-  return i & 0xFFFF
+    return i & 0xFFFF
 
 
 def move_immediate_word_to_register(reg, word):
-  Mov_imm(reg, HIGH(word), u=1)
-  Ior_imm(reg, reg, LOW(word))
+    Mov_imm(reg, HIGH(word), u=1)
+    Ior_imm(reg, reg, LOW(word))
+
+
+def busywait_on_serial_ready():
+    move_immediate_word_to_register(R1, SERIAL_STATUS)
+    Load_word(R2, R1, 0)
+    EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
 
 
 negative_offset_24 = lambda n: s_to_u_32(n) & 0xffffff
@@ -144,19 +163,29 @@ Add_imm(IP, IP, 4)                  # IP += 4
 PUSH(R0)
 NEXT()
 
+defcode(b'KEY', KEY)
+busywait_on_serial_ready()
+Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+PUSH(R0)
+NEXT()
+
 defcode(b'EMIT', EMIT)
-# Get TOS into a R0.
 POP(R0)
-# Busy-wait on serial ready.
-move_immediate_word_to_register(R1, SERIAL_STATUS)
-Load_word(R2, R1, 0)
-EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
-# R0 -> RAM[SERIAL_PORT]
+busywait_on_serial_ready()
 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 NEXT()
 
+defcode(b'SWAP', SWAP)
+POP(R0)
+Load_word(1, 10)
+Store_word(0, 10)
+PUSH(R1)
+NEXT()
+
+defvar(b'LATEST', LATEST, initial=LINK)
 
 label(QUIT)
+
 
 
 
