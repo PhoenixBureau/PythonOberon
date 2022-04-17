@@ -381,7 +381,8 @@ class RISC(object):
     for i in range(lower, location + number):
       label = '%8s' % syms.get(i, ' ' * label_len)[:label_len]
       h = '>' if i == location else ' '
-      print(h, label, hex(i), dis(self.ram[i << 2]), file=to_file)
+      i <<= 2
+      print(h, label, hex(i), dis(self.ram[i]), file=to_file)
 
   def dump_rom(self, to_file, location=None, number=10):
     '''
