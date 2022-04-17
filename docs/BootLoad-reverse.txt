@@ -107,52 +107,57 @@
                                                         (* ---------- disk ------------*)
 
                                                           PROCEDURE SPIIdle(n: INTEGER); (*send n FFs slowly with no card selected*)
-                                                          BEGIN SYSTEM.PUT(spiCtrl, 0);
-                                                            WHILE n > 0 DO DEC(n); SYSTEM.PUT(spiData, -1);
-                                                              REPEAT UNTIL SYSTEM.BIT(spiCtrl, 0)
-                                                            END
-                                                          END SPIIdle;
 0x3ffffe42 - 0x0042 : sub R[14] <- R[14] 0x8 immediate
 0x3ffffe43 - 0x0043 : store R[15] -> ram[R[14]]
 0x3ffffe44 - 0x0044 : store R[0] -> ram[R[14] + 0x4]
+                                                          BEGIN
+                                                            SYSTEM.PUT(spiCtrl, 0);
 0x3ffffe45 - 0x0045 : mov R[0] <- 0xffffffd4
 0x3ffffe46 - 0x0046 : mov R[1] <- 0x0
 0x3ffffe47 - 0x0047 : store R[1] -> ram[R[0]]
+                                                            WHILE n > 0 DO
 0x3ffffe48 - 0x0048 : load R[0] <- ram[R[14] + 0x4]
 0x3ffffe49 - 0x0049 : sub R[0] <- R[0] 0x0 immediate
 0x3ffffe4a - 0x004a : BR LE 0xb immediate
+                                                              DEC(n);
 0x3ffffe4b - 0x004b : load R[0] <- ram[R[14] + 0x4]
 0x3ffffe4c - 0x004c : sub R[0] <- R[0] 0x1 immediate
 0x3ffffe4d - 0x004d : store R[0] -> ram[R[14] + 0x4]
+                                                              SYSTEM.PUT(spiData, -1);
 0x3ffffe4e - 0x004e : mov R[0] <- 0xffffffd0
 0x3ffffe4f - 0x004f : mov R[1] <- 0xffffffff
 0x3ffffe50 - 0x0050 : store R[1] -> ram[R[0]]
+                                                              REPEAT UNTIL SYSTEM.BIT(spiCtrl, 0)
 0x3ffffe51 - 0x0051 : mov R[0] <- 0xffffffd4
 0x3ffffe52 - 0x0052 : load R[0] <- ram[R[0]]
 0x3ffffe53 - 0x0053 : ror R[0] <- R[0] 0x1 immediate
 0x3ffffe54 - 0x0054 : BR PL -0x4 immediate
+                                                            END
 0x3ffffe55 - 0x0055 : BR T -0xe immediate
+                                                          END SPIIdle;
 0x3ffffe56 - 0x0056 : load R[15] <- ram[R[14]]
 0x3ffffe57 - 0x0057 : add R[14] <- R[14] 0x8 immediate
 0x3ffffe58 - 0x0058 : BR T R[15]
 -----------------------------------------------------------------------------------------------------------
                                                           PROCEDURE SPI(n: INTEGER); (*send&rcv byte slowly with card selected*)
-                                                          BEGIN SYSTEM.PUT(spiCtrl, CARD0); SYSTEM.PUT(spiData, n);
-                                                            REPEAT UNTIL SYSTEM.BIT(spiCtrl, 0)
-                                                          END SPI;
 0x3ffffe59 - 0x0059 : sub R[14] <- R[14] 0x8 immediate
 0x3ffffe5a - 0x005a : store R[15] -> ram[R[14]]
 0x3ffffe5b - 0x005b : store R[0] -> ram[R[14] + 0x4]
+                                                          BEGIN 
+                                                            SYSTEM.PUT(spiCtrl, CARD0);
 0x3ffffe5c - 0x005c : mov R[0] <- 0xffffffd4
 0x3ffffe5d - 0x005d : mov R[1] <- 0x1
 0x3ffffe5e - 0x005e : store R[1] -> ram[R[0]]
+                                                            SYSTEM.PUT(spiData, n);
 0x3ffffe5f - 0x005f : mov R[0] <- 0xffffffd0
 0x3ffffe60 - 0x0060 : load R[1] <- ram[R[14] + 0x4]
 0x3ffffe61 - 0x0061 : store R[1] -> ram[R[0]]
+                                                            REPEAT UNTIL SYSTEM.BIT(spiCtrl, 0)
 0x3ffffe62 - 0x0062 : mov R[0] <- 0xffffffd4
 0x3ffffe63 - 0x0063 : load R[0] <- ram[R[0]]
 0x3ffffe64 - 0x0064 : ror R[0] <- R[0] 0x1 immediate
 0x3ffffe65 - 0x0065 : BR PL -0x4 immediate
+                                                          END SPI;
 0x3ffffe66 - 0x0066 : load R[15] <- ram[R[14]]
 0x3ffffe67 - 0x0067 : add R[14] <- R[14] 0x8 immediate
 0x3ffffe68 - 0x0068 : BR T R[15]
@@ -160,13 +165,30 @@
                                                           PROCEDURE SPICmd(n, arg: INTEGER);
                                                             VAR i, data, crc: INTEGER;
                                                           BEGIN (*send cmd*)
-                                                            REPEAT SPIIdle(1); SYSTEM.GET(spiData, data) UNTIL data = 255; (*flush while unselected*)
-                                                            REPEAT SPI(255); SYSTEM.GET(spiData, data) UNTIL data = 255; (*flush while selected*)
-                                                            IF n = 8 THEN crc := 135 ELSIF n = 0 THEN crc := 149 ELSE crc := 255 END;
+                                                            REPEAT
+                                                              SPIIdle(1);
+                                                              SYSTEM.GET(spiData, data)
+                                                            UNTIL data = 255; (*flush while unselected*)
+                                                            REPEAT
+                                                              SPI(255);
+                                                              SYSTEM.GET(spiData, data)
+                                                            UNTIL data = 255; (*flush while selected*)
+                                                            IF n = 8 THEN
+                                                              crc := 135
+                                                            ELSIF n = 0 THEN
+                                                              crc := 149
+                                                            ELSE crc := 255 END;
                                                             SPI(n MOD 64 + 64); (*send command*)
-                                                            FOR i := 24 TO 0 BY -8 DO SPI(ROR(arg, i)) END; (*send arg*)
-                                                            SPI(crc); i := 32;
-                                                            REPEAT SPI(255); SYSTEM.GET(spiData, data); DEC(i) UNTIL (data < 80H) OR (i = 0)
+                                                            FOR i := 24 TO 0 BY -8 DO
+                                                              SPI(ROR(arg, i))
+                                                            END; (*send arg*)
+                                                            SPI(crc);
+                                                            i := 32;
+                                                            REPEAT
+                                                              SPI(255);
+                                                              SYSTEM.GET(spiData, data);
+                                                              DEC(i)
+                                                            UNTIL (data < 80H) OR (i = 0)
                                                           END SPICmd;
 0x3ffffe69 - 0x0069 : sub R[14] <- R[14] 0x18 immediate
 0x3ffffe6a - 0x006a : store R[15] -> ram[R[14]]
@@ -239,9 +261,11 @@
 -----------------------------------------------------------------------------------------------------------
                                                           PROCEDURE InitSPI;
                                                             VAR res, data: INTEGER;
-                                                          BEGIN SPIIdle(9); (*first, idle for at least 80 clks*)
+                                                          BEGIN
+                                                            SPIIdle(9); (*first, idle for at least 80 clks*)
                                                             SPICmd(0, 0); (*CMD0 when card selected, sets MMC SPI mode*)
-                                                            SPICmd(8, 1AAH); SPI(-1); SPI(-1); SPI(-1); (*CMD8 for SD cards*)
+                                                            SPICmd(8, 1AAH);
+                                                            SPI(-1); SPI(-1); SPI(-1); (*CMD8 for SD cards*)
                                                             REPEAT (*until card becomes ready*)
                                                               (*ACMD41, optionally with high-capacity (HCS) bit set, starts init*)
                                                               SPICmd(55, 0); (*APP cmd follows*)
@@ -251,7 +275,8 @@
                                                               SPIIdle(10000)
                                                             UNTIL res = 0;
                                                             (*CMD16 set block size as a precaution (should default)*)
-                                                            SPICmd(16, 512); SPIIdle(1)
+                                                            SPICmd(16, 512);
+                                                            SPIIdle(1)
                                                           END InitSPI;
 0x3ffffead - 0x00ad : sub R[14] <- R[14] 0xc immediate
 0x3ffffeae - 0x00ae : store R[15] -> ram[R[14]]
