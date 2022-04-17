@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+#
+#    Copyright © 2019 Simon Forman
+#
+#    This file is part of PythonOberon
+#
+#    PythonOberon is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    PythonOberon is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
+#
 from pkg_resources import resource_filename
 from io import BytesIO
 from oberon.bootloader import bootloader
@@ -47,8 +66,11 @@ def strfi(fn):
         return BytesIO(file_obj.read())
 
 
-def newcpu():
-    cpu = make_cpu(strfi(DISKIMG), strfi(FILLSCR))
+def newcpu(disk_filename=DISKIMG, serial_input_filename=FILLSCR):
+    cpu = make_cpu(
+        strfi(disk_filename),
+        strfi(serial_input_filename),
+        )
     cpu.breakpoints = 'PC == 0'
     cpu.watches = ''
     cpu.decode(0)  # Ensure that all attributes of the cpu have been created.

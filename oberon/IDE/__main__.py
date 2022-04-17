@@ -17,20 +17,24 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
-import oberon.IDE.widgets
 from sys import argv
 import importlib
 
+from oberon.IDE.newcpu import newcpu
+from oberon.IDE.widgets import DebugApp
 
-w = oberon.IDE.widgets.DebugApp()
-w.font['family'] = 'Inconsolata'
-w.font['size'] = 12
-##w.set_symbols('./symbols.txt')
+
+cpu = newcpu()
+app = DebugApp(cpu)
+app.font['family'] = 'Inconsolata'
+app.font['size'] = 14
+
+# app.set_symbols('./symbols.txt')
 if '-n' not in argv:
-    w.tk.mainloop()
+    app.tk.mainloop()
 
 
-def newapp():
-    import oberon.IDE.widgets
-    importlib.reload(oberon.IDE.widgets)
-    return oberon.IDE.widgets.DebugApp()
+##def newapp():
+##    import oberon.IDE.widgets
+##    importlib.reload(oberon.IDE.widgets)
+##    return oberon.IDE.widgets.DebugApp()
