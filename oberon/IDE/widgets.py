@@ -150,6 +150,7 @@ class DebugApp(object):
         self.breakpoints.reset_text(self.cpu.breakpoints)
 
         self.syms = {}
+        self.data_addrs = set()
 
         self.copy_cpu_values()
 
@@ -165,14 +166,14 @@ class DebugApp(object):
         self.step104_button.pack(side=LEFT)
         self.save_button.pack(side=LEFT)
 
-    def set_symbols(self, filename):
+    def set_symbols(self, symbol_table, data_addrs):
         syms = {}
-        with open(filename, 'r') as f:
-            for line in f:
-                name, sep, address = line.strip().partition('-')
-                if sep:
-                    syms[int(address) >> 2] = name
+        for name, address in symbol_table.items():
+            #syms[int(address) >> 2] = name
+            syms[address >> 2] = name
         self.syms = syms
+        self.data_addrs = data_addrs
+##        self.copy_cpu_values()
 
     def step(self, event=None):
         if not self._break:

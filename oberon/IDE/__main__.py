@@ -20,16 +20,19 @@
 from sys import argv
 import importlib
 
+from oberon.util import load_syms
 from oberon.IDE.newcpu import newcpu
 from oberon.IDE.widgets import DebugApp
 
+SERIAL_INPUT = '/home/sforman/src/PythonOberon/oberonforth.bin'
+SYMBOLS = '/home/sforman/src/PythonOberon/oberonforth.symbols'
 
-cpu = newcpu()
+cpu = newcpu(serial_input_filename=SERIAL_INPUT)
 app = DebugApp(cpu)
+app.set_symbols(*load_syms(SYMBOLS))
 app.font['family'] = 'Inconsolata'
 app.font['size'] = 14
 
-# app.set_symbols('./symbols.txt')
 if '-n' not in argv:
     app.tk.mainloop()
 

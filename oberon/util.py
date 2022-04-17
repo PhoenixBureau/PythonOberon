@@ -24,7 +24,15 @@ Utilities
 
 '''
 from math import log, floor
+from pickle import load
 from struct import pack, unpack
+
+
+def load_syms(fn):
+  with open(fn, 'rb') as f:
+    symbol_table, data_addrs = load(f)
+  return symbol_table, data_addrs
+
 
 
 class binary_addressing_mixin(object):
