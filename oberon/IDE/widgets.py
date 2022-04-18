@@ -53,7 +53,6 @@ and you can change the `font properties <https://effbot.org/tkinterbook/tkinter-
 '''
 from tkinter import (
     Tk,
-
     Button,
     Checkbutton,
     Entry,
@@ -65,7 +64,6 @@ from tkinter import (
     Scrollbar,
     StringVar,
     Text,
-
     BOTH,
     LEFT,
     RIGHT,
@@ -79,7 +77,7 @@ from tkinter import (
     W,
     X,
     Y,
-    )
+)
 import tkinter.font, tkinter.filedialog, tkinter.messagebox
 
 from glob import iglob
@@ -93,7 +91,9 @@ from oberon.IDE.newcpu import newcpu
 from oberon.risc import ROMStart, MemSize, MemWords
 
 
-_DEFAULT_GRID_OPTS = dict(sticky=N+E+W+S, padx=1, pady=1, ipadx=3, ipady=3)
+_DEFAULT_GRID_OPTS = dict(
+    sticky=N + E + W + S, padx=1, pady=1, ipadx=3, ipady=3
+)
 
 
 class DebugApp(object):
@@ -108,14 +108,18 @@ class DebugApp(object):
         self.frame = Frame(self.tk)
         self.frame.pack()
 
-        self.register_frame = LabelFrame(self.frame, text='Registers', font=self.font)
+        self.register_frame = LabelFrame(
+            self.frame, text='Registers', font=self.font
+        )
 
         self.register_widgets = [
             self._register(self.register_frame, 'R%i' % i, i // 8, i % 8)
             for i in range(16)
         ]
 
-        self.specials = LabelFrame(self.frame, text='Specials', font=self.font)
+        self.specials = LabelFrame(
+            self.frame, text='Specials', font=self.font
+        )
 
         self.PC = self._register(self.specials, 'PC:')
         self.H = self._register(self.specials, 'H:', row=1)
@@ -134,17 +138,26 @@ class DebugApp(object):
         self._break = False
 
         # Bind from here to pass cpu.
-        self.watch.text.bind('<Button-3>', lambda _: self.watch.update(self.cpu))
-        self.breakpoints.text.bind('<Button-3>', lambda _: self.breakpoints.check(self.cpu, self.syms))
-        
-        self.register_frame. grid(column=0, row=0,               **_DEFAULT_GRID_OPTS)
-        self.specials.       grid(column=0, row=1,               **_DEFAULT_GRID_OPTS)
-        self.LEDs.     frame.grid(column=0, row=2,               **_DEFAULT_GRID_OPTS)
-        self.pj.             grid(column=0, row=3,               **_DEFAULT_GRID_OPTS)
-        self.ram_inspector.  grid(column=1, row=0, columnspan=2, **_DEFAULT_GRID_OPTS)
-        self.breakpoints.    grid(column=1, row=1, rowspan=2,    **_DEFAULT_GRID_OPTS)
-        self.controls.       grid(column=1, row=3,               **_DEFAULT_GRID_OPTS)
-        self.watch.          grid(column=2, row=1, rowspan=2,    **_DEFAULT_GRID_OPTS)
+        self.watch.text.bind(
+            '<Button-3>', lambda _: self.watch.update(self.cpu)
+        )
+        self.breakpoints.text.bind(
+            '<Button-3>',
+            lambda _: self.breakpoints.check(self.cpu, self.syms),
+        )
+
+        self.register_frame.grid(column=0, row=0, **_DEFAULT_GRID_OPTS)
+        self.specials.grid(column=0, row=1, **_DEFAULT_GRID_OPTS)
+        self.LEDs.frame.grid(column=0, row=2, **_DEFAULT_GRID_OPTS)
+        self.pj.grid(column=0, row=3, **_DEFAULT_GRID_OPTS)
+        self.ram_inspector.grid(
+            column=1, row=0, columnspan=2, **_DEFAULT_GRID_OPTS
+        )
+        self.breakpoints.grid(
+            column=1, row=1, rowspan=2, **_DEFAULT_GRID_OPTS
+        )
+        self.controls.grid(column=1, row=3, **_DEFAULT_GRID_OPTS)
+        self.watch.grid(column=2, row=1, rowspan=2, **_DEFAULT_GRID_OPTS)
 
         self.watch.reset_text(self.cpu.watches)
         self.breakpoints.reset_text(self.cpu.breakpoints)
@@ -157,10 +170,30 @@ class DebugApp(object):
     def _make_controls(self):
         self.tk.bind('<Control-space>', self.step)
         self.controls = Frame(self.frame)
-        self.step_button = Button(self.controls, text='>', font=self.font, command=lambda: self._step())
-        self.step10_button = Button(self.controls, text='10>>', font=self.font, command=lambda: self._step(10))
-        self.step104_button = Button(self.controls, text='10^4>>', font=self.font, command=lambda: self._step(10**4))
-        self.save_button = Button(self.controls, text='Save', font=self.font, command=self.pj.save_pickle)
+        self.step_button = Button(
+            self.controls,
+            text='>',
+            font=self.font,
+            command=lambda: self._step(),
+        )
+        self.step10_button = Button(
+            self.controls,
+            text='10>>',
+            font=self.font,
+            command=lambda: self._step(10),
+        )
+        self.step104_button = Button(
+            self.controls,
+            text='10^4>>',
+            font=self.font,
+            command=lambda: self._step(10**4),
+        )
+        self.save_button = Button(
+            self.controls,
+            text='Save',
+            font=self.font,
+            command=self.pj.save_pickle,
+        )
         self.step_button.pack(side=LEFT)
         self.step10_button.pack(side=LEFT)
         self.step104_button.pack(side=LEFT)
@@ -169,11 +202,12 @@ class DebugApp(object):
     def set_symbols(self, symbol_table, data_addrs):
         syms = {}
         for name, address in symbol_table.items():
-            #syms[int(address) >> 2] = name
+            # syms[int(address) >> 2] = name
             syms[address >> 2] = name
         self.syms = syms
         self.data_addrs = data_addrs
-##        self.copy_cpu_values()
+
+    ##        self.copy_cpu_values()
 
     def step(self, event=None):
         if not self._break:
@@ -213,7 +247,6 @@ class DebugApp(object):
 
 
 class LabelText(LabelFrame):
-
     def __init__(self, root, label, font, **kw):
         LabelFrame.__init__(self, root, text=label, font=font)
         self.text = Text(self, font=font, relief='flat', **kw)
@@ -225,7 +258,6 @@ class LabelText(LabelFrame):
 
 
 class RAMInspector(LabelText):
-
     def __init__(self, root, font):
         LabelText.__init__(self, root, 'RAM', font, height=13, width=68)
 
@@ -244,22 +276,32 @@ class Watch(LabelText):
         LabelText.__init__(self, root, 'Watch', font, height=5, width=34)
         self.text['wrap'] = 'none'  # TODO: scrollbars
         self.watches = []
-        self.text.tag_config(self.ERR, background='red', bgstipple='gray25')
+        self.text.tag_config(
+            self.ERR, background='red', bgstipple='gray25'
+        )
 
     def update(self, cpu):
         d = dict(cpu.__dict__)
         d['ROMStart'] = ROMStart
 
-        self.text.tag_remove(self.ERR, '0.0', END)  # Clear any error tags.
+        self.text.tag_remove(
+            self.ERR, '0.0', END
+        )  # Clear any error tags.
         text = cpu.watches = self.text.get('0.0', END).rstrip()
         exprs = text.splitlines()
 
         num_exprs = len(exprs)
-        if not (num_exprs == len(self.watches) == len(self.text.window_names())):
+        if not (
+            num_exprs
+            == len(self.watches)
+            == len(self.text.window_names())
+        ):
             while self.watches:
                 self.watches.pop().destroy()
             for line_no in range(1, 1 + num_exprs):
-                e = RegisterWidget(self.text, str(line_no) + ':', self.font)
+                e = RegisterWidget(
+                    self.text, str(line_no) + ':', self.font
+                )
                 self.watches.append(e)
                 self.text.window_create('%i.0' % line_no, window=e)
 
@@ -279,7 +321,9 @@ class Watch(LabelText):
         e.set(value)
 
     def _err_tag_line(self, line_no):
-        self.text.tag_add(self.ERR, '%i.0' % line_no, '%i.0' % (line_no + 1))
+        self.text.tag_add(
+            self.ERR, '%i.0' % line_no, '%i.0' % (line_no + 1)
+        )
 
     def reset_text(self, text):
         LabelText.reset_text(self, text)
@@ -292,9 +336,13 @@ class Breakpoints(LabelText):
     ERR = 'break_error'
 
     def __init__(self, root, font):
-        LabelText.__init__(self, root, 'Breakpoints', font, height=5, width=34)
+        LabelText.__init__(
+            self, root, 'Breakpoints', font, height=5, width=34
+        )
         self.text.tag_config(self.BRK, background='orange')
-        self.text.tag_config(self.ERR, background='red', bgstipple='gray25')
+        self.text.tag_config(
+            self.ERR, background='red', bgstipple='gray25'
+        )
 
     def check(self, cpu, syms):
         d = dict(cpu.__dict__)
@@ -305,7 +353,8 @@ class Breakpoints(LabelText):
         self.text.tag_remove(self.ERR, '0.0', END)
         text = cpu.breakpoints = self.text.get('0.0', END).rstrip()
         for line_no, e in enumerate(text.splitlines(), 1):
-            if not e.strip(): continue  # filter blank lines.
+            if not e.strip():
+                continue  # filter blank lines.
             try:
                 value = eval(e, d)
             except:
@@ -326,14 +375,16 @@ class FlagWidget(Frame):
 
     def __init__(self, root, label_text, font):
         Frame.__init__(self, root)
-        
+
         Label(  # I want the label on the left, Checkbox widget built-in labels are on the right only.
             self,
             anchor=E,
             font=font,
             text=label_text,
             width=3,
-            ).pack(side=LEFT)
+        ).pack(
+            side=LEFT
+        )
 
         self.value = IntVar(self, value=0)
         'Call the set method of this IntVar with 0 or 1.'
@@ -349,8 +400,12 @@ class RegisterWidget(Frame):
 
     FORMATS = [
         '%08x',
-        (lambda n: (lambda s:    '%s:%s'    % (       s[ :4], s[4: ]       ))('%08x' % n)),
-        (lambda n: (lambda s: '%s:%s:%s:%s' % (s[:2], s[2:4], s[4:6], s[6:]))('%08x' % n)),
+        (lambda n: (lambda s: '%s:%s' % (s[:4], s[4:]))('%08x' % n)),
+        (
+            lambda n: (
+                lambda s: '%s:%s:%s:%s' % (s[:2], s[2:4], s[4:6], s[6:])
+            )('%08x' % n)
+        ),
         '%i',
         (lambda n: hex(n).rstrip('Ll')),
     ]
@@ -379,7 +434,7 @@ class RegisterWidget(Frame):
             font=font,
             text=label_text,
             width=3,
-            ).pack(side=LEFT)
+        ).pack(side=LEFT)
 
         self.label = Entry(
             self,
@@ -387,7 +442,7 @@ class RegisterWidget(Frame):
             textvariable=self.value,
             state="readonly",
             width=12,
-            )
+        )
         'Display the register value.'
 
         self.label.bind('<Button-3>', self.toggle_format)
@@ -411,7 +466,9 @@ class RegisterWidget(Frame):
 
     def toggle_format(self, event=None):
         '''Switch to the next formatter.'''
-        self.current_format = (self.current_format + 1) % len(self.FORMATS)
+        self.current_format = (self.current_format + 1) % len(
+            self.FORMATS
+        )
         self.set(self._value)
 
 
@@ -508,7 +565,6 @@ class PickleJar(Frame):
 
 
 class LEDsAndSwitches(object):
-
     def __init__(self, app, font):
         self.app = app
         self.frame = LabelFrame(
@@ -540,7 +596,7 @@ class LEDsAndSwitches(object):
 
             self.LEDs.append(LED_var)
             self.switches.append(switch_var)
-        
+
         self._monkey_patch_LED_write(self.app.cpu)
 
     def _monkey_patch_LED_write(self, cpu):
@@ -576,13 +632,12 @@ class LEDsAndSwitches(object):
         if self.switches[i].get():  # Switch is on.
             self.app.cpu.io_ports[4].switches |= 1 << i
         else:
-            self.app.cpu.io_ports[4].switches &= 0xff ^ (1 << i)
+            self.app.cpu.io_ports[4].switches &= 0xFF ^ (1 << i)
         print('switches', bin(self.app.cpu.io_ports[4].switches))
 
 
 class ScrollingListbox(Frame):
-
-    def  __init__(self, root, font, **kw):
+    def __init__(self, root, font, **kw):
         Frame.__init__(self, root, bd=2, relief=SUNKEN)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -593,8 +648,8 @@ class ScrollingListbox(Frame):
             bd=0,
             listvariable=self.variable,
             yscrollcommand=self.scrollbar.set,
-            **kw
+            **kw,
         )
         self.scrollbar.config(command=self.listbox.yview)
-        self.listbox.grid(row=0, column=0, sticky=N+E+W+S)
-        self.scrollbar.grid(row=0, column=1, sticky=N+E+S)
+        self.listbox.grid(row=0, column=0, sticky=N + E + W + S)
+        self.scrollbar.grid(row=0, column=1, sticky=N + E + S)
