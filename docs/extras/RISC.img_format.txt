@@ -1,0 +1,142 @@
+
+  [Oberon] RISC.img format
+
+From Paul Reed to Oberon mailing list
+Sat Feb 13 12:24:46 CET 2016
+
+------------------------------------------------------------------------
+
+Dear Oberoners,
+
+I've been asked a couple of questions about the RISC.img SD-Card image
+downloadable from http://projectoberon.com <http://projectoberon.com/>
+for the FPGA RISC5 Oberon systems.  (If you can, please post questions
+publically rather than emailing me privately - otherwise I have to assume
+it's a private matter which is more time-consuming to deal with - if I
+can ever get to it - and doesn't benefit others.)
+
+The RISC Oberon system boots from an SD-Card and uses it as its file
+system.  This filesystem is much simpler than common contemporary
+filesystems such as FAT, FAT32, NTFS, exFAT, EXT4 etc. and is not in any
+way compatible.  (On the original Ceres, the backup floppy disk format
+was very close to the FAT12 format, but with an altered directory to cope
+with long filenames, which were not in those days supported on FAT).
+
+It would have been easy to make the RISC5 Oberon filesystem (including
+its reserved area for the bootfile) begin at offset 0 from the beginning
+of the SD-Card.  This would have dedicated the SD-Card to Oberon use, but
+simplified the bootloader.
+
+Or alternatively, the Oberon filesystem could have perhaps been stored as
+a file in the FAT filesystem on the SD-Card, making it much more
+accessible to utilities running on other computers.  But this convenience
+would have come at a high cost: it would have made the bootloader much
+more complicated, and given many more possibilities for distracting
+problems in development.
+
+In the end, it was decided to place the Oberon filesystem at a fixed
+offset from the beginning of the disk.  This was a trivial change to the
+bootloader, keeping it easily-understandable and within one block ram
+(BRAM) of the FPGA.
+
+This meant that FAT-compatible data structures, and a reasonable-size and
+perhaps useful (256MB) FAT partition could still exist at the beginning
+of the disk.  If this FAT partition has nothing in it, it compresses very
+well and therefore does not significantly increase the RISC.img download
+time.
+
+The MBR partition id for the Oberon filesystem was chosen as 0FFh,
+because the ids are historically rather a free-for-all and the filesystem
+is not exactly the same format as any that have gone before, even the ETH
+PC-based Oberon filesystems.  0FFh is clearly an arbitrary value, and
+also was only used by others for private data structures rather than for
+filesystems which were interoperable amongst systems.
+
+Note that a lot of the motivation for this was defensive.  For example it
+makes it more difficult for the Oberon filesystem to be destroyed when
+the SD-Card is inserted in a Windows system.
+
+When submitting some early additions to Peter de Wachter's RISC emulator
+
+https://github.com/pdewacht/oberon-risc-emu <https://github.com/pdewacht/oberon-risc-emu>
+
+for emulated RS232 file transfer which he kindly incorporated, I also
+included a quick check on startup which allows the use of a disk image
+which only contains the Oberon file system (called .OBERON.FS in the
+Windows binary distribution of the emulator which I put on
+http://projectoberon.com <http://projectoberon.com/>).
+
+This check is for the magic number 9B1EA38DH (FileDir.DirMark) which is
+at the beginning of the root directory sector.  Oberon uses a "parity"
+scheme for sector numbers, making all of them divisible by 29, so the
+first usable Oberon sector, number 29, begins at SD-Card sector offset
+80002H.  This slightly odd value comes from the fact that SD-Cards have
+512-byte sectors, but Oberon uses two of these (1K) for each Oberon
+sector, and that sector 0 is not used.
+
+So if you are using a nice operating system and you know what you are
+doing (because it allows dangerous commands such as dd) you can extract
+the Oberon file system from the image with a command like (262145 =
+40001H = 80002H * 512 DIV 1024)
+
+  dd if=RISC.img of=.OBERON.FS  obs=1024 ibs=1024 skip=262145
+
+and you can even (sudo) write it directly back to a real SD-Card with
+something like
+
+  dd if=.OBERON.FS of=/dev/disk1 obs=1024 ibs=1024 seek=262145
+
+The name .OBERON.FS was chosen to make it look like a system file, which
+would be totally destroyed if someone opened it and saved it with a text
+editor, for example.
+
+Hope that's useful!
+Cheers,
+Paul
+
+
+------------------------------------------------------------------------
+More information about the Oberon mailing list
+<https://lists.inf.ethz.ch/mailman/listinfo/oberon>
+
+========================================================================
+  [Oberon] RISC.img format
+
+From: Jörg Straube
+Sun Mar 20 09:20:48 CET 2016
+
+------------------------------------------------------------------------
+
+Hi Tom
+
+the RISC.img is an "normal" ISO file with an MBR. The MBR is populated
+with two partitions.
+
+The first one  (256 MB) is just there and is not used by Oberon at all.
+It can be (re)formatted to any filesystem you like.
+
+The second partition (64 MB) is the Oberon filesystem. It has to be at
+that location (256 MB from the start of the disk) as the Oberon
+bootloader does NOT read the MBR to find the first Oberon sector. It just
+reads directly from a fixed position and reads in some 1K sectors to load
+the system.
+
+The Oberon filesystem is currently limited to 64 MB as  Kernel.Mod keeps
+a fixed sector map (VAR sectorMap) of 64k bit (CONST mapsize) Each bit
+represents a sectior of 1K  --> 64k * 1kB = 64 MB.
+
+64MB is the maximum size an Oberon system can hold. The actual size of
+the few files distributed in RISC.img is much smaller; below 500kB.
+
+If you want to use the rest of your SD card, add a third partition in the
+MBR after the Oberon partition.
+
+I wrote Oberon code to copy files from and to the second partition of
+RISC.img. If your interested, I can send you my code.
+
+Jörg
+
+
+------------------------------------------------------------------------
+More information about the Oberon mailing list
+<https://lists.inf.ethz.ch/mailman/listinfo/oberon>
