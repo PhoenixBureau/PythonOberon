@@ -29,13 +29,13 @@ from oberon.risc import (
     Mouse,
     RISC,
     Serial,
-    )
+)
 
 
 DISKIMG = resource_filename(__name__, '../disk.img')
 FILLSCR = resource_filename(__name__, '../../FILLED.bin')
-#FILLSCR = resource_filename(__name__, '../../fillscreen.bin')
-#FILLSCR = resource_filename(__name__, '../../joy_asmii.bin')
+# FILLSCR = resource_filename(__name__, '../../fillscreen.bin')
+# FILLSCR = resource_filename(__name__, '../../joy_asmii.bin')
 
 
 def make_cpu(disk_image, serial=None):
@@ -69,15 +69,17 @@ def newcpu(disk_filename=DISKIMG, serial_input_filename=FILLSCR):
     cpu = make_cpu(
         strfi(disk_filename),
         strfi(serial_input_filename),
-        )
+    )
     cpu.breakpoints = 'PC == 0'
     cpu.watches = ''
-    cpu.decode(0)  # Ensure that all attributes of the cpu have been created.
+    # Ensure that all attributes of the cpu have been created.
+    cpu.decode(0)
     return cpu
 
 
 if __name__ == '__main__':
     import pickle
+
     cpu = newcpu()
     for _ in range(100):
         cpu.cycle()
