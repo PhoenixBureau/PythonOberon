@@ -28,11 +28,12 @@ class that visualizes the memory-mapped raster display on a PyGame surface.
 
 '''
 from sys import stderr
+
 try:
     import pygame
     from pygame.locals import *
 except ImportError:
-    print('Unable to import pygame.', file=stderr) 
+    print('Unable to import pygame.', file=stderr)
     PYGAME = False
 else:
     PYGAME = True
@@ -42,7 +43,7 @@ else:
 SIZE = WIDTH, HEIGHT = 1024, 768
 'Size of the screen in pixels.'
 
-DISPLAY_START = 0xe7f00
+DISPLAY_START = 0xE7F00
 'RAM address of the start of the memory-mapped raster display.'
 
 DISPLAY_SIZE_IN_BYTES = WIDTH * HEIGHT // 8
@@ -81,7 +82,11 @@ class ScreenRAMMixin(object):
         PyGame screen accordingly.
         '''
         super(ScreenRAMMixin, self).put(address, word)
-        if DISPLAY_START <= address < DISPLAY_START + DISPLAY_SIZE_IN_BYTES:
+        if (
+            DISPLAY_START
+            <= address
+            < DISPLAY_START + DISPLAY_SIZE_IN_BYTES
+        ):
             # Convert byte RAM address to word screen address.
             address = (address - DISPLAY_START) >> 2
             update_screen(self.screen, address, word)
@@ -127,5 +132,5 @@ def update_screen(screen, address, value):
     bit values from the integer ``value``.
     '''
     for coords, bit in zip(coords_of_word(address), bits_of_int(value)):
-        screen.set_at(coords, 0xff * (1 - bit))
+        screen.set_at(coords, 0xFF * (1 - bit))
     display_flip()
