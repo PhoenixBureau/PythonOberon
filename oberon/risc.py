@@ -23,8 +23,44 @@ Emulated Hardware
 ========================================
 
 
+RAM map
+      Addr (bytes)
+    ╔════════════╤══════════════╗
+    ║ 0x00000000   Start of RAM ║
+    ║      .     │              ║
+    ║ 0x000E7F00   DISPLAY_START║
+    ║      .     + 0x18000 bytes║
+    ║      .     or 0x6000 words║
+    ║      .    or 1024x768x1px ║
+    ║ 0x000FFF00  end of display║
+    ║      .     │              ║
+    ║ 0x00180000   MemSize      ║
+    ╟──────────  ┼  ────────────╢
+    ║            │              ║
+    ║          Empty            ║
+    ╟──────────  ┼  ────────────╢
+    ║ 0xFFFFF800   ROMStart     ║
+    ║      .     │              ║
+    ║      .       IO_RANGE     ║
+    ║ 0xFFFFFFC0 | clock        ║
+    ║ 0xffffffc4 | switches/LEDs║
+    ║ 0xffffffc8 | serial data  ║
+    ║ 0xffffffcc | serial status║
+    ║ 0xffffffd0 | SPI data     ║
+    ║ 0xffffffd4 | SPI control  ║
+    ║ 0xffffffd8 | mouse        ║
+    ║      .     │              ║
+    ╚════════════╧══════════════╝
+
+0x2550 ═ ╒ ╔ ╖ ╘ ╚ ╜ ╞
+0x2551 ║ ╓ ╕ ╗ ╙ ╛ ╝ ╟
+
+0x2560 ╠ ╢ ╤ ╦ ╨ ╪ ╬ ╮
+0x2561 ╡ ╣ ╥ ╧ ╩ ╫ ╭ ╯
 '''
+
 import pdb, sys
+from array import array
 from time import time
 from struct import unpack
 from pprint import pformat
@@ -476,7 +512,8 @@ class ByteAddressed32BitRAM(object):
     def __init__(self):
         # Use a dict rather than some array.  Might be woth exploring other
         # datastructures...
-        self.store = {}
+        self.store = array('I', MemWords * b'\0\0\0\0')
+        assert self.store.itemsize == 4
 
     def get(self, addr):
         '''
@@ -484,12 +521,7 @@ class ByteAddressed32BitRAM(object):
         '''
         word_addr, byte_offset = divmod(addr, 4)
         assert not byte_offset, repr(addr)
-        try:
-            value = self.store[word_addr]
-        except KeyError:
-            # Should we log this?
-            value = self.store[word_addr] = 0
-        return value
+        return self.store[word_addr]
 
     __getitem__ = get
 
@@ -509,26 +541,23 @@ class ByteAddressed32BitRAM(object):
         '''
         word_addr, byte_offset = divmod(addr, 4)
         word = self.store[word_addr]
-        return (word >> (8 * byte_offset)) & 255
+        return (word >> (8 * byte_offset)) & 0xFF
 
     def put_byte(self, addr, byte):
         '''
         Set a byte.  Address need not be word-aligned.
         '''
-        if isinstance(byte, str):
-            byte = ord(byte[:1])
-        if not (0 <= byte < 256):
+        # if isinstance(byte, str):
+        #     byte = ord(byte[:1])
+        if not (0 <= byte < 0x100):
             raise ValueError("byte out of range: %i" % (byte,))
 
         word_addr, byte_offset = divmod(addr, 4)
         n = 8 * byte_offset  # How many bits to shift.
         byte <<= n
 
-        try:  # Get the current memory contents, if any.
-            word = self.store[word_addr]
-        except KeyError:  # nothing there yet so
-            pass  # just store shifted byte, or
-        else:  # merge word and shifted byte
+        word = self.store[word_addr]
+        if word:  # merge word and shifted byte
             # AND mask with the memory word to clear the bits for the
             # pre-shifted byte and OR the result with it.
             byte |= word & self.BYTE_MASKS[byte_offset]
