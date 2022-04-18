@@ -30,10 +30,11 @@ from struct import unpack
 from pprint import pformat
 from .disassembler import dis
 from .util import (
-    bint, blong,
+    bint,
+    blong,
     python_int_to_signed_int,
     signed_int_to_python_int,
-    )
+)
 
 
 IO_RANGE = 0x0FFFFFFC0
@@ -44,6 +45,8 @@ MemWords = MemSize // 4
 
 def log(message, *args):
     pass
+
+
 ##  print message % args
 ##  print >> stderr, message % args
 
@@ -94,7 +97,9 @@ class RISC(object):
         else:
             raise Trap('Fetch from bad address 0x%08x' % (self.PC,))
 
-        if instruction == 0xe7ffffff: # REPEAT UNTIL False i.e. halt loop.
+        if (
+            instruction == 0xE7FFFFFF
+        ):  # REPEAT UNTIL False i.e. halt loop.
             raise Trap('REPEAT-UNTIL-False-ing')
 
         return instruction
@@ -135,7 +140,7 @@ class RISC(object):
 
         self.LDR = self.p and (not self.q) and (not self.u)
         self.STR = self.p and (not self.q) and self.u
-        self.BR  = self.p and self.q
+        self.BR = self.p and self.q
 
     def register_instruction(self):
         '''
@@ -180,10 +185,14 @@ class RISC(object):
         # the Q bit is set, otherwise C1 is just set to C0.)
 
         C1 = self.C1 = (
-            (0b11111111111111110000000000000000 | self.imm)
-            if self.v else
-            self.imm
-            ) if self.q else self.C0
+            (
+                (0b11111111111111110000000000000000 | self.imm)
+                if self.v
+                else self.imm
+            )
+            if self.q
+            else self.C0
+        )
 
         if self.MOV:
             # (q ? (~u ? {{16{v}}, imm} : {imm, 16'b0}) :
@@ -199,12 +208,12 @@ class RISC(object):
                         res = self.H
                     else:
                         res = (
-                            self.N << 31 |
-                            self.Z << 30 |
-                            self.C << 29 |
-                            self.OV << 28 |
-                            80
-                            )
+                            self.N << 31
+                            | self.Z << 30
+                            | self.C << 29
+                            | self.OV << 28
+                            | 80
+                        )
 
         # Bit-wise logical operations
 
@@ -215,7 +224,7 @@ class RISC(object):
             C1 &= 31
             res = B >> C1
             if bint(B)[31]:
-                res |= (2**C1 - 1) << (32 - C1) # Extend sign bit.
+                res |= (2**C1 - 1) << (32 - C1)  # Extend sign bit.
 
         elif self.ROR:
             C1 &= 31
@@ -226,7 +235,7 @@ class RISC(object):
             res = B & C1
 
         elif self.ANN:
-            res = B & (0xffffffff ^ C1)
+            res = B & (0xFFFFFFFF ^ C1)
 
         elif self.IOR:
             res = B | C1
@@ -286,31 +295,36 @@ class RISC(object):
         self.R[self.ira] = value[32:0]
         self.N = value[31]
         self.Z = value == 0
-        self.H = (self.product[64:32] if self.MUL
-                            else self.remainder if self.DIV
-                            else self.H)
+        self.H = (
+            self.product[64:32]
+            if self.MUL
+            else self.remainder
+            if self.DIV
+            else self.H
+        )
 
     def branch_instruction(self):
         '''
         Branch instruction.
         '''
         S = self.N ^ self.OV
-        T = ((self.cc == 0) & self.N |
-                 (self.cc == 1) & self.Z |
-                 (self.cc == 2) & self.C |
-                 (self.cc == 3) & self.OV |
-                 (self.cc == 4) & (self.C|self.Z) |
-                 (self.cc == 5) & S |
-                 (self.cc == 6) & (S|self.Z) |
-                 (self.cc == 7)
-                 )
+        T = (
+            (self.cc == 0) & self.N
+            | (self.cc == 1) & self.Z
+            | (self.cc == 2) & self.C
+            | (self.cc == 3) & self.OV
+            | (self.cc == 4) & (self.C | self.Z)
+            | (self.cc == 5) & S
+            | (self.cc == 6) & (S | self.Z)
+            | (self.cc == 7)
+        )
         if self.IR[27]:
             T = not T
         if not T:
             self.pcnext = self.PC + 1
             return
 
-        if self.v: # Save link
+        if self.v:  # Save link
             self.R[15] = (self.PC + 1) << 2
 
         if self.u:
@@ -323,7 +337,9 @@ class RISC(object):
         '''
         RAM read/write instruction.
         '''
-        self.addr = addr = int(self.R[self.irb] + self._sign_extend_offset())
+        self.addr = addr = int(
+            self.R[self.irb] + self._sign_extend_offset()
+        )
 
         if addr >= IO_RANGE:
             self.io(addr - IO_RANGE)
@@ -341,9 +357,9 @@ class RISC(object):
         self.pcnext = self.PC + 1
 
     def _sign_extend_offset(self):
-        off = bint(self.off & 0xfffff)
+        off = bint(self.off & 0xFFFFF)
         if off[19]:
-            off = signed_int_to_python_int(off | 0xfff00000)
+            off = signed_int_to_python_int(off | 0xFFF00000)
         return off
 
     def io(self, port):
@@ -366,7 +382,9 @@ class RISC(object):
         else:
             self.dump_rom(to_file=to_file, number=number)
 
-    def dump_ram(self, to_file=None, location=None, number=10, syms=None):
+    def dump_ram(
+        self, to_file=None, location=None, number=10, syms=None
+    ):
         '''
         Debug function, print a disassembly of a span of RAM.
         '''
@@ -394,7 +412,10 @@ class RISC(object):
         upper = min((len(self.rom), location + number + 1))
         for i in range(lower, upper):
             h = '>' if i == location else ' '
-            print('%s rom[0x%x] %s' % (h, i, dis(self.rom[i])), file=to_file)
+            print(
+                '%s rom[0x%x] %s' % (h, i, dis(self.rom[i])),
+                file=to_file,
+            )
 
     def view(self):
         '''
@@ -404,12 +425,17 @@ class RISC(object):
             return
         kw = self.__dict__.copy()
         kw['A'] = self.R[self.ira]
-        #print '- ' * 40
+        # print '- ' * 40
         print('PC: 0x%(PC)04x ---' % kw, dis(int(self.IR)))
         if self.STR:
-            print('            Storing', '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw)
+            print(
+                '            Storing',
+                '[0x%(addr)04x] <- R%(ira)i = 0x%(A)08x' % kw,
+            )
         elif self.LDR:
-            print('            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw)
+            print(
+                '            Loading', 'R%(ira)i <- [0x%(addr)04x]' % kw
+            )
         # Print the registers.
         # for i in range(0, 16, 2):
         #   reg0, reg1 = self.R[i], self.R[i + 1]
@@ -421,15 +447,16 @@ class RISC(object):
         '''
         Debug function, print crude state of chip.
         '''
-        return ('0x%08x : 0x%08x'
-                        ' %i %i %i %i %i %i %i %i'
-                        ' %i %i %i %i %i %i %i'
-                        ' 0x%x'
-                        ) % (
-                            (self.PC, self.IR)
-                            + tuple(map(signed_int_to_python_int, self.R[:-1]))
-                            + (self.R[-1],)
-                            )
+        return (
+            '0x%08x : 0x%08x'
+            ' %i %i %i %i %i %i %i %i'
+            ' %i %i %i %i %i %i %i'
+            ' 0x%x'
+        ) % (
+            (self.PC, self.IR)
+            + tuple(map(signed_int_to_python_int, self.R[:-1]))
+            + (self.R[-1],)
+        )
 
 
 class ByteAddressed32BitRAM(object):
@@ -444,7 +471,7 @@ class ByteAddressed32BitRAM(object):
         0b11111111111111110000000011111111,
         0b11111111000000001111111111111111,
         0b00000000111111111111111111111111,
-        )
+    )
 
     def __init__(self):
         # Use a dict rather than some array.  Might be woth exploring other
@@ -494,14 +521,14 @@ class ByteAddressed32BitRAM(object):
             raise ValueError("byte out of range: %i" % (byte,))
 
         word_addr, byte_offset = divmod(addr, 4)
-        n = 8 * byte_offset # How many bits to shift.
+        n = 8 * byte_offset  # How many bits to shift.
         byte <<= n
 
-        try: # Get the current memory contents, if any.
+        try:  # Get the current memory contents, if any.
             word = self.store[word_addr]
-        except KeyError: # nothing there yet so
-            pass # just store shifted byte, or
-        else: # merge word and shifted byte
+        except KeyError:  # nothing there yet so
+            pass  # just store shifted byte, or
+        else:  # merge word and shifted byte
             # AND mask with the memory word to clear the bits for the
             # pre-shifted byte and OR the result with it.
             byte |= word & self.BYTE_MASKS[byte_offset]
@@ -557,10 +584,14 @@ class Disk(object):
         self.tx_idx += 1
 
         if self.state == self.diskCommand:
-            if (0xff & word) == 0xff and self.rx_idx == 0:
+            if (0xFF & word) == 0xFF and self.rx_idx == 0:
                 log('disk_write PASS 0x%x', word)
                 return
-            log('disk_write diskCommand 0x%x to rx_buf[%i]', word, self.rx_idx)
+            log(
+                'disk_write diskCommand 0x%x to rx_buf[%i]',
+                word,
+                self.rx_idx,
+            )
             self.rx_buf[self.rx_idx] = word
             self.rx_idx += 1
             if self.rx_idx == 6:
@@ -599,7 +630,7 @@ class Disk(object):
 
     def run_command(self):
         cmd, a, b, c, d = self.rx_buf[0:5]
-        a, b, c, d = (n & 0xff for n in (a, b, c, d))
+        a, b, c, d = (n & 0xFF for n in (a, b, c, d))
         arg = (a << 24) | (b << 16) | (c << 8) | d
         log('run_command ' + ' '.join(map(hex, (cmd, arg))))
 
@@ -653,11 +684,11 @@ class Mouse(object):
         raise NotImplementedError
 
     def set_coords(self, x, y):
-        self.value = self.value & 0xff000000 | x | (y << 12)
+        self.value = self.value & 0xFF000000 | x | (y << 12)
 
     def button_up(self, n):
         assert 1 <= n <= 3, repr(n)
-        self.value = self.value & (0xffffffff ^ (1 << (27 - n)))
+        self.value = self.value & (0xFFFFFFFF ^ (1 << (27 - n)))
 
     def button_down(self, n):
         assert 1 <= n <= 3, repr(n)
@@ -673,7 +704,7 @@ class Clock(object):
     def read(self):
         return self.time() - self.start_time
 
-    def write(self, word): # RESERVED
+    def write(self, word):  # RESERVED
         raise NotImplementedError
 
     def reset(self, now=None):
@@ -724,7 +755,6 @@ class FakeSPI(object):
 
 
 class DataControl(object):
-
     def __init__(self, spi):
         self.spi = spi
 
@@ -732,7 +762,7 @@ class DataControl(object):
         if self.spi.current_thing:
             data = self.spi.current_thing.read()
         else:
-            data = 0xff
+            data = 0xFF
         log('FakeSPI Data Read: 0x%x', data)
         return data
 
@@ -743,7 +773,6 @@ class DataControl(object):
 
 
 class SerialStatus(object):
-
     def __init__(self, ser):
         self.ser = ser
 
@@ -751,23 +780,21 @@ class SerialStatus(object):
         return 1
 
     def write(self, word):
-        2/0
+        2 / 0
 
 
 class Serial(object):
-
     def __init__(self, input_file):
         self.input_file = input_file
         self.status = SerialStatus(self)
-
 
     def read(self):
         return ord(self.input_file.read(1))
 
     def write(self, word):
-        if word & 0xffffff00:
+        if word & 0xFFFFFF00:
             # There are bits in the high bytes!
             print(f'\nwoot! 0x{word:08x}')
         else:
-            print(chr(word & 0xff), end='')
+            print(chr(word & 0xFF), end='')
             sys.stdout.flush()  # damnit
