@@ -29,50 +29,50 @@ from struct import pack, unpack
 
 
 def load_syms(fn):
-  with open(fn, 'rb') as f:
-    symbol_table, data_addrs = load(f)
-  return symbol_table, data_addrs
+    with open(fn, 'rb') as f:
+        symbol_table, data_addrs = load(f)
+    return symbol_table, data_addrs
 
 
 
 class binary_addressing_mixin(object):
-  '''
-  Permit integers to be addressed bit-wise.
+    '''
+    Permit integers to be addressed bit-wise.
 
-  Single indexing (foo[bar]) returns a Boolean value, while slicing
-  returns an integer (foo[bar:baz]).  Slice indexes are left-to-right
-  and do not support step parameter.
-  '''
+    Single indexing (foo[bar]) returns a Boolean value, while slicing
+    returns an integer (foo[bar:baz]).  Slice indexes are left-to-right
+    and do not support step parameter.
+    '''
 
-  def __getitem__(self, n):
-    if isinstance(n, tuple):
-      if len(n) != 2:
-        raise IndexError('Must pass only two indicies.')
-      start, stop = n
-      return self._mask(stop, start - stop)
+    def __getitem__(self, n):
+        if isinstance(n, tuple):
+            if len(n) != 2:
+                raise IndexError('Must pass only two indicies.')
+            start, stop = n
+            return self._mask(stop, start - stop)
 
-    if isinstance(n, slice):
-      return self._getslice(n)
+        if isinstance(n, slice):
+            return self._getslice(n)
 
-    return bool(self >> n & 1)
+        return bool(self >> n & 1)
 
-  def _getslice(self, s):
-    if s.step:
-      raise TypeError('Slice with step not supported.')
+    def _getslice(self, s):
+        if s.step:
+            raise TypeError('Slice with step not supported.')
 
-    start = 0 if s.start is None else s.start
-    stop = 0 if s.stop is None else s.stop
-    n = start - stop
-    if n < 0:
-      raise IndexError('Slice indexes should be left-to-right.')
+        start = 0 if s.start is None else s.start
+        stop = 0 if s.stop is None else s.stop
+        n = start - stop
+        if n < 0:
+            raise IndexError('Slice indexes should be left-to-right.')
 
-    if not n:
-      return type(self)(0)
+        if not n:
+            return type(self)(0)
 
-    return self._mask(stop, n)
+        return self._mask(stop, n)
 
-  def _mask(self, stop, n):
-    return type(self)(self >> stop & (2**n - 1))
+    def _mask(self, stop, n):
+        return type(self)(self >> stop & (2**n - 1))
 
 
 #class bint(binary_addressing_mixin, int): pass
@@ -81,55 +81,55 @@ bint = blong
 
 
 def python_int_to_signed_int(i, width=32):
-  '''
-  Given a Python integer, possibly negative, return the Python integer
-  that has the same bit pattern as the C signed int of the same value
-  would have.
+    '''
+    Given a Python integer, possibly negative, return the Python integer
+    that has the same bit pattern as the C signed int of the same value
+    would have.
 
-  I.e.:
-    >>> n = -23
-    >>> bin(n)
-    '-0b10111'
-    >>> n = python_int_to_signed_int(n)
-    >>> bin(n)
-    '0b11111111111111111111111111101001'
-    >>> 
-  
-  '''
-  assert width > 0
-  width -= 1
-  b = 2**width
-  if not (-b <= i < b):
-    raise ValueError
-  if i >= 0:
-    return i
-  return b + i + (1 << width)
+    I.e.:
+        >>> n = -23
+        >>> bin(n)
+        '-0b10111'
+        >>> n = python_int_to_signed_int(n)
+        >>> bin(n)
+        '0b11111111111111111111111111101001'
+        >>>
+
+    '''
+    assert width > 0
+    width -= 1
+    b = 2**width
+    if not (-b <= i < b):
+        raise ValueError
+    if i >= 0:
+        return i
+    return b + i + (1 << width)
 
 
 def signed_int_to_python_int(i, width=32):
-  '''
-  Convert a Python integer representing the bit-pattern of a C signed int
-  into a Python integer of the same value.
+    '''
+    Convert a Python integer representing the bit-pattern of a C signed int
+    into a Python integer of the same value.
 
-  I.e.:
-    >>> n = 0b11111111111111111111111111101001
-    >>> n
-    4294967273
-    >>> n = 4294967273
-    >>> bin(n)
-    '0b11111111111111111111111111101001'
-    >>> n = signed_int_to_python_int(n)
-    >>> n
-    -23
+    I.e.:
+        >>> n = 0b11111111111111111111111111101001
+        >>> n
+        4294967273
+        >>> n = 4294967273
+        >>> bin(n)
+        '0b11111111111111111111111111101001'
+        >>> n = signed_int_to_python_int(n)
+        >>> n
+        -23
 
-  '''
-  assert width > 0
-  b = 2**width
-  if not (0 <= i < b):
-    raise ValueError
-  if i < b // 2:
-    return i
-  return i - b
+    '''
+    assert width > 0
+    b = 2**width
+    if not (0 <= i < b):
+        raise ValueError
+    if i < b // 2:
+        return i
+    return i - b
 
 
 def u_to_s_16(g): return unpack('<h', pack('<H', g))[0]
@@ -140,11 +140,11 @@ def s_to_u_32(g): return unpack('<I', pack('<i', g))[0]
 
 
 def signed(n, bits=16):
-  limit = 2**bits
-  if -limit < n < limit:
-    q = ((n < 0) << (bits - 1)) + abs(n)
-    return bint(q)[bits:]
-  raise ValueError
+    limit = 2**bits
+    if -limit < n < limit:
+        q = ((n < 0) << (bits - 1)) + abs(n)
+        return bint(q)[bits:]
+    raise ValueError
 
 
 ##def bits2signed_int(i, n=32):
