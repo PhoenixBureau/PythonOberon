@@ -34,7 +34,6 @@ def load_syms(fn):
     return symbol_table, data_addrs
 
 
-
 class binary_addressing_mixin(object):
     '''
     Permit integers to be addressed bit-wise.
@@ -75,8 +74,11 @@ class binary_addressing_mixin(object):
         return type(self)(self >> stop & (2**n - 1))
 
 
-#class bint(binary_addressing_mixin, int): pass
-class blong(binary_addressing_mixin, int): pass
+# class bint(binary_addressing_mixin, int): pass
+class blong(binary_addressing_mixin, int):
+    pass
+
+
 bint = blong
 
 
@@ -132,11 +134,13 @@ def signed_int_to_python_int(i, width=32):
     return i - b
 
 
-def u_to_s_16(g): return unpack('<h', pack('<H', g))[0]
-def s_to_u_16(g): return unpack('<H', pack('<h', g))[0]
-def u_to_s_32(g): return unpack('<i', pack('<I', g))[0]
-def s_to_u_32(g): return unpack('<I', pack('<i', g))[0]
+_convert = lambda n, out, in_: unpack(out, pack(in_, n))[0]
 
+
+u_to_s_16 = lambda n: _convert(n, '<h', '<H')
+s_to_u_16 = lambda n: _convert(n, '<H', '<h')
+u_to_s_32 = lambda n: _convert(n, '<i', '<I')
+s_to_u_32 = lambda n: _convert(n, '<I', '<i')
 
 
 def signed(n, bits=16):
