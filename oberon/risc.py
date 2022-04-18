@@ -37,7 +37,7 @@ from .util import (
 )
 
 
-IO_RANGE = 0x0FFFFFFC0
+IO_RANGE = 0xFFFFFFC0
 ROMStart = 0xFFFFF800 // 4
 MemSize = 0x00180000
 MemWords = MemSize // 4
