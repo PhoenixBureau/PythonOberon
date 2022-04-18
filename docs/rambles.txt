@@ -1,0 +1,41 @@
+After being stalled for awhile I reimplemented Xerblin yet again, and
+cleaned up the Python Oberon assembler (which wasn't actually there, I
+had to go dig it out of storage!)
+
+Once the Assembler was working, and equipped with a not-completely-useless
+GUI IDE for the RISC emulator, the obvious next step was to implement
+Forth.  (I find it amusing that as soon as I has the asm env done I run
+away as fast as I can.  "Great, thx, cya!"  I love ASM but I'm not *in
+love* with ASM, yeah?)
+
+The RAM display in the IDE is pretty useless.  I tried rewriting it but
+it got away from me.  The results are in git stash.  First time I've used
+that in years.  Part of the problem is that RAM is filled by the
+bootloader, so there's nothing there at start time.
+
+Wirth's RISC is just right:  large enough to be useful, small enough to
+be tractable, a toy that powered a major University!
+
+The idea is that the computer should be simple enough that most people
+have a fighting chance to master it (if they want to) rather than the
+current state where a single person would have to be a savant to
+understand a whole modern processor.  At the same time, the 8-bit systems
+that are popular today are a bit too rustic for the kinds of applications
+I have in mind.
+
+I should pause and say something about that.  I imagine a homesteader who
+needs to keep simple spreadsheets and calendars, who wants some limited
+logging and automation of their farm infrastructure and gear  (things
+like watering schedules and opening greenhouse vents on hot days, etc.)
+VisiCalc and Lotus 1-2-3 handled that fine nearly half a century ago, eh?
+Instead of a modern web browser it might run something like Dillo, but
+Gemini is more likely than WWW.  Email, because of course.
+The computer(s) and the system are probably powered by solar or wind,
+off-grid.
+
+I imagine that in a non-apocalyptic situation high performance hardware
+can be added as peripherals,  like GPUs are today.  If you really need
+processing power there's always the cloud, eh?
+
+The important thing is that the control plane is small, regular, simple,
+and easy to audit.
