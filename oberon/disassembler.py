@@ -55,7 +55,14 @@ def dis_Mov0(u, v, a, c):
 
 
 def dis_F1(IR):
-    u, v, a, b, op, imm = IR[29], IR[28], IR[28:24], IR[24:20], IR[20:16], IR[16:0]
+    u, v, a, b, op, imm = (
+        IR[29],
+        IR[28],
+        IR[28:24],
+        IR[24:20],
+        IR[20:16],
+        IR[16:0],
+    )
     if ops_rev[op] == 'Mov':
         value = f'Mov_imm({a}, 0x{imm:x}, u={u}, v={v})'
     else:
@@ -66,11 +73,12 @@ def dis_F1(IR):
 _ram_instrs = {
     # IR[29], IR[28]
     # u       v
-    (True,   True): 'Store_byte',
-    (True,  False): 'Store_word',
-    (False,  True): 'Load_byte',
+    (True, True): 'Store_byte',
+    (True, False): 'Store_word',
+    (False, True): 'Load_byte',
     (False, False): 'Load_word',
-    }
+}
+
 
 def dis_F2(IR):
     u, v, a, b, off = IR[29], IR[28], IR[28:24], IR[24:20], IR[20:0]
