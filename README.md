@@ -1,7 +1,9 @@
 Python Oberon
 =============
 
-Some software for [Oberon 2013](http://www.inf.ethz.ch/personal/wirth/ProjectOberon/).
+An emulator for [Prof. Wirth's Oberon RISC processor](http://www.inf.ethz.ch/personal/wirth/ProjectOberon/)
+ported from Peter De Wachter's emulator written in C (see below.)
+There is also a crude assembler.
 
 -  [Documentation](https://pythonoberon.readthedocs.io/en/latest/)
 -  [Source code](https://git.sr.ht/~sforman/PythonOberon)
@@ -11,18 +13,11 @@ Some software for [Oberon 2013](http://www.inf.ethz.ch/personal/wirth/ProjectObe
 See also:
 
 -  [projectoberon.com](http://projectoberon.com/)
--  [pdewacht/oberon-risc-emu on github](https://github.com/pdewacht/oberon-risc-emu)
--  [Project Oberon emulator in JavaScript and Java](http://schierlm.github.io/OberonEmulator/)
+-  [Project Oberon RISC emulator in C](https://github.com/pdewacht/oberon-risc-emu)
+-  [Project Oberon RISC emulator in JavaScript and Java](http://schierlm.github.io/OberonEmulator/)
+-  [Project Oberon RISC emulator in Go](https://github.com/fzipp/oberon)
 -  [A resource page for Oberon-07](http://oberon07.com/)
 
-
-A hardware emulator for the new RISC processor written in Python.  If
-Pygame is available it will open a screen of the standard dimensions of
-1024 x 768 pixels.  I've also implemented a very crude "assembler" which
-is really little more than a bunch of helper functions to emit binary
-instructions (in the form of 32-bit-wide ints.)  However, it also provides
-a function dis() that will return a string representing the (integer)
-instruction passed to it.
 
 Start with:
 
@@ -30,28 +25,12 @@ Start with:
 python -i -m oberon
 ```
 
-This will use `disk.img` by default.  At around 3400000 cycles the screen
-background begins to fill in, and at around 6500000 cycles the window
-content begins to be drawn:
+- If Pygame is available a screen will open of the standard dimensions of 1024 x 768 pixels.
+- This command will use `disk.img` by default.
+- At around 3400000 cycles the screen background begins to fill in, and at around 6500000 cycles the window content begins to be drawn:
 
 ![PyGame window showing Oberon](https://git.sr.ht/~sforman/PythonOberon/blob/master/Screenshot.png "PyGame window showing Oberon")
 
 (The `-i` option tells Python to drop into interactive REPL mode after
 the script has run.  You can interact with the risc object.)
 
-
-TODO
---------------
-
-    [X] Load pickles
-    [X] Save pickles
-    [X] Watch expressions
-    [X] Breakpoints
-    [X] RAM Inspector
-    [ ] RAM Map / symbol table
-    [ ] Reset w/ new disk|serial file(s)
-    [X] Step CPU button.
-    [X] Switches & LEDs
-    [X] Save breakpoints & watches
-    [ ] Indicate when HALT'd.
-    [ ] Register display mode for records.
