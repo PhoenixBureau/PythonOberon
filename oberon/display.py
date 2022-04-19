@@ -39,6 +39,10 @@ else:
     PYGAME = True
     display_flip = pygame.display.flip
 
+    WHITE = pygame.Color(0xFF, 0xFF, 0xFF)
+    CURSOR = None
+
+
 
 SIZE = WIDTH, HEIGHT = 1024, 768
 'Size of the screen in pixels.'
@@ -53,12 +57,18 @@ WORDS_IN_SCANLINE = WIDTH // 32
 'The number of 32-bit words in one horizontal scan line of the display.'
 
 
+WHITE = 23
+
+
 def initialize_screen():
     '''
     Fire up PyGame and return a screen surface of :py:obj:`SIZE`.
     '''
     pygame.init()
-    return pygame.display.set_mode(SIZE, 0, 8)
+    screen = pygame.display.set_mode(SIZE)
+    global CURSOR
+    CURSOR = pygame.Surface((32, 1), depth=screen.get_bitsize())
+    return screen
 
 
 class ScreenRAMMixin(object):
@@ -131,6 +141,9 @@ def update_screen(screen, address, value):
     Update the contents of the PyGame ``screen`` at ``address`` with the
     bit values from the integer ``value``.
     '''
-    for coords, bit in zip(coords_of_word(address), bits_of_int(value)):
-        screen.set_at(coords, 0xFF * (1 - bit))
+    COLORS = 0, (255, 255, 255)
+    for x, bit in enumerate(bits_of_int(value)):
+        CURSOR.set_at((x, 0), COLORS[bit])
+    y, x = divmod(address, WORDS_IN_SCANLINE)
+    screen.blit(CURSOR, (x << 5, HEIGHT - y - 1))
     display_flip()
