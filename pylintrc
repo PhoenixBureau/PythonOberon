@@ -45,11 +45,11 @@ unsafe-load-any-extension=no
 ##        too-many-arguments
 ##
 
-disable=invalid-name,
-        missing-function-docstring,
-        multiple-statements,
-        too-many-arguments,
-        too-many-public-methods,
-        exec-used,
-        too-few-public-methods,
-        consider-using-f-string
+##disable=invalid-name,
+##        missing-function-docstring,
+##        multiple-statements,
+##        too-many-arguments,
+##        too-many-public-methods,
+##        exec-used,
+##        too-few-public-methods,
+##        consider-using-f-string

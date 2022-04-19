@@ -17,7 +17,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
-from .demo import cycle, make_arg_parser, make_cpu
+'''
+Use the demo module to fire up the system,
+Load disk and (optionally) image over serial port.
+Run for eight million cycles.
+'''
+from oberon.demo import cycle, make_arg_parser, make_cpu
 
 
 args = make_arg_parser().parse_args()

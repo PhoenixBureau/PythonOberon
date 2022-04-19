@@ -17,6 +17,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
+# N.B. this is a file which is not improved by black formatting.
+#
 '''
 
 Assembler
@@ -27,15 +29,26 @@ from collections import defaultdict
 from struct import pack
 from pickle import dump
 
+from oberon.disassembler import dis
 from oberon.util import bint, s_to_u_32
 
 
 def assemble_file(in_fn, out_fn, sym_fn=None):
-    with open(in_fn, 'rb') as f:
-        text = f.read()
+    '''
+    Accept up to three file names.  The first is a source file,
+    the second is the binary output file, and the optional third
+    is a file to which to write symbols and other information
+    (currently the other information is just a set of addresses
+    that contain data, rather than machine code.)
+
+    The symbol file is a pickle of a symbol table dictionary that
+    maps label names to addresses, and the set of data addresses.
+    '''
+    with open(in_fn, 'rb') as in_file:
+        text = in_file.read()
     code = compile(text, in_fn, 'exec')
-    a = Assembler()
-    p = a(code)
+    assembler = Assembler()
+    program = assembler(code)
 
     # This is the bootloader function that will load the binary over teh serial line:
     #
@@ -61,24 +74,33 @@ def assemble_file(in_fn, out_fn, sym_fn=None):
     # length is non-zero, otherwise we're done and the machine
     # boots from there.
 
-    P = [p.get(n, 0) for n in range(0, max(p) + 4, 4)]  # Fill holes with zero.
-    P.insert(0, len(P) * 4)
-    P.insert(1, 0)  # address
-    P.append(0)  # stop loading
-    data = pack(f'<{len(P)}I', *P)
-    with open(out_fn, 'wb') as f:
-        f.write(data)
+    program_list = [
+        program.get(n, 0)  # Fill holes with zero.
+        for n in range(0, max(program) + 4, 4)
+        ]
+    program_list.insert(0, len(program_list) * 4)
+    program_list.insert(1, 0)  # address 0x00000000
+    program_list.append(0)  # stop loading
+    data = pack(f'<{len(program_list)}I', *program_list)
+    with open(out_fn, 'wb') as out_file:
+        out_file.write(data)
 
     if sym_fn is not None:
-        with open(sym_fn, 'wb') as f:
-            dump((a.symbol_table, a.data_addrs), f)
+        with open(sym_fn, 'wb') as sym_file:
+            dump(
+                (assembler.symbol_table, assembler.data_addrs),
+                sym_file,
+                )
 
 
-
+# pylint: disable=too-many-public-methods
 class ASM:
     '''
     Collect the individual bit-pattern generator functions.
     '''
+    # pylint: disable=invalid-name
+    # pylint: disable=missing-function-docstring
+    # pylint: disable=multiple-statements
 
     @staticmethod
     def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
@@ -286,6 +308,7 @@ cmps = {
 }
 
 
+# pylint: disable=invalid-name, missing-function-docstring
 def make_F0(u, op, a, b, c):
     assert bool(u) == u, repr(u)
     assert ops['Mov'] <= op <= ops['Div'], repr(op)
@@ -301,6 +324,7 @@ def make_F0(u, op, a, b, c):
         )
 
 
+# pylint: disable=too-many-arguments
 def make_F1(u, v, op, a, b, K):
     assert bool(u) == u, repr(u)
     assert bool(v) == v, repr(v)
@@ -368,17 +392,17 @@ def make_F3_imm(cond, offset, invert=False, v=False):
 def opof(op):
     return ops_rev[int(op)]
 
-
 class LabelThunk:
     '''
     Stand for an address that will be determined later.
     '''
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
-        return "<LabelThunk %s>" % (self.name,)
+        return f'<LabelThunk {self.name}>'
 
 
 class Context(dict):
@@ -390,22 +414,21 @@ class Context(dict):
         dict.__init__(self)
         self.symbol_table = symbol_table
 
-    def __setitem__(self, item, value):
-        if item in self.symbol_table:
-            it = self.symbol_table[item]
+    def __setitem__(self, name, value):
+        if name in self.symbol_table:
+            it = self.symbol_table[name]
             if isinstance(it, LabelThunk):
-                print('# assigning label %s -> %#06x' % (item, value))
-                self.symbol_table[item] = value
+                self.symbol_table[name] = value
             else:
-                raise RuntimeError("Can't reassign labels %s" % (item,))
-        dict.__setitem__(self, item, value)
+                raise RuntimeError(f"Can't reassign labels: {name}")
+        dict.__setitem__(self, name, value)
 
-    def __getitem__(self, item):
+    def __getitem__(self, name):
         try:
-            return dict.__getitem__(self, item)
+            return dict.__getitem__(self, name)
         except KeyError:
-            print('# New unassigned label:', item)
-            thunk = self[item] = self.symbol_table[item] = LabelThunk(item)
+            print('# New unassigned label:', name)
+            thunk = self[name] = self.symbol_table[name] = LabelThunk(name)
             return thunk
 
 
@@ -450,7 +473,7 @@ def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
 
             else:
                 if offset % 4:
-                    raise RuntimeError('bad offset %r' % (offset,))
+                    raise RuntimeError(f'bad offset {offset:x}')
                 offset = (offset - self.here) // 4 - 1
                 if offset < 0:
                     offset = s_to_u_32(offset) & 0xffffff # 2**24 -1
@@ -493,7 +516,6 @@ class Assembler:
                     self.context[name] = value
 
     def print_program(self):
-        from oberon.disassembler import dis
         max_label_length = max(map(len, self.symbol_table))
         blank_prefix = ' ' * (2 + max_label_length)
         addrs_to_labels = {
@@ -517,6 +539,7 @@ class Assembler:
             print(f'{prefix}0x{addr:05x} {dis(i)}')
 
     def __call__(self, text):
+        # pylint: disable=exec-used
         exec(text, self.context)
         del self.context['__builtins__']
         return self.program
@@ -601,77 +624,88 @@ class Assembler:
         self.here += 4
 
     @deco(ASM.Add_imm)
-    def Add_imm(self, a, b, K, v=0, u=0): pass
+    def Add_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def And(self, a, b, c, u=0):
         self.program[self.here] = ASM.And(a, b, c, u)
         self.here += 4
 
     @deco(ASM.And_imm)
-    def And_imm(self, a, b, K, v=0, u=0): pass
+    def And_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Ann(self, a, b, c, u=0):
         self.program[self.here] = ASM.Ann(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Ann_imm)
-    def Ann_imm(self, a, b, K, v=0, u=0): pass
+    def Ann_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Asr(self, a, b, c, u=0):
         self.program[self.here] = ASM.Asr(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Asr_imm)
-    def Asr_imm(self, a, b, K, v=0, u=0): pass
+    def Asr_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Div(self, a, b, c, u=0):
         self.program[self.here] = ASM.Div(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Div_imm)
-    def Div_imm(self, a, b, K, v=0, u=0): pass
+    def Div_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Ior(self, a, b, c, u=0):
         self.program[self.here] = ASM.Ior(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Ior_imm)
-    def Ior_imm(self, a, b, K, v=0, u=0): pass
+    def Ior_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Lsl(self, a, b, c, u=0):
         self.program[self.here] = ASM.Lsl(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Lsl_imm)
-    def Lsl_imm(self, a, b, K, v=0, u=0): pass
+    def Lsl_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Mul(self, a, b, c, u=0):
         self.program[self.here] = ASM.Mul(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Mul_imm)
-    def Mul_imm(self, a, b, K, v=0, u=0): pass
+    def Mul_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Ror(self, a, b, c, u=0):
         self.program[self.here] = ASM.Ror(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Ror_imm)
-    def Ror_imm(self, a, b, K, v=0, u=0): pass
+    def Ror_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Sub(self, a, b, c, u=0):
         self.program[self.here] = ASM.Sub(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Sub_imm)
-    def Sub_imm(self, a, b, K, v=0, u=0): pass
+    def Sub_imm(self, a, b, K, v=0, u=0):
+        pass
 
     def Xor(self, a, b, c, u=0):
         self.program[self.here] = ASM.Xor(a, b, c, u)
         self.here += 4
 
     @deco(ASM.Xor_imm)
-    def Xor_imm(self, a, b, K, v=0, u=0): pass
+    def Xor_imm(self, a, b, K, v=0, u=0):
+        pass
 
     #==------------------------------------------------------------------
     #  Branch instructions
@@ -681,7 +715,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.CC_imm)
-    def CC_imm(self, offset): pass
+    def CC_imm(self, offset):
+        pass
 
     def CC_link(self, c):
         self.program[self.here] = ASM.CC_link(c)
@@ -692,7 +727,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.CS_imm)
-    def CS_imm(self, offset): pass
+    def CS_imm(self, offset):
+        pass
 
     def CS_link(self, c):
         self.program[self.here] = ASM.CS_link(c)
@@ -703,7 +739,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.EQ_imm)
-    def EQ_imm(self, offset): pass
+    def EQ_imm(self, offset):
+        pass
 
     def EQ_link(self, c):
         self.program[self.here] = ASM.EQ_link(c)
@@ -714,7 +751,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.F_imm)
-    def F_imm(self, offset): pass
+    def F_imm(self, offset):
+        pass
 
     def F_link(self, c):
         self.program[self.here] = ASM.F_link(c)
@@ -725,7 +763,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.GE_imm)
-    def GE_imm(self, offset): pass
+    def GE_imm(self, offset):
+        pass
 
     def GE_link(self, c):
         self.program[self.here] = ASM.GE_link(c)
@@ -736,7 +775,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.GT_imm)
-    def GT_imm(self, offset): pass
+    def GT_imm(self, offset):
+        pass
 
     def GT_link(self, c):
         self.program[self.here] = ASM.GT_link(c)
@@ -747,7 +787,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.HI_imm)
-    def HI_imm(self, offset): pass
+    def HI_imm(self, offset):
+        pass
 
     def HI_link(self, c):
         self.program[self.here] = ASM.HI_link(c)
@@ -758,7 +799,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.LE_imm)
-    def LE_imm(self, offset): pass
+    def LE_imm(self, offset):
+        pass
 
     def LE_link(self, c):
         self.program[self.here] = ASM.LE_link(c)
@@ -769,7 +811,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.LS_imm)
-    def LS_imm(self, offset): pass
+    def LS_imm(self, offset):
+        pass
 
     def LS_link(self, c):
         self.program[self.here] = ASM.LS_link(c)
@@ -780,7 +823,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.LT_imm)
-    def LT_imm(self, offset): pass
+    def LT_imm(self, offset):
+        pass
 
     def LT_link(self, c):
         self.program[self.here] = ASM.LT_link(c)
@@ -791,7 +835,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.MI_imm)
-    def MI_imm(self, offset): pass
+    def MI_imm(self, offset):
+        pass
 
     def MI_link(self, c):
         self.program[self.here] = ASM.MI_link(c)
@@ -802,7 +847,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.NE_imm)
-    def NE_imm(self, offset): pass
+    def NE_imm(self, offset):
+        pass
 
     def NE_link(self, c):
         self.program[self.here] = ASM.NE_link(c)
@@ -813,7 +859,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.PL_imm)
-    def PL_imm(self, offset): pass
+    def PL_imm(self, offset):
+        pass
 
     def PL_link(self, c):
         self.program[self.here] = ASM.PL_link(c)
@@ -824,7 +871,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.T_imm)
-    def T_imm(self, offset): pass
+    def T_imm(self, offset):
+        pass
 
     def T_link(self, c):
         self.program[self.here] = ASM.T_link(c)
@@ -835,7 +883,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.VC_imm)
-    def VC_imm(self, offset): pass
+    def VC_imm(self, offset):
+        pass
 
     def VC_link(self, c):
         self.program[self.here] = ASM.VC_link(c)
@@ -846,7 +895,8 @@ class Assembler:
         self.here += 4
 
     @deco0(ASM.VS_imm)
-    def VS_imm(self, offset): pass
+    def VS_imm(self, offset):
+        pass
 
     def VS_link(self, c):
         self.program[self.here] = ASM.VS_link(c)
