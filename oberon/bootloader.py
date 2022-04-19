@@ -7,10 +7,17 @@ This module is just a convenient way to make the machine code
 of the Oberon bootloader available in Python.  It exports a single
 tuple of integers.
 
-You can find the Oberon source code for the bootloader in the
-BootLoader.Mod file in the ``disk.img`` after booting.  Or see
-the side-by-side comparision of the Oberon code and the disassembled
-machine code in ``docs/BootLoad-reverse.txt``.
+The Oberon source code for the bootloader is in the
+`BootLoader.Mod <https://people.inf.ethz.ch/wirth/ProjectOberon/Sources/BootLoad.Mod.txt>`_
+source file on Prof. Wirth's site.
+
+There is a side-by-side comparision of the Oberon code and the disassembled
+machine code in
+`docs/BootLoad-reverse.txt <https://git.sr.ht/~sforman/PythonOberon/blob/simpler/docs/BootLoad-reverse.txt>`_
+.
+
+The bootloader includes routines for loading images either from an SD card
+hard drive or over the serial port.
 '''
 
 
