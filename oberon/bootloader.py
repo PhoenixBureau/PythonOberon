@@ -13,7 +13,8 @@ source file on Prof. Wirth's site.
 
 There is a side-by-side comparision of the Oberon code and the disassembled
 machine code in
-`docs/BootLoad-reverse.txt <https://git.sr.ht/~sforman/PythonOberon/blob/simpler/docs/BootLoad-reverse.txt>`_
+`docs/BootLoad-reverse.txt
+<https://git.sr.ht/~sforman/PythonOberon/blob/simpler/docs/BootLoad-reverse.txt>`_
 .
 
 The bootloader includes routines for loading images either from an SD card

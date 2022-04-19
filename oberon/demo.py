@@ -27,12 +27,12 @@ with the Oberon OS disk image and some virtual peripherals.
 
 '''
 from argparse import ArgumentParser, FileType
-from pkg_resources import resource_filename
 from sys import stderr
 from traceback import print_exc
-from .bootloader import bootloader
-from .display import PYGAME, initialize_screen, ScreenRAMMixin
-from .risc import (
+from pkg_resources import resource_filename
+from oberon.bootloader import bootloader
+from oberon.display import PYGAME, initialize_screen, ScreenRAMMixin
+from oberon.risc import (
     ByteAddressed32BitRAM,
     Clock,
     Disk,
@@ -103,16 +103,16 @@ def cycle(cpu, limit):
 
     Flip the display (if any) every 10000 cycles.
     '''
-    n = 0
-    while n < limit:
+    count = 0
+    while count < limit:
         try:
             cpu.cycle()
-        except:
+        except:  # pylint: disable=bare-except
             print_exc()
             cpu.dump_ram()
             break
 
-        if not n % 10000:
+        if not count % 10000:
             pump()
-            print(n, file=stderr)
-        n += 1
+            print(count, file=stderr)
+        count += 1

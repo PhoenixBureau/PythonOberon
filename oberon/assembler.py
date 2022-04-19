@@ -29,7 +29,6 @@ from collections import defaultdict
 from struct import pack
 from pickle import dump
 
-from oberon.disassembler import dis
 from oberon.util import bint, s_to_u_32
 
 
@@ -43,37 +42,50 @@ def assemble_file(in_fn, out_fn, sym_fn=None):
 
     The symbol file is a pickle of a symbol table dictionary that
     maps label names to addresses, and the set of data addresses.
+
+    The resulting binary file is suitable for loading over the
+    serial port, you can pass it to the ``--serial-in`` command
+    line option.
+
+    This is the Oberon bootloader function that will load the
+    binary over the serial line::
+
+        PROCEDURE LoadFromLine;
+          VAR len, adr, dat: INTEGER;
+        BEGIN
+          RecInt(len);
+          WHILE len > 0 DO
+            RecInt(adr);
+            REPEAT
+              RecInt(dat);
+              SYSTEM.PUT(adr, dat);
+              adr := adr + 4;
+              len := len - 4
+            UNTIL len = 0;
+            RecInt(len)
+          END
+        END LoadFromLine;
+
+    It reads a (4-byte) int length and drops into a while loop
+    the loop reads a (4-byte) int address at which to store
+    the following data.
+
+    Then a second loop (repeat) is started to read the data.
+    It reads a 4-byte word, stores it to the RAM, then
+    increments the address and decrements the length (each by
+    four.  So the length is counting bytes, not words!  N.B.)
+
+    Once the repeat loop is done patching RAM it reads one more
+    (4-byte) int length and the while loop restarts if the
+    length is non-zero, otherwise we're done and the machine
+    boots from there.
+
     '''
     with open(in_fn, 'rb') as in_file:
         text = in_file.read()
     code = compile(text, in_fn, 'exec')
     assembler = Assembler()
     program = assembler(code)
-
-    # This is the bootloader function that will load the binary over teh serial line:
-    #
-    #  PROCEDURE LoadFromLine;
-    #    VAR len, adr, dat: INTEGER;
-    #  BEGIN RecInt(len);
-    #    WHILE len > 0 DO
-    #      RecInt(adr);
-    #      REPEAT RecInt(dat); SYSTEM.PUT(adr, dat); adr := adr + 4; len := len - 4 UNTIL len = 0;
-    #      RecInt(len)
-    #    END
-    #  END LoadFromLine;
-    #
-    # It reads a (4-byte) int length and drops into a while loop
-    # the loop reads a (4-byte) int address at which to store
-    # the following data.
-    # Then a second loop (repeat) is started to read the data.
-    # It reads a 4-byte word, stores it to the RAM, then
-    # increments the address and decrements the length, each by
-    # four!  So the length is counting bytes, not words!  N.B.
-    # Once the repeat loop is done patching RAM it reads one more
-    # (4-byte) int length and the while loop restarts if the
-    # length is non-zero, otherwise we're done and the machine
-    # boots from there.
-
     program_list = [
         program.get(n, 0)  # Fill holes with zero.
         for n in range(0, max(program) + 4, 4)
@@ -516,6 +528,8 @@ class Assembler:
                     self.context[name] = value
 
     def print_program(self):
+        # pylint: disable=import-outside-toplevel
+        from oberon.disassembler import dis
         max_label_length = max(map(len, self.symbol_table))
         blank_prefix = ' ' * (2 + max_label_length)
         addrs_to_labels = {
