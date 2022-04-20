@@ -23,7 +23,7 @@ F_LENMASK = 0x1f
 SERIAL_PORT = s_to_u_32(-56)  # io_ports[8]
 SERIAL_STATUS = s_to_u_32(-52)  # io_ports[12]
 
-# Dictionary 
+# Dictionary
 LINK = 0
 
 
@@ -135,16 +135,31 @@ def busywait_on_serial_ready():
 negative_offset_24 = lambda n: s_to_u_32(n) & 0xffffff
 negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
 
+# FIGlet SaaS:
+# http://www.patorjk.com/software/taag/
 
+##  _              _
+## | |__  ___ __ _(_)_ _
+## | '_ \/ -_) _` | | ' \
+## |_.__/\___\__, |_|_||_|
+##           |___/
 T_imm(main)
 label(_reserved, reserves=36)
 
+##  ___   ___   ___ ___  _
+## |   \ / _ \ / __/ _ \| |
+## | |) | (_) | (_| (_) | |__
+## |___/ \___/ \___\___/|____|
 label(DOCOL)
 PUSHRSP(IP)
 # Point from the codeword to the first data word.
 Add_imm(IP, next_function, 4)
 NEXT()
 
+##             _
+##  _ __  __ _(_)_ _
+## | '  \/ _` | | ' \
+## |_|_|_\__,_|_|_||_|
 label(main)
 Mov_imm(Dstack, DATA_STACK)
 Mov_imm(Rstack, RETURN_STACK)
@@ -153,10 +168,16 @@ Mov_imm(R1, 38)  # ASCII '&'
 PUSH(R1)
 NEXT()
 
+##         _    _      _            _
+##  __ ___| |__| |  __| |_ __ _ _ _| |_
+## / _/ _ \ / _` | (_-<  _/ _` | '_|  _|
+## \__\___/_\__,_|_/__/\__\__,_|_|  \__|
+##              |___|
 label(cold_start)
 dw(EMIT)
 #dw(QUIT)  # IP starts pointing here so this RAM address must
           # contain the address of the codeword of QUIT.
+
 
 defcode(b'DROP', DROP)
 Add_imm(Dstack, Dstack, 4)  # drop top of stack
@@ -188,17 +209,6 @@ T_link(R1)
 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 NEXT()
 
-defcode(b'SWAP', SWAP)
-POP(R0)
-Load_word(1, 10)
-Store_word(0, 10)
-PUSH(R1)
-NEXT()
-
-defvar(b'LATEST', LATEST, initial=LINK)
-# Later link to actual last value/label.
-
-
 label(_KEY)
 # subroutine to busywait on serial port status.
 # Sets R1 to point to SERIAL_STATUS i/o port.
@@ -208,6 +218,15 @@ Load_word(R2, R1, 0)
 EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
 T(15)  # return
 
+defcode(b'SWAP', SWAP)
+POP(R0)
+Load_word(1, 10)
+Store_word(0, 10)
+PUSH(R1)
+NEXT()
+
+defvar(b'LATEST', LATEST, initial=LINK)
+# Later link to actual last value/label.
 
 label(WORD_BUFFER, reserves=32)
 
@@ -259,23 +278,3 @@ NEXT()
 
 
 label(QUIT)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
