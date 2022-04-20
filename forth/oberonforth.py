@@ -63,6 +63,8 @@ def def_(name, LABEL, flags=0):
     Set up dictionary link, name field, and label for word definitions.
     '''
     assert isinstance(name, bytes)
+    LABEL_dfa = globals()[LABEL.name + '_dfa']
+    label(LABEL_dfa)
     global LINK
     dw(LINK)
     LINK = HERE() - 4
