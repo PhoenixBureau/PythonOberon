@@ -63,8 +63,10 @@ def def_(name, LABEL, flags=0):
     Set up dictionary link, name field, and label for word definitions.
     '''
     assert isinstance(name, bytes)
-    LABEL_dfa = globals()[LABEL.name + '_dfa']
-    label(LABEL_dfa)
+    # To make a label based off the name of some other label you have to
+    # grab the globals() object, which is the context object of the
+    # assembler, and access the new label name to create a new LabelThunk.
+    label(globals()[LABEL.name + '_dfa'])
     global LINK
     dw(LINK)
     LINK = HERE() - 4
