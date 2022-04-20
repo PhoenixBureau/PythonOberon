@@ -32,7 +32,7 @@ from pickle import dump
 from oberon.util import bint, s_to_u_32
 
 
-def assemble_file(in_file, out_file, sym_file=None):
+def assemble_file(in_file, out_file, sym_file=None, print_program=False):
     '''
     Accept up to three file objects.  The first is a source file,
     the second is the binary output file, and the optional third
@@ -99,6 +99,8 @@ def assemble_file(in_file, out_file, sym_file=None):
             (assembler.symbol_table, assembler.data_addrs),
             sym_file,
             )
+    if print_program:
+        assembler.print_program()
 
 
 # pylint: disable=too-many-public-methods
@@ -555,6 +557,11 @@ class Assembler:
         return self.program
 
     def dw(self, data):
+        '''
+        Lay in a data word literal value.
+        Adds the current address to the ``data_addrs`` set
+        attribute.
+        '''
         if isinstance(data, LabelThunk):
             self.fixups[data].append(self.here)
             def fixup(value, h=self.here):
@@ -568,15 +575,24 @@ class Assembler:
         self.here += 4
 
     def HERE(self):
+        '''
+        Return the current address.
+        '''
         return self.here
 
     def label(self, thunk, reserves=0):
+        '''
+        Enter a label in the symbol table, fix up any prior
+        references to this label, and optionally reserve some
+        RAM (``reserves`` must be a multiple of four.)
+        '''
         if not isinstance(thunk, LabelThunk):
             raise RuntimeError('already assigned')
         self.context[thunk.name] = self.here
         self._fix(thunk, self.here)
         if reserves:
             assert reserves > 0, repr(reserves)
+            assert 0 == (reserves % 4), repr(reserves)
             self.here += reserves
 
     def _fix(self, thunk, value):

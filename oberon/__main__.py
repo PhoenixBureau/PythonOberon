@@ -47,6 +47,10 @@ asm_subparser.add_argument(
     '-s', '--symbol-file',
     type=FileType('wb'),
     )
+asm_subparser.add_argument(
+    '-p', '--print-program',
+    action='store_true',
+    )
 emu_subparser= subparsers.add_parser(
     'emulate'
     )
@@ -69,6 +73,7 @@ if hasattr(args, 'output'):  # We are assembling
         args.source,
         args.output,
         args.symbol_file,
+        print_program=args.print_program,
         )
 
 else:  # We are emulating.
