@@ -32,9 +32,9 @@ from pickle import dump
 from oberon.util import bint, s_to_u_32
 
 
-def assemble_file(in_fn, out_fn, sym_fn=None):
+def assemble_file(in_file, out_file, sym_file=None):
     '''
-    Accept up to three file names.  The first is a source file,
+    Accept up to three file objects.  The first is a source file,
     the second is the binary output file, and the optional third
     is a file to which to write symbols and other information
     (currently the other information is just a set of addresses
@@ -81,9 +81,8 @@ def assemble_file(in_fn, out_fn, sym_fn=None):
     boots from there.
 
     '''
-    with open(in_fn, 'rb') as in_file:
-        text = in_file.read()
-    code = compile(text, in_fn, 'exec')
+    text = in_file.read()
+    code = compile(text, in_file.name, 'exec')
     assembler = Assembler()
     program = assembler(code)
     program_list = [
@@ -94,15 +93,12 @@ def assemble_file(in_fn, out_fn, sym_fn=None):
     program_list.insert(1, 0)  # address 0x00000000
     program_list.append(0)  # stop loading
     data = pack(f'<{len(program_list)}I', *program_list)
-    with open(out_fn, 'wb') as out_file:
-        out_file.write(data)
-
-    if sym_fn is not None:
-        with open(sym_fn, 'wb') as sym_file:
-            dump(
-                (assembler.symbol_table, assembler.data_addrs),
-                sym_file,
-                )
+    out_file.write(data)
+    if sym_file:
+        dump(
+            (assembler.symbol_table, assembler.data_addrs),
+            sym_file,
+            )
 
 
 # pylint: disable=too-many-public-methods

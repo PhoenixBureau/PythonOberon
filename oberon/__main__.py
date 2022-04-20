@@ -22,11 +22,64 @@ Use the demo module to fire up the system,
 Load disk and (optionally) image over serial port.
 Run for eight million cycles.
 '''
-from oberon.demo import cycle, make_arg_parser, make_cpu
+from argparse import ArgumentParser, FileType
+from pkg_resources import resource_filename
 
 
-args = make_arg_parser().parse_args()
-print(('Using disk image file', args.disk_image.name))
-cpu = make_cpu(args.disk_image, args.serial_in)
-# Details begin to be painted around 6.5M cycles.
-cycle(cpu, 8000000)
+parser = ArgumentParser(
+    prog='python -m oberon',
+    #usage='python -i -m oberon [-d DISK_IMAGE]',
+    description='An emulator for Prof Wirth\'s RISC CPU for Project Oberon.',
+    )
+subparsers = parser.add_subparsers(help='sub-command help')
+asm_subparser = subparsers.add_parser(
+    'assemble'
+    )
+asm_subparser.add_argument(
+    'source',
+    type=FileType('rb'),
+    )
+asm_subparser.add_argument(
+    'output',
+    type=FileType('wb'),
+    )
+asm_subparser.add_argument(
+    '-s', '--symbol-file',
+    type=FileType('wb'),
+    )
+emu_subparser= subparsers.add_parser(
+    'emulate'
+    )
+emu_subparser.add_argument(
+    '-d', '--disk-image',
+    type=FileType('rb'),
+    default=resource_filename(__name__, 'disk.img'),
+    )
+emu_subparser.add_argument(
+    '--serial-in',
+    type=FileType('rb'),
+    )
+
+args = parser.parse_args()
+
+if hasattr(args, 'output'):  # We are assembling
+    from oberon.assembler import assemble_file
+
+    assemble_file(
+        args.source,
+        args.output,
+        args.symbol_file,
+        )
+
+else:  # We are emulating.
+
+    # Do not import this unless we need to, because pygame
+    # prints a banner when imported.  This way you can use
+    # the '-h' options without the clutter of the banner, yet
+    # still see it when starting the program proper.
+    from oberon.demo import cycle, make_cpu
+
+    print(('Using disk image file', args.disk_image.name))
+    cpu = make_cpu(args.disk_image, args.serial_in)
+    # Details begin to be painted around 6.5M cycles.
+    cycle(cpu, 8000000)

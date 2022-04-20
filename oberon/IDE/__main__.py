@@ -24,8 +24,8 @@ from oberon.util import load_syms
 from oberon.IDE.newcpu import newcpu
 from oberon.IDE.widgets import DebugApp
 
-SERIAL_INPUT = '/home/sforman/src/PythonOberon/oberonforth.bin'
-SYMBOLS = '/home/sforman/src/PythonOberon/oberonforth.symbols'
+SERIAL_INPUT = '/home/sforman/src/PythonOberon/forth/oberonforth.bin'
+SYMBOLS = '/home/sforman/src/PythonOberon/forth/oberonforth.symbols'
 
 cpu = newcpu(serial_input_filename=SERIAL_INPUT)
 app = DebugApp(cpu)

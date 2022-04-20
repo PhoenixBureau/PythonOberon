@@ -26,10 +26,8 @@ This module show how to instantiate the :py:class:`RISC` class and run it
 with the Oberon OS disk image and some virtual peripherals.
 
 '''
-from argparse import ArgumentParser, FileType
 from sys import stderr
 from traceback import print_exc
-from pkg_resources import resource_filename
 from oberon.bootloader import bootloader
 from oberon.display import PYGAME, initialize_screen, ScreenRAMMixin
 from oberon.risc import (
@@ -51,27 +49,6 @@ if PYGAME:
 else:
     pump = lambda: None
     Memory = ByteAddressed32BitRAM
-
-
-def make_arg_parser():
-    '''
-    Return an :py:class:`ArgumentParser` object.
-    '''
-    parser = ArgumentParser(
-        prog='PythonOberon',
-        usage='python -i -m oberon [-d DISK_IMAGE]',
-        description='An emulator for Prof Wirth\'s RISC CPU for Project Oberon.',
-        )
-    parser.add_argument(
-        '-d', '--disk-image',
-        type=FileType('rb'),
-        default=resource_filename(__name__, 'disk.img'),
-        )
-    parser.add_argument(
-        '--serial-in',
-        type=FileType('rb'),
-        )
-    return parser
 
 
 def make_cpu(disk_image, serial=None):
