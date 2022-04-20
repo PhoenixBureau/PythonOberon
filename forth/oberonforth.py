@@ -127,6 +127,9 @@ def busywait_on_serial_ready():
     move_immediate_word_to_register(R1, SERIAL_STATUS)
     Load_word(R2, R1, 0)
     EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
+    # Note that the machine will have incremented the PC
+    # by four already, so we jump back two words (-8 bytes)
+    # to reach the Load_word() instruction.
 
 
 negative_offset_24 = lambda n: s_to_u_32(n) & 0xffffff
@@ -211,8 +214,8 @@ label(WORD_BUFFER, reserves=32)
 defcode(b'WORD', WORD)
 
 # call _KEY
-Mov_imm(R1, _KEY)
 label(_word_key)
+Mov_imm(R1, _KEY)
 T_link(R1)
 
 # Get a byte from the serial port.
@@ -234,7 +237,7 @@ Mov_imm(word_counter, 0)
 # Have we overflowed the buffer yet?
 label(_find_length)
 Sub_imm(R2, word_counter, 32)
-EQ_imm(_a_key)  # then reset word and try again.
+EQ_imm(_word_key)  # try again.
 
 # Save the char to the buffer
 Store_byte(R0, word_pointer)
@@ -242,13 +245,15 @@ Add_imm(word_pointer, word_pointer, 1)
 Add_imm(word_counter, word_counter, 1)
 
 # Get the next character, breaking if it's a space.
-T_link(R1)  # Still points to _KEY
+Mov_imm(R1, _KEY)
+T_link(R1)
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 # Is it a space char?
 Sub_imm(R2, R0, ord(' '))
 NE_imm(_find_length)  # No, keep getting chars to the buffer
 
 # Otherwise, if it's a space, push the length and return.
+# (WORD_BUFFER is a constant.)
 PUSH(word_counter)
 NEXT()
 
