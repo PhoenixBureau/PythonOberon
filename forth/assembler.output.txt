@@ -1,92 +1,36 @@
 # New unassigned label: main
 # New unassigned label: _reserved
-# assigning label _reserved -> 0x0004
 # New unassigned label: DOCOL
-# assigning label DOCOL -> 0x0028
-# assigning label main -> 0x0044
-# fixing <LabelThunk main> at 0x0 to 0x44 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x8015ad9d0>
+# fixing <LabelThunk main> at 0x0 to 0x44 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x801dd85e0>
 # New unassigned label: cold_start
-# assigning label cold_start -> 0x006c
-# fixing <LabelThunk cold_start> at 0x4c to 0x6c using <function Assembler.Mov_imm.<locals>.fixup at 0x8015ad9d0>
+# fixing <LabelThunk cold_start> at 0x4c to 0x6c using <function Assembler.Mov_imm.<locals>.fixup at 0x801dd85e0>
 # New unassigned label: EMIT
 # New unassigned label: DROP
-# assigning label DROP -> 0x007c
+# New unassigned label: DROP_dfa
 # New unassigned label: EXIT
-# assigning label EXIT -> 0x00a0
+# New unassigned label: EXIT_dfa
 # New unassigned label: LIT
-# assigning label LIT -> 0x00c4
+# New unassigned label: LIT_dfa
 # New unassigned label: KEY
-# assigning label KEY -> 0x00f0
+# New unassigned label: KEY_dfa
 # New unassigned label: _KEY
-# assigning label EMIT -> 0x0124
-# fixing <LabelThunk EMIT> at 0x6c to 0x124 using <function Assembler.dw.<locals>.fixup at 0x8015ad9d0>
+# New unassigned label: EMIT_dfa
+# fixing <LabelThunk EMIT> at 0x6c to 0x124 using <function Assembler.dw.<locals>.fixup at 0x801dd85e0>
 # New unassigned label: SWAP
-# assigning label SWAP -> 0x0158
+# New unassigned label: SWAP_dfa
 # New unassigned label: LATEST
 # New unassigned label: LATEST_var
-# assigning label LATEST -> 0x0190
-# assigning label LATEST_var -> 0x01b0
-# fixing <LabelThunk LATEST_var> at 0x194 to 0x1b0 using <function Assembler.Mov_imm.<locals>.fixup at 0x8015adaf0>
-# assigning label _KEY -> 0x01b4
-# fixing <LabelThunk _KEY> at 0xf4 to 0x1b4 using <function Assembler.Mov_imm.<locals>.fixup at 0x8015ada60>
-# fixing <LabelThunk _KEY> at 0x130 to 0x1b4 using <function Assembler.Mov_imm.<locals>.fixup at 0x8015ad9d0>
+# New unassigned label: LATEST_dfa
+# fixing <LabelThunk LATEST_var> at 0x194 to 0x1b0 using <function Assembler.Mov_imm.<locals>.fixup at 0x801dd8700>
+# fixing <LabelThunk _KEY> at 0xf4 to 0x1b4 using <function Assembler.Mov_imm.<locals>.fixup at 0x801dd8670>
+# fixing <LabelThunk _KEY> at 0x130 to 0x1b4 using <function Assembler.Mov_imm.<locals>.fixup at 0x801dd85e0>
 # New unassigned label: WORD_BUFFER
-# assigning label WORD_BUFFER -> 0x01c8
 # New unassigned label: WORD
-# assigning label WORD -> 0x01f4
+# New unassigned label: WORD_dfa
 # New unassigned label: _word_key
-# assigning label _word_key -> 0x01fc
 # New unassigned label: _a_key
-# assigning label _a_key -> 0x020c
 # New unassigned label: _find_length
-# assigning label _find_length -> 0x0214
 # New unassigned label: QUIT
-# assigning label QUIT -> 0x0250
-# New unassigned label: main
-# New unassigned label: _reserved
-# assigning label _reserved -> 0x0004
-# New unassigned label: DOCOL
-# assigning label DOCOL -> 0x0028
-# assigning label main -> 0x0044
-# fixing <LabelThunk main> at 0x0 to 0x44 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x8015ad9d0>
-# New unassigned label: cold_start
-# assigning label cold_start -> 0x006c
-# fixing <LabelThunk cold_start> at 0x4c to 0x6c using <function Assembler.Mov_imm.<locals>.fixup at 0x8015ad9d0>
-# New unassigned label: EMIT
-# New unassigned label: DROP
-# assigning label DROP -> 0x007c
-# New unassigned label: EXIT
-# assigning label EXIT -> 0x00a0
-# New unassigned label: LIT
-# assigning label LIT -> 0x00c4
-# New unassigned label: KEY
-# assigning label KEY -> 0x00f0
-# New unassigned label: _KEY
-# assigning label EMIT -> 0x0124
-# fixing <LabelThunk EMIT> at 0x6c to 0x124 using <function Assembler.dw.<locals>.fixup at 0x8015ad9d0>
-# New unassigned label: SWAP
-# assigning label SWAP -> 0x0158
-# New unassigned label: LATEST
-# New unassigned label: LATEST_var
-# assigning label LATEST -> 0x0190
-# assigning label LATEST_var -> 0x01b0
-# fixing <LabelThunk LATEST_var> at 0x194 to 0x1b0 using <function Assembler.Mov_imm.<locals>.fixup at 0x8015adaf0>
-# assigning label _KEY -> 0x01b4
-# fixing <LabelThunk _KEY> at 0xf4 to 0x1b4 using <function Assembler.Mov_imm.<locals>.fixup at 0x8015ada60>
-# fixing <LabelThunk _KEY> at 0x130 to 0x1b4 using <function Assembler.Mov_imm.<locals>.fixup at 0x8015ad9d0>
-# New unassigned label: WORD_BUFFER
-# assigning label WORD_BUFFER -> 0x01c8
-# New unassigned label: WORD
-# assigning label WORD -> 0x01f4
-# New unassigned label: _word_key
-# assigning label _word_key -> 0x01fc
-# New unassigned label: _a_key
-# assigning label _a_key -> 0x020c
-# New unassigned label: _find_length
-# assigning label _find_length -> 0x0214
-# New unassigned label: QUIT
-# assigning label QUIT -> 0x0250
-
               0x00000 T_imm(0x10)
    _reserved: 0x00004 0x00000000
               0x00008 0x00000000
@@ -115,7 +59,7 @@
               0x00064 Add_imm(14, 14, 0x4, u=False, v=False)
               0x00068 T(4)
   cold_start: 0x0006c 0x00000124
-              0x00070 0x00000000
+    DROP_dfa: 0x00070 0x00000000
               0x00074 0x0444524f
               0x00078 0x50000000
         DROP: 0x0007c 0x00000080
@@ -124,7 +68,7 @@
               0x00088 Load_word(4, 3)
               0x0008c Add_imm(14, 14, 0x4, u=False, v=False)
               0x00090 T(4)
-              0x00094 0x00000070
+    EXIT_dfa: 0x00094 0x00000070
               0x00098 0x04455849
               0x0009c 0x54000000
         EXIT: 0x000a0 0x000000a4
@@ -134,7 +78,7 @@
               0x000b0 Load_word(4, 3)
               0x000b4 Add_imm(14, 14, 0x4, u=False, v=False)
               0x000b8 T(4)
-              0x000bc 0x00000094
+     LIT_dfa: 0x000bc 0x00000094
               0x000c0 0x034c4954
          LIT: 0x000c4 0x000000c8
               0x000c8 Load_word(0, 14)
@@ -145,7 +89,7 @@
               0x000dc Load_word(4, 3)
               0x000e0 Add_imm(14, 14, 0x4, u=False, v=False)
               0x000e4 T(4)
-              0x000e8 0x000000bc
+     KEY_dfa: 0x000e8 0x000000bc
               0x000ec 0x034b4559
          KEY: 0x000f0 0x000000f4
               0x000f4 Mov_imm(1, 0x1b4, u=False, v=False)
@@ -157,7 +101,7 @@
               0x0010c Load_word(4, 3)
               0x00110 Add_imm(14, 14, 0x4, u=False, v=False)
               0x00114 T(4)
-              0x00118 0x000000e8
+    EMIT_dfa: 0x00118 0x000000e8
               0x0011c 0x04454d49
               0x00120 0x54000000
         EMIT: 0x00124 0x00000128
@@ -170,7 +114,7 @@
               0x00140 Load_word(4, 3)
               0x00144 Add_imm(14, 14, 0x4, u=False, v=False)
               0x00148 T(4)
-              0x0014c 0x00000118
+    SWAP_dfa: 0x0014c 0x00000118
               0x00150 0x04535741
               0x00154 0x50000000
         SWAP: 0x00158 0x0000015c
@@ -184,7 +128,7 @@
               0x00178 Load_word(4, 3)
               0x0017c Add_imm(14, 14, 0x4, u=False, v=False)
               0x00180 T(4)
-              0x00184 0x0000014c
+  LATEST_dfa: 0x00184 0x0000014c
               0x00188 0x064c4154
               0x0018c 0x45535400
       LATEST: 0x00190 0x00000194
@@ -209,7 +153,7 @@
               0x001dc 0x00000000
               0x001e0 0x00000000
               0x001e4 0x00000000
-              0x001e8 0x00000184
+    WORD_dfa: 0x001e8 0x00000184
               0x001ec 0x04574f52
               0x001f0 0x44000000
         WORD: 0x001f4 0x000001f8
