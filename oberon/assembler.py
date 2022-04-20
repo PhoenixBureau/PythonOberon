@@ -584,7 +584,9 @@ class Assembler:
         '''
         Enter a label in the symbol table, fix up any prior
         references to this label, and optionally reserve some
-        RAM (``reserves`` must be a multiple of four.)
+        RAM (``reserves`` counts bytes, not words, and can
+        only reserve whole words to maintain alignment, so
+        this must be a multiple of four.)
         '''
         if not isinstance(thunk, LabelThunk):
             raise RuntimeError('already assigned')
