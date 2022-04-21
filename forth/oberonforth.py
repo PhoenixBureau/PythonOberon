@@ -1,4 +1,45 @@
+#
+#    Copyright © 2022 Simon Forman
+#
+#    This file is part of PythonOberon
+#
+#    PythonOberon is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    PythonOberon is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
+#
+'''
+   ___  _                        ___        _   _
+  / _ \| |__  ___ _ _ ___ _ _   | __|__ _ _| |_| |_
+ | (_) | '_ \/ -_) '_/ _ \ ' \  | _/ _ \ '_|  _| ' \
+  \___/|_.__/\___|_| \___/_||_| |_|\___/_|  \__|_||_|
+
+  Oberon Forth
+
+Now that I have an emulator and assembler the obvious thing to do is
+implement a Forth.  I grabbed a copy of Jonesforth and set to.
+'''
+# The chip uses two's complement.
 from oberon.util import s_to_u_32
+
+
+##    _                     _    _
+##   /_\   ______ ___ _ __ | |__| |___ _ _
+##  / _ \ (_-<_-</ -_) '  \| '_ \ / -_) '_|
+## /_/ \_\/__/__/\___|_|_|_|_.__/_\___|_|
+## \ \ / /_ _ _ _(_)__ _| |__| |___ ___
+##  \ V / _` | '_| / _` | '_ \ / -_|_-<
+##   \_/\__,_|_| |_\__,_|_.__/_\___/__/
+#
+# Assembler Variables
 
 # Put these anywhere...
 DATA_STACK = 0x4000
@@ -15,9 +56,9 @@ Dstack = 10
 Rstack = 12
 
 # Flags
-F_IMMED = 0x80
-F_HIDDEN = 0x20
-F_LENMASK = 0x1f
+F_IMMED = 0x80  #   0b0_1000_0000
+F_HIDDEN = 0x20  #  0b0_0010_0000
+F_LENMASK = 0x1f  # 0b0_0001_1111
 
 # I/O
 SERIAL_PORT = s_to_u_32(-56)  # io_ports[8]
@@ -26,6 +67,13 @@ SERIAL_STATUS = s_to_u_32(-52)  # io_ports[12]
 # Dictionary
 LINK = 0
 
+
+##  __  __
+## |  \/  |__ _ __ _ _ ___ ___
+## | |\/| / _` / _| '_/ _ (_-<
+## |_|  |_\__,_\__|_| \___/__/
+#
+# Macros
 
 def NEXT():
     Load_word(next_function, IP)        # next_function <- RAM[IP]
@@ -103,11 +151,25 @@ def defvar(name, LABEL, flags=0, initial=0):
     '''
     LABEL_var = globals()[LABEL.name + '_var']
     defcode(name, LABEL, flags)
+    # Put the address of the variable on the stack.
     Mov_imm(R0, LABEL_var)
     PUSH(R0)
     NEXT()
+    # Reserve a word of RAM for the variable.
     label(LABEL_var)
     dw(initial)
+
+
+def move_immediate_word_to_register(reg, word):
+    # TODO: check size & sign of word value?
+    Mov_imm(reg, HIGH(word), u=1)
+    Ior_imm(reg, reg, LOW(word))
+
+
+def busywait_on_serial_ready():
+    '''Call the _KEY subroutine.'''
+    Mov_imm(R1, _KEY)
+    T_link(R1)
 
 
 def HIGH(i):
@@ -118,34 +180,22 @@ def LOW(i):
     return i & 0xFFFF
 
 
-def move_immediate_word_to_register(reg, word):
-    Mov_imm(reg, HIGH(word), u=1)
-    Ior_imm(reg, reg, LOW(word))
-
-
-def busywait_on_serial_ready():
-    move_immediate_word_to_register(R1, SERIAL_STATUS)
-    Load_word(R2, R1, 0)
-    EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
-    # Note that the machine will have incremented the PC
-    # by four already, so we jump back two words (-8 bytes)
-    # to reach the Load_word() instruction.
-
-
 negative_offset_24 = lambda n: s_to_u_32(n) & 0xffffff
 negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
 
+
 # FIGlet SaaS:
 # http://www.patorjk.com/software/taag/
+
 
 ##  _              _
 ## | |__  ___ __ _(_)_ _
 ## | '_ \/ -_) _` | | ' \
 ## |_.__/\___\__, |_|_||_|
 ##           |___/
-
 T_imm(main)
 label(_reserved, reserves=36)
+
 
 ##  ___   ___   ___ ___  _
 ## |   \ / _ \ / __/ _ \| |
@@ -153,10 +203,11 @@ label(_reserved, reserves=36)
 ## |___/ \___/ \___\___/|____|
 
 label(DOCOL)
-PUSHRSP(IP)
-# Point from the codeword to the first data word.
+PUSHRSP(IP)  # Save current value of IP to the Return Stack.
+# Make IP point from the codeword to the first data word.
 Add_imm(IP, next_function, 4)
 NEXT()
+
 
 ##             _
 ##  _ __  __ _(_)_ _
@@ -171,6 +222,7 @@ Mov_imm(IP, cold_start)
 ##PUSH(R1)
 NEXT()
 
+
 ##         _    _      _            _
 ##  __ ___| |__| |  __| |_ __ _ _ _| |_
 ## / _/ _ \ / _` | (_-<  _/ _` | '_|  _|
@@ -182,10 +234,15 @@ dw(REPL)
           # contain the address of the codeword of QUIT.
 
 
+##                    _
+## __ __ _____ _ _ __| |___
+## \ V  V / _ \ '_/ _` (_-<
+##  \_/\_/\___/_| \__,_/__/
+
 defword(b'REPL', REPL)
 dw(WORD)
 dw(FIND)
-dw(REPL)
+dw(REPL) # Don't use too many words or you'll blow out the Return Stack!
 dw(EXIT) # Won't get here because of recursive call above.
 
 
@@ -193,15 +250,18 @@ defcode(b'DROP', DROP)
 Add_imm(Dstack, Dstack, 4)  # drop top of stack
 NEXT()
 
+
 defcode(b'EXIT', EXIT)
-POPRSP(IP)
+POPRSP(IP)  # Restore previous IP from the Return Stack.
 NEXT()
 
+
 defcode(b'LIT', LIT)
-Load_word(R0, IP)
-Add_imm(IP, IP, 4)                  # IP += 4
-PUSH(R0)
+Load_word(R0, IP)  # Don't run the next word, load it,
+PUSH(R0)  # push the value,
+Add_imm(IP, IP, 4)  # then skip it and run the word after it (EXIT).
 NEXT()
+
 
 defcode(b'SWAP', SWAP)
 POP(R0)
@@ -210,41 +270,45 @@ Store_word(0, 10)
 PUSH(R1)
 NEXT()
 
+
 ##  ___   _____
 ## |_ _| / / _ \
 ##  | | / / (_) |
 ## |___/_/ \___/
 
 defcode(b'KEY', KEY)
-##busywait_on_serial_ready()
-Mov_imm(R1, _KEY)
-T_link(R1)
+busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 PUSH(R0)
 NEXT()
 
 defcode(b'EMIT', EMIT)
 POP(R0)
-##busywait_on_serial_ready()
-Mov_imm(R1, _KEY)
-T_link(R1)
+busywait_on_serial_ready()
 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 NEXT()
+
 
 ##     _  _______   __
 ##    | |/ / __\ \ / /
 ##    | ' <| _| \ V /
 ##  __|_|\_\___| |_|
 ## |___|
-
-label(_KEY)
+#
 # subroutine to busywait on serial port status.
 # Sets R1 to point to SERIAL_STATUS i/o port.
 # Clobbers R2.
+
+label(_KEY)
 move_immediate_word_to_register(R1, SERIAL_STATUS)
 Load_word(R2, R1, 0)
 EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
+# Note that the machine will have incremented the PC
+# by four already, so we jump back two words (-8 bytes)
+# to reach the Load_word() instruction.  (I could use
+# another label, but this seems sufficient.)
 T(15)  # return
+
 
 ## __      _____  ___ ___
 ## \ \    / / _ \| _ \   \
@@ -262,8 +326,7 @@ defcode(b'WORD', WORD)
 label(_word_key)  # <=================================( _word_key )======
 
 # Get a byte from the serial port.
-Mov_imm(R1, _KEY)
-T_link(R1)
+busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
 # Is it a space char?
@@ -289,8 +352,7 @@ Add_imm(word_pointer, word_pointer, 1)
 Add_imm(word_counter, word_counter, 1)
 
 # Get the next character, breaking if it's a space.
-Mov_imm(R1, _KEY)
-T_link(R1)
+busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
 # Is it a space char?
@@ -304,6 +366,10 @@ Store_byte(word_counter, word_pointer)
 NEXT()
 
 
+##  ___ ___ _  _ ___
+## | __|_ _| \| |   \
+## | _| | || .` | |) |
+## |_| |___|_|\_|___/
 
 defcode(b'FIND', FIND)
 
@@ -311,7 +377,7 @@ defcode(b'FIND', FIND)
 Mov_imm(R0, LATEST_var)
 EQ_imm(_end_of_dict)  # Null pointer (should never happen here, eh?)
 
-label(_1)  # <==============================( _1 )===
+label(_FIND_1)  # <==============================( _FIND_1 )===
 Load_word(R1, R0)  # Load the address of the word's link field
 Load_word(R0, R1, 4)  # load a word of the name field.
 
@@ -321,17 +387,17 @@ Mov_imm(word_pointer, WORD_BUFFER)
 Load_word(word_counter, word_pointer)
 
 Sub(R0, R0, word_counter)
-NE_imm(_2)  # If these two words differ then load the next word.
+NE_imm(_FIND_2)  # If these two words differ then load the next word.
 
 # The two word are the same, same count, and same first three letters.
 # That's plenty for now.
 PUSH(R1)
 NEXT()
 
-label(_2)  # <==============================( _2 )===
+label(_FIND_2)  # <==============================( _FIND_2 )===
 Load_word(R0, R1)  # Load the next link field into R0
 EQ_imm(_end_of_dict)  # Null pointer
-T_imm(_1)  # Check the next word.
+T_imm(_FIND_1)  # Check the next word.
 
 label(_end_of_dict)  # <==============================( _end_of_dict )===
 # We know R0 is 0x00000000, so push it to signal failure.

@@ -34,9 +34,9 @@
 # fixing <LabelThunk FIND> at 0x78 to 0x244 using <function Assembler.dw.<locals>.fixup at 0x801dd85e0>
 # New unassigned label: LATEST_var
 # New unassigned label: _end_of_dict
-# New unassigned label: _1
-# New unassigned label: _2
-# fixing <LabelThunk _2> at 0x264 to 0x280 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x801dd8700>
+# New unassigned label: _FIND_1
+# New unassigned label: _FIND_2
+# fixing <LabelThunk _FIND_2> at 0x264 to 0x280 using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x801dd8700>
 # fixing <LabelThunk _end_of_dict> at 0x24c to 0x28c using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x801dd8550>
 # fixing <LabelThunk _end_of_dict> at 0x284 to 0x28c using <function deco0.<locals>.inner.<locals>.wrapper.<locals>.fixup at 0x801dd8700>
 # New unassigned label: LATEST
@@ -100,9 +100,9 @@
               0x000d4 0x54494c03
          LIT: 0x000d8 0x000000dc
               0x000dc Load_word(0, 14)
-              0x000e0 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x000e4 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x000e8 Store_word(0, 10)
+              0x000e0 Sub_imm(10, 10, 0x4, u=False, v=False)
+              0x000e4 Store_word(0, 10)
+              0x000e8 Add_imm(14, 14, 0x4, u=False, v=False)
               0x000ec Load_word(3, 14)
               0x000f0 Load_word(4, 3)
               0x000f4 Add_imm(14, 14, 0x4, u=False, v=False)
@@ -192,7 +192,7 @@ _find_length: 0x001f8 Sub_imm(2, 5, 0x20, u=False, v=False)
         FIND: 0x00244 0x00000248
               0x00248 Mov_imm(0, 0x2d0, u=False, v=False)
               0x0024c EQ_imm(0xf)
-          _1: 0x00250 Load_word(1, 0)
+     _FIND_1: 0x00250 Load_word(1, 0)
               0x00254 Load_word(0, 1, offset=0x4)
               0x00258 Mov_imm(6, 0x1ac, u=False, v=False)
               0x0025c Load_word(5, 6)
@@ -204,7 +204,7 @@ _find_length: 0x001f8 Sub_imm(2, 5, 0x20, u=False, v=False)
               0x00274 Load_word(4, 3)
               0x00278 Add_imm(14, 14, 0x4, u=False, v=False)
               0x0027c T(4)
-          _2: 0x00280 Load_word(0, 1)
+     _FIND_2: 0x00280 Load_word(0, 1)
               0x00284 EQ_imm(0x1)
               0x00288 T_imm(0xfffff1)
 _end_of_dict: 0x0028c Sub_imm(10, 10, 0x4, u=False, v=False)
