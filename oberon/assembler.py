@@ -32,7 +32,11 @@ from pickle import dump
 from oberon.util import bint, s_to_u_32
 
 
-def assemble_file(in_file, out_file, sym_file=None, print_program=False):
+def assemble_file(in_file, out_file, sym_file=None,
+                  print_program=False,
+                  epilog=None,  # Bytes to follow image
+                  # in serial stream.  Not part of the program.
+                  ):
     '''
     Accept up to three file objects.  The first is a source file,
     the second is the binary output file, and the optional third
@@ -94,6 +98,10 @@ def assemble_file(in_file, out_file, sym_file=None, print_program=False):
     program_list.append(0)  # stop loading
     data = pack(f'<{len(program_list)}I', *program_list)
     out_file.write(data)
+    if epilog:
+        assert isinstance(epilog, bytes)
+        while len(epilog) % 4: epilog += b'\x00'
+        out_file.write(epilog)
     if sym_file:
         dump(
             (assembler.symbol_table, assembler.data_addrs),

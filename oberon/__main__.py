@@ -51,6 +51,9 @@ asm_subparser.add_argument(
     '-p', '--print-program',
     action='store_true',
     )
+asm_subparser.add_argument(
+    '-e', '--epilog',
+    )
 emu_subparser= subparsers.add_parser(
     'emulate'
     )
@@ -69,11 +72,14 @@ args = parser.parse_args()
 if hasattr(args, 'output'):  # We are assembling
     from oberon.assembler import assemble_file
 
+    epilog = args.epilog.encode('UTF_8') if args.epilog else None
+
     assemble_file(
         args.source,
         args.output,
         args.symbol_file,
         print_program=args.print_program,
+        epilog=epilog,
         )
 
 else:  # We are emulating.

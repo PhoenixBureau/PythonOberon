@@ -72,11 +72,11 @@ def def_(name, LABEL, flags=0):
     LINK = HERE() - 4
     name_len = len(name)
     assert name_len < 32, repr(name)
-    name_bytes = [name_len]
+    name_bytes = [name_len | flags]
     name_bytes.extend(name)  # Converts bytes to [int].
     while len(name_bytes) % 4: name_bytes.append(0)
     for i in range(0, len(name_bytes), 4):
-        a, b, c, d = name_bytes[i:i+4]
+        d, c, b, a = name_bytes[i:i+4]
         dw((a<<24) + (b<<16) + (c<<8) + d)
     label(LABEL)
 
@@ -143,6 +143,7 @@ negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
 ## | '_ \/ -_) _` | | ' \
 ## |_.__/\___\__, |_|_||_|
 ##           |___/
+
 T_imm(main)
 label(_reserved, reserves=36)
 
@@ -150,6 +151,7 @@ label(_reserved, reserves=36)
 ## |   \ / _ \ / __/ _ \| |
 ## | |) | (_) | (_| (_) | |__
 ## |___/ \___/ \___\___/|____|
+
 label(DOCOL)
 PUSHRSP(IP)
 # Point from the codeword to the first data word.
@@ -160,12 +162,13 @@ NEXT()
 ##  _ __  __ _(_)_ _
 ## | '  \/ _` | | ' \
 ## |_|_|_\__,_|_|_||_|
+
 label(main)
 Mov_imm(Dstack, DATA_STACK)
 Mov_imm(Rstack, RETURN_STACK)
 Mov_imm(IP, cold_start)
-Mov_imm(R1, 38)  # ASCII '&'
-PUSH(R1)
+##Mov_imm(R1, 38)  # push ASCII '&' onto stack
+##PUSH(R1)
 NEXT()
 
 ##         _    _      _            _
@@ -174,9 +177,16 @@ NEXT()
 ## \__\___/_\__,_|_/__/\__\__,_|_|  \__|
 ##              |___|
 label(cold_start)
-dw(EMIT)
+dw(REPL)
 #dw(QUIT)  # IP starts pointing here so this RAM address must
           # contain the address of the codeword of QUIT.
+
+
+defword(b'REPL', REPL)
+dw(WORD)
+dw(EMIT)
+dw(REPL)
+dw(EXIT) # Won't get here because of recursive call above.
 
 
 defcode(b'DROP', DROP)
@@ -192,6 +202,21 @@ Load_word(R0, IP)
 Add_imm(IP, IP, 4)                  # IP += 4
 PUSH(R0)
 NEXT()
+
+defcode(b'SWAP', SWAP)
+POP(R0)
+Load_word(1, 10)
+Store_word(0, 10)
+PUSH(R1)
+NEXT()
+
+defvar(b'LATEST', LATEST, initial=LINK)
+# Later link to actual last value/label.
+
+##  ___   _____
+## |_ _| / / _ \
+##  | | / / (_) |
+## |___/_/ \___/
 
 defcode(b'KEY', KEY)
 ##busywait_on_serial_ready()
@@ -209,6 +234,12 @@ T_link(R1)
 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 NEXT()
 
+##     _  _______   __
+##    | |/ / __\ \ / /
+##    | ' <| _| \ V /
+##  __|_|\_\___| |_|
+## |___|
+
 label(_KEY)
 # subroutine to busywait on serial port status.
 # Sets R1 to point to SERIAL_STATUS i/o port.
@@ -218,26 +249,20 @@ Load_word(R2, R1, 0)
 EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
 T(15)  # return
 
-defcode(b'SWAP', SWAP)
-POP(R0)
-Load_word(1, 10)
-Store_word(0, 10)
-PUSH(R1)
-NEXT()
-
-defvar(b'LATEST', LATEST, initial=LINK)
-# Later link to actual last value/label.
+## __      _____  ___ ___
+## \ \    / / _ \| _ \   \
+##  \ \/\/ / (_) |   / |) |
+##   \_/\_/ \___/|_|_\___/
 
 label(WORD_BUFFER, reserves=32)
 
 defcode(b'WORD', WORD)
 
-# call _KEY
-label(_word_key)
-Mov_imm(R1, _KEY)
-T_link(R1)
+label(_word_key)  # <=================================( _word_key )======
 
 # Get a byte from the serial port.
+Mov_imm(R1, _KEY)
+T_link(R1)
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
 # Is it a space char?
@@ -245,7 +270,6 @@ Sub_imm(R2, R0, ord(' '))
 EQ_imm(_word_key)  # then get another char
 
 # Set up buffer and counter.
-label(_a_key)
 Mov_imm(word_pointer, WORD_BUFFER)
 Mov_imm(word_counter, 0)
 
@@ -254,7 +278,7 @@ Mov_imm(word_counter, 0)
 # (For finding words in the dictionary.)
 
 # Have we overflowed the buffer yet?
-label(_find_length)
+label(_find_length)  # <==============================( _find_length )===
 Sub_imm(R2, word_counter, 32)
 EQ_imm(_word_key)  # try again.
 
@@ -267,12 +291,14 @@ Add_imm(word_counter, word_counter, 1)
 Mov_imm(R1, _KEY)
 T_link(R1)
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+
 # Is it a space char?
 Sub_imm(R2, R0, ord(' '))
 NE_imm(_find_length)  # No, keep getting chars to the buffer
 
 # Otherwise, if it's a space, push the length and return.
 # (WORD_BUFFER is a constant.)
+Add_imm(word_counter, word_counter, 37)  # make it an ASCII char.
 PUSH(word_counter)
 NEXT()
 
