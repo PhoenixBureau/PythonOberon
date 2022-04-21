@@ -445,7 +445,7 @@ class Context(dict):
         try:
             return dict.__getitem__(self, name)
         except KeyError:
-            print('# New unassigned label:', name)
+            # print('# New unassigned label:', name)
             thunk = self[name] = self.symbol_table[name] = LabelThunk(name)
             return thunk
 
@@ -609,7 +609,7 @@ class Assembler:
         if thunk in self.fixups: # defaultdict!
             for addr in self.fixups.pop(thunk):
                 fix = self.program[addr][0]
-                print('# fixing', thunk, 'at', hex(addr), 'to', hex(value), 'using', fix)
+                # print('# fixing', thunk, 'at', hex(addr), 'to', hex(value), 'using', fix)
                 temp, self.here = self.here, addr
                 try:
                     fix(value)
