@@ -817,7 +817,11 @@ class Serial(object):
         self.status = SerialStatus(self)
 
     def read(self):
-        return ord(self.input_file.read(1))
+        next_byte = self.input_file.read(1)
+        if not next_byte:
+            raise RuntimeError('Out of serial input.')
+        # print(f'serial port read: {(next_byte)}')
+        return ord(next_byte)
 
     def write(self, word):
         if word & 0xFFFFFF00:

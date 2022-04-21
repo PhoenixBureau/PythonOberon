@@ -241,7 +241,8 @@ dw(REPL)
 
 defword(b'REPL', REPL)
 dw(WORD)
-dw(FIND)
+#dw(FIND)
+dw(NUMBER)
 dw(REPL) # Don't use too many words or you'll blow out the Return Stack!
 dw(EXIT) # Won't get here because of recursive call above.
 
@@ -403,6 +404,90 @@ label(_end_of_dict)  # <==============================( _end_of_dict )===
 # We know R0 is 0x00000000, so push it to signal failure.
 PUSH(R0)
 NEXT()
+
+
+##  _  _ _   _ __  __ ___ ___ ___
+## | \| | | | |  \/  | _ ) __| _ \
+## | .` | |_| | |\/| | _ \ _||   /
+## |_|\_|\___/|_|  |_|___/___|_|_\
+#
+# Parse the number in the WORD_BUFFER.
+# To keep things simple, numbers are in hexidecimal only (no BASE)
+# and must begin with a '$' and {abcdef} must be lowercase.
+# No negative literals (subtract from zero to get negative numbers.)
+defcode(b'NUMBER', NUMBER)
+
+## ASCII ch
+##    48 0
+##    49 1
+##    50 2
+##    51 3
+##    52 4
+##    53 5
+##    54 6
+##    55 7
+##    56 8
+##    57 9
+#
+##    97 a
+##    98 b
+##    99 c
+##   100 d
+##   101 e
+##   102 f
+
+Mov_imm(word_pointer, WORD_BUFFER)
+Load_byte(word_counter, word_pointer)
+Mov_imm(R2, 0)  # use R2 as the accumulator for the number's value
+
+Add_imm(word_pointer, word_pointer, 1)  # Point to first char.
+Load_byte(R0, word_pointer)  # Load it.
+Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
+NE_imm(_NUM_fin)
+
+# It is a '$', let's parse a hex lit.
+Sub_imm(word_counter, word_counter, 1)  # we have parsed one '$' char.
+
+label(_NUM_hex)  # <============================( _NUM_hex )===
+Add_imm(word_pointer, word_pointer, 1)  # Point to next char.
+Load_byte(R0, word_pointer)  # Load it.
+
+Sub_imm(R0, R0, ord('0'))
+LT_imm(_NUM_fin)  # Is its ASCII value lower than '0'?
+
+Sub_imm(R1, R0, 9)  # Is it 0-9?
+LE_imm(_NUM_add)  # It is!
+
+# It is not 0-9, but is it a-f?
+# We have already subtracted 48 from it, so if it was 'a' (97)
+# it would now be '1' (49 = 97 - 48).  We want to know if it's
+# between 49 and 54 inclusive.  ('f' (102) -> '6' (54 = 102 - 48).)
+Sub_imm(R0, R0, 49)  # so now '1'..'6' -> 0..5
+LT_imm(_NUM_fin)  # Its ASCII value is less than 'a', nope out.
+
+# It is >='a' but is it <='f'?
+Sub_imm(R1, R0, 5)  # Is it a-f?
+GT_imm(_NUM_fin)  # nope, nope out
+# It is a-f.
+Add_imm(R0, R0, 10)  # 0..5 -> 10..15
+
+label(_NUM_add)  # <============================( _NUM_add )===
+Add( R2, R2, R0)  # Add it to the accumulator.
+
+Sub_imm(word_counter, word_counter, 1)  # we have parsed a digit char.
+NE_imm(_NUM_foo)  # More digits? Keep going.
+# That was all the digits, done.
+
+label(_NUM_fin)  # <============================( _NUM_fin )===
+PUSH(R2)
+PUSH(word_counter)
+NEXT()
+
+label(_NUM_foo)  # <============================( _NUM_foo )===
+Lsl_imm(R2, R2, 4)  # accumulator *= 16
+T_imm(_NUM_hex)  # Go get the next digit.
+
+
 
 
 defvar(b'LATEST', LATEST, initial=LINK)
