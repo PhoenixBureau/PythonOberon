@@ -184,7 +184,7 @@ dw(REPL)
 
 defword(b'REPL', REPL)
 dw(WORD)
-dw(EMIT)
+dw(FIND)
 dw(REPL)
 dw(EXIT) # Won't get here because of recursive call above.
 
@@ -209,9 +209,6 @@ Load_word(1, 10)
 Store_word(0, 10)
 PUSH(R1)
 NEXT()
-
-defvar(b'LATEST', LATEST, initial=LINK)
-# Later link to actual last value/label.
 
 ##  ___   _____
 ## |_ _| / / _ \
@@ -253,6 +250,10 @@ T(15)  # return
 ## \ \    / / _ \| _ \   \
 ##  \ \/\/ / (_) |   / |) |
 ##   \_/\_/ \___/|_|_\___/
+#
+# This version does NOT push the length nor the address.
+# The address is fixed at WORD_BUFFER and the length is
+# put into the first byte.
 
 label(WORD_BUFFER, reserves=32)
 
@@ -270,7 +271,7 @@ Sub_imm(R2, R0, ord(' '))
 EQ_imm(_word_key)  # then get another char
 
 # Set up buffer and counter.
-Mov_imm(word_pointer, WORD_BUFFER)
+Mov_imm(word_pointer, WORD_BUFFER + 1)  # Leave a byte for the length.
 Mov_imm(word_counter, 0)
 
 # I think we're going to want to put the length in the first
@@ -296,11 +297,50 @@ Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 Sub_imm(R2, R0, ord(' '))
 NE_imm(_find_length)  # No, keep getting chars to the buffer
 
-# Otherwise, if it's a space, push the length and return.
+# Otherwise, if it's a space, save the length and return.
 # (WORD_BUFFER is a constant.)
-Add_imm(word_counter, word_counter, 37)  # make it an ASCII char.
-PUSH(word_counter)
+Mov_imm(word_pointer, WORD_BUFFER)
+Store_byte(word_counter, word_pointer)
 NEXT()
+
+
+
+defcode(b'FIND', FIND)
+
+# Load the LATEST var into a register.
+Mov_imm(R0, LATEST_var)
+EQ_imm(_end_of_dict)  # Null pointer (should never happen here, eh?)
+
+label(_1)  # <==============================( _1 )===
+Load_word(R1, R0)  # Load the address of the word's link field
+Load_word(R0, R1, 4)  # load a word of the name field.
+
+# Make sure the word_pointer points to the WORD_BUFFER.
+Mov_imm(word_pointer, WORD_BUFFER)
+# Reuse the counter to store parts of the name.
+Load_word(word_counter, word_pointer)
+
+Sub(R0, R0, word_counter)
+NE_imm(_2)  # If these two words differ then load the next word.
+
+# The two word are the same, same count, and same first three letters.
+# That's plenty for now.
+PUSH(R1)
+NEXT()
+
+label(_2)  # <==============================( _2 )===
+Load_word(R0, R1)  # Load the next link field into R0
+EQ_imm(_end_of_dict)  # Null pointer
+T_imm(_1)  # Check the next word.
+
+label(_end_of_dict)  # <==============================( _end_of_dict )===
+# We know R0 is 0x00000000, so push it to signal failure.
+PUSH(R0)
+NEXT()
+
+
+defvar(b'LATEST', LATEST, initial=LINK)
+# Later link to actual last value/label.
 
 
 label(QUIT)
