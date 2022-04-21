@@ -242,7 +242,7 @@ dw(REPL)
 defword(b'REPL', REPL)
 dw(WORD)
 #dw(FIND)
-dw(NUMBER)
+dw(CREATE)
 dw(REPL) # Don't use too many words or you'll blow out the Return Stack!
 dw(EXIT) # Won't get here because of recursive call above.
 
@@ -488,10 +488,75 @@ Lsl_imm(R2, R2, 4)  # accumulator *= 16
 T_imm(_NUM_hex)  # Go get the next digit.
 
 
+##   ___ ___ ___   _ _____ ___
+##  / __| _ \ __| /_\_   _| __|
+## | (__|   / _| / _ \| | | _|
+##  \___|_|_\___/_/ \_\_| |___|
+
+defcode(b'CREATE', CREATE)
+
+# Link field.
+Mov_imm(R0, HERE__var)  # R0 <- &HERE
+Load_word(R0, R0)  # R0 <- ram[HERE]
+
+Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
+Load_word(R1, R1)  # R1 <- ram[LATEST]
+Store_word(R1, R0)  # value of LATEST -> ram[HERE]
+# I think that's right...
+
+# Name field.
+Mov_imm(word_pointer, WORD_BUFFER)
+Load_byte(word_counter, word_pointer)
+Ior_imm(word_counter, word_counter, F_LENMASK)
+Asr_imm(word_counter, word_counter, 2)  # How many words?
+
+label(_CREATE_loop)  # <========================( _CREATE_loop )===
+
+Load_word(R1, word_pointer)  # Get the word from WORD_BUFFER.
+Store_word(R1, R0)  # Store word to HERE.
+Add_imm(R0, R0, 4)  # HERE += 4
+Sub_imm(word_counter, word_counter, 1)
+LT_imm(_CREATE_fin)  # There are no more words.
+# There are more words.
+Add_imm(word_pointer, word_pointer, 4)
+T_imm(_CREATE_loop)
+
+label(_CREATE_fin)  # <==========================( _CREATE_fin )===
+# Update HERE.
+Mov_imm(R1, HERE__var)  # R1 <- &HERE
+Store_word(R0, R1)
+NEXT()
 
 
 defvar(b'LATEST', LATEST, initial=LINK)
+defvar(b'STATE', STATE)
+defvar(b'HERE', HERE_, initial=HERE())
 # Later link to actual last value/label.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 label(QUIT)

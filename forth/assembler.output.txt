@@ -28,7 +28,7 @@
               0x0006c 0x0000004c
         REPL: 0x00070 0x00000028
               0x00074 0x000001d8
-              0x00078 0x000002b0
+              0x00078 0x00000340
               0x0007c 0x00000070
               0x00080 0x000000b4
     DROP_dfa: 0x00084 0x00000064
@@ -144,7 +144,7 @@ _find_length: 0x001f8 Sub_imm(2, 5, 0x20, u=False, v=False)
               0x0023c 0x4e494604
               0x00240 0x00000044
         FIND: 0x00244 0x00000248
-              0x00248 Mov_imm(0, 0x360, u=False, v=False)
+              0x00248 Mov_imm(0, 0x3c8, u=False, v=False)
               0x0024c EQ_imm(0xf)
      _FIND_1: 0x00250 Load_word(1, 0)
               0x00254 Load_word(0, 1, offset=0x4)
@@ -203,15 +203,65 @@ _end_of_dict: 0x0028c Sub_imm(10, 10, 0x4, u=False, v=False)
               0x00328 T(4)
     _NUM_foo: 0x0032c Lsl_imm(2, 2, 0x4, u=False, v=False)
               0x00330 T_imm(0xffffe8)
-  LATEST_dfa: 0x00334 0x000002a4
-              0x00338 0x54414c06
-              0x0033c 0x00545345
-      LATEST: 0x00340 0x00000344
-              0x00344 Mov_imm(0, 0x360, u=False, v=False)
-              0x00348 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x0034c Store_word(0, 10)
-              0x00350 Load_word(3, 14)
-              0x00354 Load_word(4, 3)
-              0x00358 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x0035c T(4)
-  LATEST_var: 0x00360 0x000002a4
+  CREATE_dfa: 0x00334 0x000002a4
+              0x00338 0x45524306
+              0x0033c 0x00455441
+      CREATE: 0x00340 0x00000344
+              0x00344 Mov_imm(0, 0x428, u=False, v=False)
+              0x00348 Load_word(0, 0)
+              0x0034c Mov_imm(1, 0x3c8, u=False, v=False)
+              0x00350 Load_word(1, 1)
+              0x00354 Store_word(1, 0)
+              0x00358 Mov_imm(6, 0x1ac, u=False, v=False)
+              0x0035c Load_byte(5, 6)
+              0x00360 Ior_imm(5, 5, 0x1f, u=False, v=False)
+              0x00364 Asr_imm(5, 5, 0x2, u=False, v=False)
+_CREATE_loop: 0x00368 Load_word(1, 6)
+              0x0036c Store_word(1, 0)
+              0x00370 Add_imm(0, 0, 0x4, u=False, v=False)
+              0x00374 Sub_imm(5, 5, 0x1, u=False, v=False)
+              0x00378 LT_imm(0x2)
+              0x0037c Add_imm(6, 6, 0x4, u=False, v=False)
+              0x00380 T_imm(0xfffff9)
+ _CREATE_fin: 0x00384 Mov_imm(1, 0x428, u=False, v=False)
+              0x00388 Store_word(0, 1)
+              0x0038c Load_word(3, 14)
+              0x00390 Load_word(4, 3)
+              0x00394 Add_imm(14, 14, 0x4, u=False, v=False)
+              0x00398 T(4)
+  LATEST_dfa: 0x0039c 0x00000334
+              0x003a0 0x54414c06
+              0x003a4 0x00545345
+      LATEST: 0x003a8 0x000003ac
+              0x003ac Mov_imm(0, 0x3c8, u=False, v=False)
+              0x003b0 Sub_imm(10, 10, 0x4, u=False, v=False)
+              0x003b4 Store_word(0, 10)
+              0x003b8 Load_word(3, 14)
+              0x003bc Load_word(4, 3)
+              0x003c0 Add_imm(14, 14, 0x4, u=False, v=False)
+              0x003c4 T(4)
+  LATEST_var: 0x003c8 0x00000334
+   STATE_dfa: 0x003cc 0x0000039c
+              0x003d0 0x41545305
+              0x003d4 0x00004554
+       STATE: 0x003d8 0x000003dc
+              0x003dc Mov_imm(0, 0x3f8, u=False, v=False)
+              0x003e0 Sub_imm(10, 10, 0x4, u=False, v=False)
+              0x003e4 Store_word(0, 10)
+              0x003e8 Load_word(3, 14)
+              0x003ec Load_word(4, 3)
+              0x003f0 Add_imm(14, 14, 0x4, u=False, v=False)
+              0x003f4 T(4)
+   STATE_var: 0x003f8 0x00000000
+   HERE__dfa: 0x003fc 0x000003cc
+              0x00400 0x52454804
+              0x00404 0x00000045
+       HERE_: 0x00408 0x0000040c
+              0x0040c Mov_imm(0, 0x428, u=False, v=False)
+              0x00410 Sub_imm(10, 10, 0x4, u=False, v=False)
+              0x00414 Store_word(0, 10)
+              0x00418 Load_word(3, 14)
+              0x0041c Load_word(4, 3)
+              0x00420 Add_imm(14, 14, 0x4, u=False, v=False)
+              0x00424 T(4)
+   HERE__var: 0x00428 0x000003fc
