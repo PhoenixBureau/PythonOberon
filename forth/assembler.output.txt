@@ -1,268 +1,340 @@
-              0x00000 T_imm(0x10)
-   _reserved: 0x00004 0x00000000
-              0x00008 0x00000000
-              0x0000c 0x00000000
-              0x00010 0x00000000
-              0x00014 0x00000000
-              0x00018 0x00000000
-              0x0001c 0x00000000
-              0x00020 0x00000000
-              0x00024 0x00000000
-       DOCOL: 0x00028 Sub_imm(12, 12, 0x4, u=False, v=False)
-              0x0002c Store_word(14, 12)
-              0x00030 Add_imm(14, 3, 0x4, u=False, v=False)
-              0x00034 Load_word(3, 14)
-              0x00038 Load_word(4, 3)
-              0x0003c Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00040 T(4)
-        main: 0x00044 Mov_imm(10, 0x4000, u=False, v=False)
-              0x00048 Mov_imm(12, 0x6000, u=False, v=False)
-              0x0004c Mov_imm(14, 0x60, u=False, v=False)
-              0x00050 Load_word(3, 14)
-              0x00054 Load_word(4, 3)
-              0x00058 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x0005c T(4)
-  cold_start: 0x00060 0x00000070
-    REPL_dfa: 0x00064 0x00000000
-              0x00068 0x50455204
-              0x0006c 0x0000004c
-        REPL: 0x00070 0x00000028
-              0x00074 0x000001d8
-              0x00078 0x00000340
-              0x0007c 0x00000070
-              0x00080 0x000000b4
-    DROP_dfa: 0x00084 0x00000064
-              0x00088 0x4f524404
-              0x0008c 0x00000050
-        DROP: 0x00090 0x00000094
-              0x00094 Add_imm(10, 10, 0x4, u=False, v=False)
-              0x00098 Load_word(3, 14)
-              0x0009c Load_word(4, 3)
-              0x000a0 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x000a4 T(4)
-    EXIT_dfa: 0x000a8 0x00000084
-              0x000ac 0x49584504
-              0x000b0 0x00000054
-        EXIT: 0x000b4 0x000000b8
-              0x000b8 Load_word(14, 12)
-              0x000bc Add_imm(12, 12, 0x4, u=False, v=False)
-              0x000c0 Load_word(3, 14)
-              0x000c4 Load_word(4, 3)
-              0x000c8 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x000cc T(4)
-     LIT_dfa: 0x000d0 0x000000a8
-              0x000d4 0x54494c03
-         LIT: 0x000d8 0x000000dc
-              0x000dc Load_word(0, 14)
-              0x000e0 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x000e4 Store_word(0, 10)
-              0x000e8 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x000ec Load_word(3, 14)
-              0x000f0 Load_word(4, 3)
-              0x000f4 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x000f8 T(4)
-    SWAP_dfa: 0x000fc 0x000000d0
-              0x00100 0x41575304
-              0x00104 0x00000050
-        SWAP: 0x00108 0x0000010c
-              0x0010c Load_word(0, 10)
-              0x00110 Add_imm(10, 10, 0x4, u=False, v=False)
-              0x00114 Load_word(1, 10)
-              0x00118 Store_word(0, 10)
-              0x0011c Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x00120 Store_word(1, 10)
-              0x00124 Load_word(3, 14)
-              0x00128 Load_word(4, 3)
-              0x0012c Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00130 T(4)
-     KEY_dfa: 0x00134 0x000000fc
-              0x00138 0x59454b03
-         KEY: 0x0013c 0x00000140
-              0x00140 Mov_imm(1, 0x198, u=False, v=False)
-              0x00144 T_link(1)
-              0x00148 Load_word(0, 1, offset=0xffffc)
-              0x0014c Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x00150 Store_word(0, 10)
-              0x00154 Load_word(3, 14)
-              0x00158 Load_word(4, 3)
-              0x0015c Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00160 T(4)
-    EMIT_dfa: 0x00164 0x00000134
-              0x00168 0x494d4504
-              0x0016c 0x00000054
-        EMIT: 0x00170 0x00000174
-              0x00174 Load_word(0, 10)
-              0x00178 Add_imm(10, 10, 0x4, u=False, v=False)
-              0x0017c Mov_imm(1, 0x198, u=False, v=False)
-              0x00180 T_link(1)
-              0x00184 Store_word(0, 1, offset=0xffffc)
-              0x00188 Load_word(3, 14)
-              0x0018c Load_word(4, 3)
-              0x00190 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00194 T(4)
-        _KEY: 0x00198 Mov_imm(1, 0xffff, u=True, v=False)
-              0x0019c Ior_imm(1, 1, 0xffcc, u=False, v=False)
-              0x001a0 Load_word(2, 1)
-              0x001a4 EQ_imm(0x3fff94)
-              0x001a8 T(15)
- WORD_BUFFER: 0x001ac 0x00000000
-              0x001b0 0x00000000
-              0x001b4 0x00000000
-              0x001b8 0x00000000
-              0x001bc 0x00000000
-              0x001c0 0x00000000
-              0x001c4 0x00000000
-              0x001c8 0x00000000
-    WORD_dfa: 0x001cc 0x00000164
-              0x001d0 0x524f5704
-              0x001d4 0x00000044
-        WORD: 0x001d8 0x000001dc
-   _word_key: 0x001dc Mov_imm(1, 0x198, u=False, v=False)
-              0x001e0 T_link(1)
-              0x001e4 Load_word(0, 1, offset=0xffffc)
-              0x001e8 Sub_imm(2, 0, 0x20, u=False, v=False)
-              0x001ec EQ_imm(0xfffffb)
-              0x001f0 Mov_imm(6, 0x1ad, u=False, v=False)
-              0x001f4 Mov_imm(5, 0x0, u=False, v=False)
-_find_length: 0x001f8 Sub_imm(2, 5, 0x20, u=False, v=False)
-              0x001fc EQ_imm(0xfffff7)
-              0x00200 Store_byte(0, 6)
-              0x00204 Add_imm(6, 6, 0x1, u=False, v=False)
-              0x00208 Add_imm(5, 5, 0x1, u=False, v=False)
-              0x0020c Mov_imm(1, 0x198, u=False, v=False)
-              0x00210 T_link(1)
-              0x00214 Load_word(0, 1, offset=0xffffc)
-              0x00218 Sub_imm(2, 0, 0x20, u=False, v=False)
-              0x0021c NE_imm(0xfffff6)
-              0x00220 Mov_imm(6, 0x1ac, u=False, v=False)
-              0x00224 Store_byte(5, 6)
-              0x00228 Load_word(3, 14)
-              0x0022c Load_word(4, 3)
-              0x00230 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00234 T(4)
-    FIND_dfa: 0x00238 0x000001cc
-              0x0023c 0x4e494604
-              0x00240 0x00000044
-        FIND: 0x00244 0x00000248
-              0x00248 Mov_imm(0, 0x3fc, u=False, v=False)
-              0x0024c EQ_imm(0xf)
-     _FIND_1: 0x00250 Load_word(1, 0)
-              0x00254 Load_word(0, 1, offset=0x4)
-              0x00258 Mov_imm(6, 0x1ac, u=False, v=False)
-              0x0025c Load_word(5, 6)
-              0x00260 Sub(0, 0, 5, u=False)
-              0x00264 NE_imm(0x6)
-              0x00268 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x0026c Store_word(1, 10)
-              0x00270 Load_word(3, 14)
-              0x00274 Load_word(4, 3)
-              0x00278 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x0027c T(4)
-     _FIND_2: 0x00280 Load_word(0, 1)
-              0x00284 EQ_imm(0x1)
-              0x00288 T_imm(0xfffff1)
-_end_of_dict: 0x0028c Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x00290 Store_word(0, 10)
-              0x00294 Load_word(3, 14)
-              0x00298 Load_word(4, 3)
-              0x0029c Add_imm(14, 14, 0x4, u=False, v=False)
-              0x002a0 T(4)
-  NUMBER_dfa: 0x002a4 0x00000238
-              0x002a8 0x4d554e06
-              0x002ac 0x00524542
-      NUMBER: 0x002b0 0x000002b4
-              0x002b4 Mov_imm(6, 0x1ac, u=False, v=False)
-              0x002b8 Load_byte(5, 6)
-              0x002bc Mov_imm(2, 0x0, u=False, v=False)
-              0x002c0 Add_imm(6, 6, 0x1, u=False, v=False)
-              0x002c4 Load_byte(0, 6)
-              0x002c8 Sub_imm(0, 0, 0x24, u=False, v=False)
-              0x002cc NE_imm(0xf)
-              0x002d0 Sub_imm(5, 5, 0x1, u=False, v=False)
-    _NUM_hex: 0x002d4 Add_imm(6, 6, 0x1, u=False, v=False)
-              0x002d8 Load_byte(0, 6)
-              0x002dc Sub_imm(0, 0, 0x30, u=False, v=False)
-              0x002e0 LT_imm(0xa)
-              0x002e4 Sub_imm(1, 0, 0x9, u=False, v=False)
-              0x002e8 LE_imm(0x5)
-              0x002ec Sub_imm(0, 0, 0x31, u=False, v=False)
-              0x002f0 LT_imm(0x6)
-              0x002f4 Sub_imm(1, 0, 0x5, u=False, v=False)
-              0x002f8 GT_imm(0x4)
-              0x002fc Add_imm(0, 0, 0xa, u=False, v=False)
-    _NUM_add: 0x00300 Add(2, 2, 0, u=False)
-              0x00304 Sub_imm(5, 5, 0x1, u=False, v=False)
-              0x00308 NE_imm(0x8)
-    _NUM_fin: 0x0030c Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x00310 Store_word(2, 10)
-              0x00314 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x00318 Store_word(5, 10)
-              0x0031c Load_word(3, 14)
-              0x00320 Load_word(4, 3)
-              0x00324 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00328 T(4)
-    _NUM_foo: 0x0032c Lsl_imm(2, 2, 0x4, u=False, v=False)
-              0x00330 T_imm(0xffffe8)
-  CREATE_dfa: 0x00334 0x000002a4
-              0x00338 0x45524306
-              0x0033c 0x00455441
-      CREATE: 0x00340 0x00000344
-              0x00344 Mov_imm(0, 0x3cc, u=False, v=False)
-              0x00348 Load_word(0, 0)
-              0x0034c Mov_imm(1, 0x3fc, u=False, v=False)
-              0x00350 Load_word(1, 1)
-              0x00354 Store_word(1, 0)
-              0x00358 Add_imm(0, 0, 0x4, u=False, v=False)
-              0x0035c Mov_imm(6, 0x1ac, u=False, v=False)
-              0x00360 Load_byte(5, 6)
-              0x00364 And_imm(5, 5, 0x1f, u=False, v=False)
-              0x00368 Asr_imm(5, 5, 0x2, u=False, v=False)
-_CREATE_loop: 0x0036c Load_word(1, 6)
-              0x00370 Store_word(1, 0)
-              0x00374 Add_imm(0, 0, 0x4, u=False, v=False)
-              0x00378 Sub_imm(5, 5, 0x1, u=False, v=False)
-              0x0037c LT_imm(0x2)
-              0x00380 Add_imm(6, 6, 0x4, u=False, v=False)
-              0x00384 T_imm(0xfffff9)
- _CREATE_fin: 0x00388 Mov_imm(1, 0x3cc, u=False, v=False)
-              0x0038c Store_word(0, 1)
-              0x00390 Load_word(3, 14)
-              0x00394 Load_word(4, 3)
-              0x00398 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x0039c T(4)
-   HERE__dfa: 0x003a0 0x00000334
-              0x003a4 0x52454804
-              0x003a8 0x00000045
-       HERE_: 0x003ac 0x000003b0
-              0x003b0 Mov_imm(0, 0x3cc, u=False, v=False)
-              0x003b4 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x003b8 Store_word(0, 10)
-              0x003bc Load_word(3, 14)
-              0x003c0 Load_word(4, 3)
-              0x003c4 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x003c8 T(4)
-   HERE__var: 0x003cc 0x00000430
-  LATEST_dfa: 0x003d0 0x000003a0
-              0x003d4 0x54414c06
-              0x003d8 0x00545345
-      LATEST: 0x003dc 0x000003e0
-              0x003e0 Mov_imm(0, 0x3fc, u=False, v=False)
-              0x003e4 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x003e8 Store_word(0, 10)
-              0x003ec Load_word(3, 14)
-              0x003f0 Load_word(4, 3)
-              0x003f4 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x003f8 T(4)
-  LATEST_var: 0x003fc 0x0000040c
-   STATE_dfa: 0x00400 0x000003d0
-              0x00404 0x41545305
-              0x00408 0x00004554
-       STATE: 0x0040c 0x00000410
-              0x00410 Mov_imm(0, 0x42c, u=False, v=False)
-              0x00414 Sub_imm(10, 10, 0x4, u=False, v=False)
-              0x00418 Store_word(0, 10)
-              0x0041c Load_word(3, 14)
-              0x00420 Load_word(4, 3)
-              0x00424 Add_imm(14, 14, 0x4, u=False, v=False)
-              0x00428 T(4)
-   STATE_var: 0x0042c 0x00000000
+               0x00000 T_imm(0x10)
+    _reserved: 0x00004 0x00000000
+               0x00008 0x00000000
+               0x0000c 0x00000000
+               0x00010 0x00000000
+               0x00014 0x00000000
+               0x00018 0x00000000
+               0x0001c 0x00000000
+               0x00020 0x00000000
+               0x00024 0x00000000
+        DOCOL: 0x00028 Sub_imm(12, 12, 0x4, u=False, v=False)
+               0x0002c Store_word(14, 12)
+               0x00030 Add_imm(14, 3, 0x4, u=False, v=False)
+               0x00034 Load_word(3, 14)
+               0x00038 Load_word(4, 3)
+               0x0003c Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00040 T(4)
+         main: 0x00044 Mov_imm(10, 0x4000, u=False, v=False)
+               0x00048 Mov_imm(12, 0x6000, u=False, v=False)
+               0x0004c Mov_imm(14, 0x60, u=False, v=False)
+               0x00050 Load_word(3, 14)
+               0x00054 Load_word(4, 3)
+               0x00058 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x0005c T(4)
+   cold_start: 0x00060 0x00000070
+     REPL_dfa: 0x00064 0x00000000
+               0x00068 0x50455204
+               0x0006c 0x0000004c
+         REPL: 0x00070 0x00000028
+               0x00074 0x000001d8
+               0x00078 0x00000340
+               0x0007c 0x00000070
+               0x00080 0x000000b4
+     DROP_dfa: 0x00084 0x00000064
+               0x00088 0x4f524404
+               0x0008c 0x00000050
+         DROP: 0x00090 0x00000094
+               0x00094 Add_imm(10, 10, 0x4, u=False, v=False)
+               0x00098 Load_word(3, 14)
+               0x0009c Load_word(4, 3)
+               0x000a0 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x000a4 T(4)
+     EXIT_dfa: 0x000a8 0x00000084
+               0x000ac 0x49584504
+               0x000b0 0x00000054
+         EXIT: 0x000b4 0x000000b8
+               0x000b8 Load_word(14, 12)
+               0x000bc Add_imm(12, 12, 0x4, u=False, v=False)
+               0x000c0 Load_word(3, 14)
+               0x000c4 Load_word(4, 3)
+               0x000c8 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x000cc T(4)
+      LIT_dfa: 0x000d0 0x000000a8
+               0x000d4 0x54494c03
+          LIT: 0x000d8 0x000000dc
+               0x000dc Load_word(0, 14)
+               0x000e0 Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x000e4 Store_word(0, 10)
+               0x000e8 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x000ec Load_word(3, 14)
+               0x000f0 Load_word(4, 3)
+               0x000f4 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x000f8 T(4)
+     SWAP_dfa: 0x000fc 0x000000d0
+               0x00100 0x41575304
+               0x00104 0x00000050
+         SWAP: 0x00108 0x0000010c
+               0x0010c Load_word(0, 10)
+               0x00110 Add_imm(10, 10, 0x4, u=False, v=False)
+               0x00114 Load_word(1, 10)
+               0x00118 Store_word(0, 10)
+               0x0011c Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x00120 Store_word(1, 10)
+               0x00124 Load_word(3, 14)
+               0x00128 Load_word(4, 3)
+               0x0012c Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00130 T(4)
+      KEY_dfa: 0x00134 0x000000fc
+               0x00138 0x59454b03
+          KEY: 0x0013c 0x00000140
+               0x00140 Mov_imm(1, 0x198, u=False, v=False)
+               0x00144 T_link(1)
+               0x00148 Load_word(0, 1, offset=0xffffc)
+               0x0014c Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x00150 Store_word(0, 10)
+               0x00154 Load_word(3, 14)
+               0x00158 Load_word(4, 3)
+               0x0015c Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00160 T(4)
+     EMIT_dfa: 0x00164 0x00000134
+               0x00168 0x494d4504
+               0x0016c 0x00000054
+         EMIT: 0x00170 0x00000174
+               0x00174 Load_word(0, 10)
+               0x00178 Add_imm(10, 10, 0x4, u=False, v=False)
+               0x0017c Mov_imm(1, 0x198, u=False, v=False)
+               0x00180 T_link(1)
+               0x00184 Store_word(0, 1, offset=0xffffc)
+               0x00188 Load_word(3, 14)
+               0x0018c Load_word(4, 3)
+               0x00190 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00194 T(4)
+         _KEY: 0x00198 Mov_imm(1, 0xffff, u=True, v=False)
+               0x0019c Ior_imm(1, 1, 0xffcc, u=False, v=False)
+               0x001a0 Load_word(2, 1)
+               0x001a4 EQ_imm(0x3fff94)
+               0x001a8 T(15)
+  WORD_BUFFER: 0x001ac 0x00000000
+               0x001b0 0x00000000
+               0x001b4 0x00000000
+               0x001b8 0x00000000
+               0x001bc 0x00000000
+               0x001c0 0x00000000
+               0x001c4 0x00000000
+               0x001c8 0x00000000
+     WORD_dfa: 0x001cc 0x00000164
+               0x001d0 0x524f5704
+               0x001d4 0x00000044
+         WORD: 0x001d8 0x000001dc
+    _word_key: 0x001dc Mov_imm(1, 0x198, u=False, v=False)
+               0x001e0 T_link(1)
+               0x001e4 Load_word(0, 1, offset=0xffffc)
+               0x001e8 Sub_imm(2, 0, 0x20, u=False, v=False)
+               0x001ec EQ_imm(0xfffffb)
+               0x001f0 Mov_imm(6, 0x1ad, u=False, v=False)
+               0x001f4 Mov_imm(5, 0x0, u=False, v=False)
+ _find_length: 0x001f8 Sub_imm(2, 5, 0x20, u=False, v=False)
+               0x001fc EQ_imm(0xfffff7)
+               0x00200 Store_byte(0, 6)
+               0x00204 Add_imm(6, 6, 0x1, u=False, v=False)
+               0x00208 Add_imm(5, 5, 0x1, u=False, v=False)
+               0x0020c Mov_imm(1, 0x198, u=False, v=False)
+               0x00210 T_link(1)
+               0x00214 Load_word(0, 1, offset=0xffffc)
+               0x00218 Sub_imm(2, 0, 0x20, u=False, v=False)
+               0x0021c NE_imm(0xfffff6)
+               0x00220 Mov_imm(6, 0x1ac, u=False, v=False)
+               0x00224 Store_byte(5, 6)
+               0x00228 Load_word(3, 14)
+               0x0022c Load_word(4, 3)
+               0x00230 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00234 T(4)
+     FIND_dfa: 0x00238 0x000001cc
+               0x0023c 0x4e494604
+               0x00240 0x00000044
+         FIND: 0x00244 0x00000248
+               0x00248 Mov_imm(0, 0x3fc, u=False, v=False)
+               0x0024c EQ_imm(0xf)
+      _FIND_1: 0x00250 Load_word(1, 0)
+               0x00254 Load_word(0, 1, offset=0x4)
+               0x00258 Mov_imm(6, 0x1ac, u=False, v=False)
+               0x0025c Load_word(5, 6)
+               0x00260 Sub(0, 0, 5, u=False)
+               0x00264 NE_imm(0x6)
+               0x00268 Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x0026c Store_word(1, 10)
+               0x00270 Load_word(3, 14)
+               0x00274 Load_word(4, 3)
+               0x00278 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x0027c T(4)
+      _FIND_2: 0x00280 Load_word(0, 1)
+               0x00284 EQ_imm(0x1)
+               0x00288 T_imm(0xfffff1)
+ _end_of_dict: 0x0028c Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x00290 Store_word(0, 10)
+               0x00294 Load_word(3, 14)
+               0x00298 Load_word(4, 3)
+               0x0029c Add_imm(14, 14, 0x4, u=False, v=False)
+               0x002a0 T(4)
+   NUMBER_dfa: 0x002a4 0x00000238
+               0x002a8 0x4d554e06
+               0x002ac 0x00524542
+       NUMBER: 0x002b0 0x000002b4
+               0x002b4 Mov_imm(6, 0x1ac, u=False, v=False)
+               0x002b8 Load_byte(5, 6)
+               0x002bc Mov_imm(2, 0x0, u=False, v=False)
+               0x002c0 Add_imm(6, 6, 0x1, u=False, v=False)
+               0x002c4 Load_byte(0, 6)
+               0x002c8 Sub_imm(0, 0, 0x24, u=False, v=False)
+               0x002cc NE_imm(0xf)
+               0x002d0 Sub_imm(5, 5, 0x1, u=False, v=False)
+     _NUM_hex: 0x002d4 Add_imm(6, 6, 0x1, u=False, v=False)
+               0x002d8 Load_byte(0, 6)
+               0x002dc Sub_imm(0, 0, 0x30, u=False, v=False)
+               0x002e0 LT_imm(0xa)
+               0x002e4 Sub_imm(1, 0, 0x9, u=False, v=False)
+               0x002e8 LE_imm(0x5)
+               0x002ec Sub_imm(0, 0, 0x31, u=False, v=False)
+               0x002f0 LT_imm(0x6)
+               0x002f4 Sub_imm(1, 0, 0x5, u=False, v=False)
+               0x002f8 GT_imm(0x4)
+               0x002fc Add_imm(0, 0, 0xa, u=False, v=False)
+     _NUM_add: 0x00300 Add(2, 2, 0, u=False)
+               0x00304 Sub_imm(5, 5, 0x1, u=False, v=False)
+               0x00308 NE_imm(0x8)
+     _NUM_fin: 0x0030c Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x00310 Store_word(2, 10)
+               0x00314 Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x00318 Store_word(5, 10)
+               0x0031c Load_word(3, 14)
+               0x00320 Load_word(4, 3)
+               0x00324 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00328 T(4)
+     _NUM_foo: 0x0032c Lsl_imm(2, 2, 0x4, u=False, v=False)
+               0x00330 T_imm(0xffffe8)
+   CREATE_dfa: 0x00334 0x000002a4
+               0x00338 0x45524306
+               0x0033c 0x00455441
+       CREATE: 0x00340 0x00000344
+               0x00344 Mov_imm(0, 0x3cc, u=False, v=False)
+               0x00348 Load_word(0, 0)
+               0x0034c Mov_imm(1, 0x3fc, u=False, v=False)
+               0x00350 Load_word(1, 1)
+               0x00354 Store_word(1, 0)
+               0x00358 Add_imm(0, 0, 0x4, u=False, v=False)
+               0x0035c Mov_imm(6, 0x1ac, u=False, v=False)
+               0x00360 Load_byte(5, 6)
+               0x00364 And_imm(5, 5, 0x1f, u=False, v=False)
+               0x00368 Asr_imm(5, 5, 0x2, u=False, v=False)
+ _CREATE_loop: 0x0036c Load_word(1, 6)
+               0x00370 Store_word(1, 0)
+               0x00374 Add_imm(0, 0, 0x4, u=False, v=False)
+               0x00378 Sub_imm(5, 5, 0x1, u=False, v=False)
+               0x0037c LT_imm(0x2)
+               0x00380 Add_imm(6, 6, 0x4, u=False, v=False)
+               0x00384 T_imm(0xfffff9)
+  _CREATE_fin: 0x00388 Mov_imm(1, 0x3cc, u=False, v=False)
+               0x0038c Store_word(0, 1)
+               0x00390 Load_word(3, 14)
+               0x00394 Load_word(4, 3)
+               0x00398 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x0039c T(4)
+    HERE__dfa: 0x003a0 0x00000334
+               0x003a4 0x52454804
+               0x003a8 0x00000045
+        HERE_: 0x003ac 0x000003b0
+               0x003b0 Mov_imm(0, 0x3cc, u=False, v=False)
+               0x003b4 Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x003b8 Store_word(0, 10)
+               0x003bc Load_word(3, 14)
+               0x003c0 Load_word(4, 3)
+               0x003c4 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x003c8 T(4)
+    HERE__var: 0x003cc 0x00000514
+   LATEST_dfa: 0x003d0 0x000003a0
+               0x003d4 0x54414c06
+               0x003d8 0x00545345
+       LATEST: 0x003dc 0x000003e0
+               0x003e0 Mov_imm(0, 0x3fc, u=False, v=False)
+               0x003e4 Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x003e8 Store_word(0, 10)
+               0x003ec Load_word(3, 14)
+               0x003f0 Load_word(4, 3)
+               0x003f4 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x003f8 T(4)
+   LATEST_var: 0x003fc 0x000004f0
+    STATE_dfa: 0x00400 0x000003d0
+               0x00404 0x41545305
+               0x00408 0x00004554
+        STATE: 0x0040c 0x00000410
+               0x00410 Mov_imm(0, 0x42c, u=False, v=False)
+               0x00414 Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x00418 Store_word(0, 10)
+               0x0041c Load_word(3, 14)
+               0x00420 Load_word(4, 3)
+               0x00424 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00428 T(4)
+    STATE_var: 0x0042c 0x00000000
+    COMMA_dfa: 0x00430 0x00000400
+               0x00434 0x00002c81
+        COMMA: 0x00438 0x0000043c
+               0x0043c Load_word(2, 10)
+               0x00440 Add_imm(10, 10, 0x4, u=False, v=False)
+               0x00444 Mov_imm(1, 0x45c, u=False, v=False)
+               0x00448 T_link(1)
+               0x0044c Load_word(3, 14)
+               0x00450 Load_word(4, 3)
+               0x00454 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00458 T(4)
+       _COMMA: 0x0045c Mov_imm(0, 0x3cc, u=False, v=False)
+               0x00460 Load_word(1, 0)
+               0x00464 Store_word(2, 1)
+               0x00468 Add_imm(1, 1, 0x4, u=False, v=False)
+               0x0046c Store_word(1, 0)
+               0x00470 T(15)
+    LBRAC_dfa: 0x00474 0x00000430
+               0x00478 0x00005b81
+        LBRAC: 0x0047c 0x00000480
+               0x00480 Mov_imm(0, 0x42c, u=False, v=False)
+               0x00484 Mov_imm(1, 0x0, u=False, v=False)
+               0x00488 Store_word(1, 0)
+               0x0048c Load_word(3, 14)
+               0x00490 Load_word(4, 3)
+               0x00494 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00498 T(4)
+    RBRAC_dfa: 0x0049c 0x00000474
+               0x004a0 0x00005d01
+        RBRAC: 0x004a4 0x000004a8
+               0x004a8 Mov_imm(0, 0x42c, u=False, v=False)
+               0x004ac Mov_imm(1, 0x1, u=False, v=False)
+               0x004b0 Store_word(1, 0)
+               0x004b4 Load_word(3, 14)
+               0x004b8 Load_word(4, 3)
+               0x004bc Add_imm(14, 14, 0x4, u=False, v=False)
+               0x004c0 T(4)
+    COLON_dfa: 0x004c4 0x0000049c
+               0x004c8 0x00003a01
+        COLON: 0x004cc 0x00000028
+               0x004d0 0x000001d8
+               0x004d4 0x00000340
+               0x004d8 0x000000d8
+               0x004dc 0x00000028
+               0x004e0 0x00000438
+               0x004e4 0x000003dc
+               0x004e8 0x000004a4
+               0x004ec 0x000000b4
+SEMICOLON_dfa: 0x004f0 0x000004c4
+               0x004f4 0x00003b81
+    SEMICOLON: 0x004f8 0x00000028
+               0x004fc 0x000000d8
+               0x00500 0x000000b4
+               0x00504 0x00000438
+               0x00508 0x000003dc
+               0x0050c 0x0000047c
+               0x00510 0x000000b4
+IMMEDIATE_dfa: 0x00514 0x000004f0
+               0x00518 0x4d4d4989
+               0x0051c 0x41494445
+               0x00520 0x00004554
+    IMMEDIATE: 0x00524 0x00000528
+               0x00528 Mov_imm(0, 0x3fc, u=False, v=False)
+               0x0052c Load_word(1, 0)
+               0x00530 Add_imm(1, 1, 0x4, u=False, v=False)
+               0x00534 Load_word(0, 1)
+               0x00538 Xor_imm(0, 0, 0x80, u=False, v=False)
+               0x0053c Store_word(0, 1)
+               0x00540 Load_word(3, 14)
+               0x00544 Load_word(4, 3)
+               0x00548 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x0054c T(4)

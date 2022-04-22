@@ -529,25 +529,108 @@ Store_word(R0, R1)
 NEXT()
 
 
-##  ___         _                      
-## / __|_  _ __| |_ ___ _ __           
-## \__ \ || (_-<  _/ -_) '  \          
-## |___/\_, /__/\__\___|_|_|_|         
-## __   |__/      _      _    _        
+##  ___         _
+## / __|_  _ __| |_ ___ _ __
+## \__ \ || (_-<  _/ -_) '  \
+## |___/\_, /__/\__\___|_|_|_|
+## __   |__/      _      _    _
 ## \ \ / /_ _ _ _(_)__ _| |__| |___ ___
 ##  \ V / _` | '_| / _` | '_ \ / -_|_-<
 ##   \_/\__,_|_| |_\__,_|_.__/_\___/__/
 
 defvar(b'HERE', HERE_, initial=END)
-defvar(b'LATEST', LATEST, initial=STATE)
+defvar(b'LATEST', LATEST, initial=SEMICOLON_dfa)
 defvar(b'STATE', STATE)
 
 
+##   ___ ___  __  __ __  __   _
+##  / __/ _ \|  \/  |  \/  | /_\
+## | (_| (_) | |\/| | |\/| |/ _ \
+##  \___\___/|_|  |_|_|  |_/_/ \_\
 
+defcode(b',', COMMA, F_IMMED)
+POP(R2)
+Mov_imm(R1, _COMMA)
+T_link(R1)
+NEXT()
+
+label(_COMMA)
+Mov_imm(R0, HERE__var)  # R0 <- &HERE
+Load_word(R1, R0)  # R1 <- ram[&HERE]
+Store_word(R2, R1)  # R2 -> ram[HERE]
+Add_imm(R1, R1, 4)
+Store_word(R1, R0)  # R1+4 -> ram[&HERE]
+T(15)  # return
+
+
+##  __   __       __
+## | _| / _|___  |_ |
+## | |  > _|_ _|  | |
+## | |  \_____|   | |
+## |__|          |__|
+
+defcode(b'[', LBRAC, F_IMMED)
+Mov_imm(R0, STATE_var)
+Mov_imm(R1, 0)
+Store_word(R1, R0)
+NEXT()
+
+defcode(b']', RBRAC)
+Mov_imm(R0, STATE_var)
+Mov_imm(R1, 1)
+Store_word(R1, R0)
+NEXT()
+
+
+##   ___ ___  _    ___  _  _
+##  / __/ _ \| |  / _ \| \| |
+## | (_| (_) | |_| (_) | .` |
+##  \___\___/|____\___/|_|\_|
+
+defword(b':', COLON)
+dw(WORD)  # "Get the name of the new word"
+dw(CREATE)  # "CREATE the dictionary entry / header"
+dw(LIT)  # "Append DOCOL  (the codeword)."
+dw(DOCOL)
+dw(COMMA)
+dw(LATEST)  # "Make the word hidden (see below for definition)."
+##dw(FETCH)
+##dw(HIDDEN)
+dw(RBRAC)  # "Go into compile mode."
+dw(EXIT)  # "Return from the function."
+
+
+##  ___ ___ __  __ ___ ___ ___  _    ___  _  _
+## / __| __|  \/  |_ _/ __/ _ \| |  / _ \| \| |
+## \__ \ _|| |\/| || | (_| (_) | |_| (_) | .` |
+## |___/___|_|  |_|___\___\___/|____\___/|_|\_|
+
+defword(b';', SEMICOLON, F_IMMED)
+dw(LIT)  # "Append EXIT (so the word will return)."
+dw(EXIT)
+dw(COMMA)
+dw(LATEST)  # "Toggle hidden flag -- unhide the word (see below for definition)."
+##dw(FETCH)
+##dw(HIDDEN)
+dw(LBRAC)  # "Go back to IMMEDIATE mode."
+dw(EXIT)  # "Return from the function."
 
 label(END)
 
 
+##  ___ __  __ __  __ ___ ___ ___   _ _____ ___
+## |_ _|  \/  |  \/  | __|   \_ _| /_\_   _| __|
+##  | || |\/| | |\/| | _|| |) | | / _ \| | | _|
+## |___|_|  |_|_|  |_|___|___/___/_/ \_\_| |___|
+
+defcode(b'IMMEDIATE', IMMEDIATE, F_IMMED)
+Mov_imm(R0, LATEST_var)  # R0 <- &LATEST
+Load_word(R1, R0)  # R1 <- ram[LATEST]
+Add_imm(R1, R1, 4)  # "Point to name/flags byte."
+Load_word(R0, R1)
+Xor_imm(R0, R0, F_IMMED)
+Store_word(R0, R1)
+NEXT()
 
 
 
