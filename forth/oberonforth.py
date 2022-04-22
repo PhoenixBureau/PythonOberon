@@ -243,8 +243,8 @@ defword(b'REPL', REPL)
 dw(WORD)
 #dw(FIND)
 dw(CREATE)
-dw(REPL) # Don't use too many words or you'll blow out the Return Stack!
-dw(EXIT) # Won't get here because of recursive call above.
+dw(BRANCH)
+dw(s_to_u_32(-12))
 
 
 defcode(b'DROP', DROP)
@@ -539,7 +539,7 @@ NEXT()
 ##   \_/\__,_|_| |_\__,_|_.__/_\___/__/
 
 defvar(b'HERE', HERE_, initial=END)
-defvar(b'LATEST', LATEST, initial=SEMICOLON_dfa)
+defvar(b'LATEST', LATEST, initial=TICK_dfa)
 defvar(b'STATE', STATE)
 
 
@@ -633,15 +633,61 @@ Store_word(R0, R1)
 NEXT()
 
 
+##  _  _ ___ ___  ___  ___ _  _
+## | || |_ _|   \|   \| __| \| |
+## | __ || || |) | |) | _|| .` |
+## |_||_|___|___/|___/|___|_|\_|
+
+defcode(b'HIDDEN', HIDDEN)
+POP(R1)  # dfa OF A WORD IS ON THE STACK
+Add_imm(R1, R1, 4)  # "Point to name/flags byte."
+Load_word(R0, R1)  # "Toggle the HIDDEN bit."
+Xor_imm(R0, R0, F_HIDDEN)
+Store_word(R0, R1)
+NEXT()
 
 
+##  _    _______ ___ ___ _  ____
+## ( )  / /_   _|_ _/ __| |/ /\ \
+## |/  | |  | |  | | (__| ' <  | |
+##     | |  |_| |___\___|_|\_\ | |
+##      \_\                   /_/
+#
+# Jones says of this implementation:
+#
+# > This definition of ' uses a cheat which I copied from buzzard92.  As a result it only works in
+# > compiled code.  It is possible to write a version of ' based on WORD, FIND, >CFA which works in
+# > immediate mode too.
+
+defcode(b"'", TICK)
+Load_word(R0, IP)  # Get the address of the next codeword.
+Add_imm(IP, IP, 4)  # Skip it.
+PUSH(R0)
+NEXT()
 
 
+##  ___ ___    _   _  _  ___ _  _
+## | _ ) _ \  /_\ | \| |/ __| || |
+## | _ \   / / _ \| .` | (__| __ |
+## |___/_|_\/_/ \_\_|\_|\___|_||_|
 
+defcode(b'BRANCH', BRANCH)
+Load_word(R0, IP)  # Get the offset.
+# TODO: check for alignment?  make offset count words not bytes?
+Add(IP, IP, R0)    # IP += offset
+NEXT()
 
+##  _______ ___    _   _  _  ___ _  _ 
+## |_  / _ ) _ \  /_\ | \| |/ __| || |
+##  / /| _ \   / / _ \| .` | (__| __ |
+## /___|___/_|_\/_/ \_\_|\_|\___|_||_|
 
-
-
+defcode(b'0BRANCH', ZBRANCH)
+POP(R0)
+Add_imm(R0, R0, 0)  # Set condition flags.
+NE_imm(BRANCH + 4)  # Non-zero? BRANCH.
+Add_imm(IP, IP, 4)  # Zero? Skip offset.
+NEXT()
 
 
 

@@ -29,8 +29,8 @@
          REPL: 0x00070 0x00000028
                0x00074 0x000001d8
                0x00078 0x00000340
-               0x0007c 0x00000070
-               0x00080 0x000000b4
+               0x0007c 0x000005c0
+               0x00080 0xfffffff4
      DROP_dfa: 0x00084 0x00000064
                0x00088 0x4f524404
                0x0008c 0x00000050
@@ -253,7 +253,7 @@
                0x003f0 Load_word(4, 3)
                0x003f4 Add_imm(14, 14, 0x4, u=False, v=False)
                0x003f8 T(4)
-   LATEST_var: 0x003fc 0x000004f0
+   LATEST_var: 0x003fc 0x00000588
     STATE_dfa: 0x00400 0x000003d0
                0x00404 0x41545305
                0x00408 0x00004554
@@ -338,3 +338,51 @@ IMMEDIATE_dfa: 0x00514 0x000004f0
                0x00544 Load_word(4, 3)
                0x00548 Add_imm(14, 14, 0x4, u=False, v=False)
                0x0054c T(4)
+   HIDDEN_dfa: 0x00550 0x00000514
+               0x00554 0x44494806
+               0x00558 0x004e4544
+       HIDDEN: 0x0055c 0x00000560
+               0x00560 Load_word(1, 10)
+               0x00564 Add_imm(10, 10, 0x4, u=False, v=False)
+               0x00568 Add_imm(1, 1, 0x4, u=False, v=False)
+               0x0056c Load_word(0, 1)
+               0x00570 Xor_imm(0, 0, 0x20, u=False, v=False)
+               0x00574 Store_word(0, 1)
+               0x00578 Load_word(3, 14)
+               0x0057c Load_word(4, 3)
+               0x00580 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00584 T(4)
+     TICK_dfa: 0x00588 0x00000550
+               0x0058c 0x00002701
+         TICK: 0x00590 0x00000594
+               0x00594 Load_word(0, 14)
+               0x00598 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x0059c Sub_imm(10, 10, 0x4, u=False, v=False)
+               0x005a0 Store_word(0, 10)
+               0x005a4 Load_word(3, 14)
+               0x005a8 Load_word(4, 3)
+               0x005ac Add_imm(14, 14, 0x4, u=False, v=False)
+               0x005b0 T(4)
+   BRANCH_dfa: 0x005b4 0x00000588
+               0x005b8 0x41524206
+               0x005bc 0x0048434e
+       BRANCH: 0x005c0 0x000005c4
+               0x005c4 Load_word(0, 14)
+               0x005c8 Add(14, 14, 0, u=False)
+               0x005cc Load_word(3, 14)
+               0x005d0 Load_word(4, 3)
+               0x005d4 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x005d8 T(4)
+  ZBRANCH_dfa: 0x005dc 0x000005b4
+               0x005e0 0x52423007
+               0x005e4 0x48434e41
+      ZBRANCH: 0x005e8 0x000005ec
+               0x005ec Load_word(0, 10)
+               0x005f0 Add_imm(10, 10, 0x4, u=False, v=False)
+               0x005f4 Add_imm(0, 0, 0x0, u=False, v=False)
+               0x005f8 NE_imm(0xfffff2)
+               0x005fc Add_imm(14, 14, 0x4, u=False, v=False)
+               0x00600 Load_word(3, 14)
+               0x00604 Load_word(4, 3)
+               0x00608 Add_imm(14, 14, 0x4, u=False, v=False)
+               0x0060c T(4)
