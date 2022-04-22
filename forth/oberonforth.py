@@ -539,7 +539,7 @@ NEXT()
 ##   \_/\__,_|_| |_\__,_|_.__/_\___/__/
 
 defvar(b'HERE', HERE_, initial=END)
-defvar(b'LATEST', LATEST, initial=TICK_dfa)
+defvar(b'LATEST', LATEST, initial=FETCH_dfa)
 defvar(b'STATE', STATE)
 
 
@@ -594,8 +594,8 @@ dw(LIT)  # "Append DOCOL  (the codeword)."
 dw(DOCOL)
 dw(COMMA)
 dw(LATEST)  # "Make the word hidden (see below for definition)."
-##dw(FETCH)
-##dw(HIDDEN)
+dw(FETCH)
+dw(HIDDEN)
 dw(RBRAC)  # "Go into compile mode."
 dw(EXIT)  # "Return from the function."
 
@@ -610,8 +610,8 @@ dw(LIT)  # "Append EXIT (so the word will return)."
 dw(EXIT)
 dw(COMMA)
 dw(LATEST)  # "Toggle hidden flag -- unhide the word (see below for definition)."
-##dw(FETCH)
-##dw(HIDDEN)
+dw(FETCH)
+dw(HIDDEN)
 dw(LBRAC)  # "Go back to IMMEDIATE mode."
 dw(EXIT)  # "Return from the function."
 
@@ -690,7 +690,11 @@ Add_imm(IP, IP, 4)  # Zero? Skip offset.
 NEXT()
 
 
-
+defcode(b'@', FETCH)
+POP(R0)
+Load_word(R0, R0)
+PUSH(R0)
+NEXT()
 
 
 
