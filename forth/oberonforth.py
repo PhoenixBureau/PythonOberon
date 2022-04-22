@@ -679,6 +679,7 @@ Load_word(R0, IP)  # Get the offset.
 Add(IP, IP, R0)    # IP += offset
 NEXT()
 
+
 ##  _______ ___    _   _  _  ___ _  _
 ## |_  / _ ) _ \  /_\ | \| |/ __| || |
 ##  / /| _ \   / / _ \| .` | (__| __ |
@@ -691,6 +692,11 @@ NE_imm(BRANCH + 4)  # Non-zero? BRANCH.
 Add_imm(IP, IP, 4)  # Zero? Skip offset.
 NEXT()
 
+
+##  ___ ___ _____ ___ _  _
+## | __| __|_   _/ __| || |
+## | _|| _|  | || (__| __ |
+## |_| |___| |_| \___|_||_|
 
 defcode(b'@', FETCH)
 POP(R0)

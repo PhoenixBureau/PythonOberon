@@ -25,6 +25,7 @@ from oberon.risc import (
     Clock,
     Disk,
     FakeSPI,
+    Keyboard,
     LEDs,
     Mouse,
     RISC,
@@ -49,6 +50,7 @@ def make_cpu(disk_image, serial=None):
     risc_cpu.io_ports[16] = fakespi.data
     fakespi.register(1, disk)
     risc_cpu.io_ports[24] = mouse = Mouse()
+    risc_cpu.io_ports[28] = keyboard = Keyboard()
     mouse.set_coords(450, 474)
     return risc_cpu
 

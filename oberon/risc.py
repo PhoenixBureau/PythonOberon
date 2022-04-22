@@ -782,6 +782,17 @@ class FakeSPI(object):
             self.current_thing = None
 
 
+class Keyboard:
+    '''
+    pdewacht/oberon-risc-emu/blob/master/src/sdl-ps2.c
+    '''
+    def __init__(self, initial_keys=()):
+        self.buffer = list(initial_keys)
+
+    def read(self):
+        return self.buffer.pop(0) if self.buffer else 0
+
+
 class DataControl(object):
     def __init__(self, spi):
         self.spi = spi
