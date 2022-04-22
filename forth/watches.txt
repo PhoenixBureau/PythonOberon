@@ -1,6 +1,2 @@
-ram[R[10]]
-ram[0x001ac]
-ram[0x00000400]
-ram[0x00000404]
-ram[0x00000408]
-ram[0x0000040c]
+ram[WORD_BUFFER]
+ram[HERE__var]

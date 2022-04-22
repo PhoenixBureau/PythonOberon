@@ -139,7 +139,7 @@ class DebugApp(object):
 
         # Bind from here to pass cpu.
         self.watch.text.bind(
-            '<Button-3>', lambda _: self.watch.update(self.cpu)
+            '<Button-3>', lambda _: self.watch.update(self.cpu, self.syms)
         )
         self.breakpoints.text.bind(
             '<Button-3>',
@@ -242,7 +242,7 @@ class DebugApp(object):
         self.C.set(self.cpu.C)
         self.OV.set(self.cpu.OV)
         self.ram_inspector.update(self.cpu, self.syms)
-        self.watch.update(self.cpu)
+        self.watch.update(self.cpu, self.syms)
         self.LEDs.update(self.cpu)
 
 
@@ -280,8 +280,10 @@ class Watch(LabelText):
             self.ERR, background='red', bgstipple='gray25'
         )
 
-    def update(self, cpu):
+    def update(self, cpu, syms):
         d = dict(cpu.__dict__)
+        for addr, label in syms.items():
+            d[label] = addr << 2
         d['ROMStart'] = ROMStart
 
         self.text.tag_remove(
