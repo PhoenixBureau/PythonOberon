@@ -28,9 +28,8 @@ from pickle import load
 from struct import pack, unpack
 
 
-def load_syms(fn):
-    with open(fn, 'rb') as f:
-        symbol_table, data_addrs = load(f)
+def load_syms(pickle_file):
+    symbol_table, data_addrs = load(pickle_file)
     return symbol_table, data_addrs
 
 

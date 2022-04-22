@@ -502,12 +502,13 @@ Load_word(R0, R0)  # R0 <- ram[HERE]
 Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
 Load_word(R1, R1)  # R1 <- ram[LATEST]
 Store_word(R1, R0)  # value of LATEST -> ram[HERE]
+Add_imm(R0, R0, 4)  # HERE += 4
 # I think that's right...
 
 # Name field.
 Mov_imm(word_pointer, WORD_BUFFER)
 Load_byte(word_counter, word_pointer)
-Ior_imm(word_counter, word_counter, F_LENMASK)
+And_imm(word_counter, word_counter, F_LENMASK)
 Asr_imm(word_counter, word_counter, 2)  # How many words?
 
 label(_CREATE_loop)  # <========================( _CREATE_loop )===
@@ -528,12 +529,23 @@ Store_word(R0, R1)
 NEXT()
 
 
-defvar(b'LATEST', LATEST, initial=LINK)
+##  ___         _                      
+## / __|_  _ __| |_ ___ _ __           
+## \__ \ || (_-<  _/ -_) '  \          
+## |___/\_, /__/\__\___|_|_|_|         
+## __   |__/      _      _    _        
+## \ \ / /_ _ _ _(_)__ _| |__| |___ ___
+##  \ V / _` | '_| / _` | '_ \ / -_|_-<
+##   \_/\__,_|_| |_\__,_|_.__/_\___/__/
+
+defvar(b'HERE', HERE_, initial=END)
+defvar(b'LATEST', LATEST, initial=STATE)
 defvar(b'STATE', STATE)
-defvar(b'HERE', HERE_, initial=HERE())
-# Later link to actual last value/label.
 
 
+
+
+label(END)
 
 
 

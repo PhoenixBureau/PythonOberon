@@ -32,12 +32,6 @@ from oberon.risc import (
 )
 
 
-DISKIMG = resource_filename(__name__, '../disk.img')
-FILLSCR = resource_filename(__name__, '../../FILLED.bin')
-# FILLSCR = resource_filename(__name__, '../../fillscreen.bin')
-# FILLSCR = resource_filename(__name__, '../../joy_asmii.bin')
-
-
 def make_cpu(disk_image, serial=None):
     '''
     Build and return a :py:class:`RISC` object with peripherals.
@@ -59,19 +53,25 @@ def make_cpu(disk_image, serial=None):
     return risc_cpu
 
 
-def strfi(fn):
+def strfi(file_obj):
     # Files can't be pickled, but BytesIO objects can.
-    with open(fn, 'rb') as file_obj:
-        return BytesIO(file_obj.read())
+    return BytesIO(file_obj.read())
 
 
-def newcpu(disk_filename=DISKIMG, serial_input_filename=FILLSCR):
+def newcpu(
+    disk_file,
+    serial_input_file,
+    breakpoints='PC == 0',
+    watches='',
+    ):
+    if serial_input_file:
+        serial_input_file=strfi(serial_input_file)
     cpu = make_cpu(
-        strfi(disk_filename),
-        strfi(serial_input_filename),
+        strfi(disk_file),
+        serial_input_file,
     )
-    cpu.breakpoints = 'PC == 0'
-    cpu.watches = ''
+    cpu.breakpoints = breakpoints
+    cpu.watches = watches
     # Ensure that all attributes of the cpu have been created.
     cpu.decode(0)
     return cpu

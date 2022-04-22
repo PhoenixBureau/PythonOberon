@@ -425,14 +425,14 @@ class RISC(object):
         '''
         if to_file is None:
             to_file = sys.stdout
-        label_len = 8
+        label_len = 16
         if location is None:
             location = self.PC
         if syms is None:
             syms = {}
         lower = max((0, location - number))
         for i in range(lower, location + number):
-            label = '%8s' % syms.get(i, ' ' * label_len)[:label_len]
+            label = '%16s' % syms.get(i, ' ' * label_len)[:label_len]
             h = '>' if i == location else ' '
             i <<= 2
             print(h, label, hex(i), dis(self.ram[i]), file=to_file)
