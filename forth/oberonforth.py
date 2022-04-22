@@ -500,8 +500,9 @@ Mov_imm(R0, HERE__var)  # R0 <- &HERE
 Load_word(R0, R0)  # R0 <- ram[HERE]
 
 Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
-Load_word(R1, R1)  # R1 <- ram[LATEST]
-Store_word(R1, R0)  # value of LATEST -> ram[HERE]
+Load_word(R2, R1)  # R2 <- ram[LATEST]
+Store_word(R2, R0)  # value of LATEST -> ram[HERE]
+Store_word(R0, R1)  # value of HERE (now dfa for new word) -> ram[LATEST_var]
 Add_imm(R0, R0, 4)  # HERE += 4
 # I think that's right...
 
