@@ -60,6 +60,9 @@ F_IMMED = 0x80  #   0b0_1000_0000
 F_HIDDEN = 0x20  #  0b0_0010_0000
 F_LENMASK = 0x1f  # 0b0_0001_1111
 
+FIND_MASK = 0xFFFFFF00 | F_HIDDEN | F_LENMASK
+# 0b0_11111111_11111111_11111111_00111111
+
 # I/O
 SERIAL_PORT = s_to_u_32(-56)  # io_ports[8]
 SERIAL_STATUS = s_to_u_32(-52)  # io_ports[12]
@@ -241,8 +244,8 @@ dw(REPL)
 
 defword(b'REPL', REPL)
 dw(WORD)
-#dw(FIND)
-dw(CREATE)
+dw(FIND)
+#dw(CREATE)
 dw(BRANCH)
 dw(s_to_u_32(-12))
 
@@ -374,33 +377,31 @@ NEXT()
 
 defcode(b'FIND', FIND)
 
-# Load the LATEST var into a register.
-Mov_imm(R0, LATEST_var)
-EQ_imm(_end_of_dict)  # Null pointer (should never happen here, eh?)
+# Make sure the word_pointer points to the WORD_BUFFER.
+# (Reserve this register?)
+Mov_imm(word_pointer, WORD_BUFFER)
+# Reuse the counter to get first word of the name.
+Load_word(word_counter, word_pointer)
+# Allow for the HIDDEN bit in the flags to hide a word from FIND.
+move_immediate_word_to_register(R1, FIND_MASK)
+And(word_counter, word_counter, R1)
 
+Mov_imm(R0, LATEST_var)
 label(_FIND_1)  # <==============================( _FIND_1 )===
 Load_word(R1, R0)  # Load the address of the word's link field
 Load_word(R0, R1, 4)  # load a word of the name field.
-
-# Make sure the word_pointer points to the WORD_BUFFER.
-Mov_imm(word_pointer, WORD_BUFFER)
-# Reuse the counter to store parts of the name.
-Load_word(word_counter, word_pointer)
-
-Sub(R0, R0, word_counter)
+Sub(R0, R0, word_counter)  # Compare.
 NE_imm(_FIND_2)  # If these two words differ then load the next word.
-
-# The two word are the same, same count, and same first three letters.
-# That's plenty for now.
+# The two word are the same: same count and same first three letters.
+# That's plenty for now.  (I believe I've heard of Chuck Moore using
+# this heuristic.)
 PUSH(R1)
 NEXT()
 
 label(_FIND_2)  # <==============================( _FIND_2 )===
-Load_word(R0, R1)  # Load the next link field into R0
-EQ_imm(_end_of_dict)  # Null pointer
-T_imm(_FIND_1)  # Check the next word.
+Load_word(R0, R1)  # Load the address of the next link field into R0
+NE_imm(_FIND_1)  # Check the next word.
 
-label(_end_of_dict)  # <==============================( _end_of_dict )===
 # We know R0 is 0x00000000, so push it to signal failure.
 PUSH(R0)
 NEXT()
@@ -678,7 +679,7 @@ Load_word(R0, IP)  # Get the offset.
 Add(IP, IP, R0)    # IP += offset
 NEXT()
 
-##  _______ ___    _   _  _  ___ _  _ 
+##  _______ ___    _   _  _  ___ _  _
 ## |_  / _ ) _ \  /_\ | \| |/ __| || |
 ##  / /| _ \   / / _ \| .` | (__| __ |
 ## /___|___/_|_\/_/ \_\_|\_|\___|_||_|
