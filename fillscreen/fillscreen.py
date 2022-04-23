@@ -36,7 +36,8 @@ Sub_imm(b, b, 4)
 Sub_imm(c, c, 1)
 NE_imm(loop)
 
-label(HALT) ; T_imm(HALT)
+label(HALT)
+T_imm(HALT)
 
 
 #r0 = 0

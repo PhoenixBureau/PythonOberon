@@ -17,19 +17,33 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PythonOberon.  If not see <http://www.gnu.org/licenses/>.
 #
-# N.B. this is a file which is not improved by black formatting.
+# N.B. this is a file which is not improved by the black format tool.
 #
 '''
 
 Assembler
 =========================================
 
+Miki Tebeka’s Clever Idea
+http://pythonwise.blogspot.com/2012/06/python-based-assembler.html
+https://raw.githubusercontent.com/tebeka/pythonwise/master/assembler.pdf
+
+
 '''
 from collections import defaultdict
+from inspect import stack
 from struct import pack
 from pickle import dump
 
 from oberon.util import bint, s_to_u_32
+
+
+# Yes, friends, it's a global variable.
+# I need to pass the file name down to the _debug_line() function for
+# debuggin but that would involve passing it all the way down from
+# assemble_file(), which would be a PITA.  So a harmless little global
+# var is called for.
+_filename = ''
 
 
 def assemble_file(in_file, out_file, sym_file=None,
@@ -85,6 +99,8 @@ def assemble_file(in_file, out_file, sym_file=None,
     boots from there.
 
     '''
+    global _filename
+    _filename = in_file.name
     text = in_file.read()
     code = compile(text, in_file.name, 'exec')
     assembler = Assembler()
@@ -109,6 +125,44 @@ def assemble_file(in_file, out_file, sym_file=None,
             )
     if print_program:
         assembler.print_program()
+
+
+class DebugDict(dict):
+    def __init__(self):
+        dict.__init__(self)
+        self.debug_info = defaultdict(list)
+
+    def __setitem__(self, name, value):
+        dict.__setitem__(self, name, value)
+        self.debug_info[name].extend(self._debug_line())
+
+    def print_debug(self, out=None):
+        if out is None:
+            import sys
+            out = sys.stderr
+        for addr, (frame, *frames) in sorted(self.debug_info.items()):
+            lineno, line, function = frame
+            function = f'(in {function})' if function != '<module>' else ''
+            print(f'0x{addr:08x} line: {lineno} {line} {function}')
+##            for lineno, line, function in frames:
+##                print(f'           line: {lineno} {line} {function}')
+
+    @staticmethod
+    def _debug_line():
+        global _filename
+        return [(
+            frame.lineno,
+            frame.code_context[frame.index].rstrip(),
+            frame.function
+            ) for frame in stack()
+            if frame.filename == _filename
+            ]
+    ##            #print(frame)
+    ##            print(
+    ##                f'{frame.lineno:3}'
+    ##                f' {frame.code_context[frame.index].rstrip()[:60]:60}'
+    ##                f' {frame.function}'
+    ##                )
 
 
 # pylint: disable=too-many-public-methods
@@ -410,6 +464,7 @@ def make_F3_imm(cond, offset, invert=False, v=False):
 def opof(op):
     return ops_rev[int(op)]
 
+
 class LabelThunk:
     '''
     Stand for an address that will be determined later.
@@ -511,7 +566,7 @@ class Assembler:
     '''
 
     def __init__(self):
-        self.program = {}
+        self.program = DebugDict()
         self.symbol_table = {}
         self.data_addrs = set()
         self.fixups = defaultdict(list)
@@ -562,6 +617,7 @@ class Assembler:
         # pylint: disable=exec-used
         exec(text, self.context)
         del self.context['__builtins__']
+        self.program.print_debug()
         return self.program
 
     def dw(self, data):
