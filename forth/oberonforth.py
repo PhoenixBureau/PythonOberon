@@ -690,8 +690,8 @@ NEXT()
 defcode(b'0BRANCH', ZBRANCH)
 POP(R0)
 Add_imm(R0, R0, 0)  # Set condition flags.
-NE_imm(BRANCH + 4)  # Non-zero? BRANCH.
-Add_imm(IP, IP, 4)  # Zero? Skip offset.
+EQ_imm(BRANCH + 4)  # Zero? BRANCH.
+Add_imm(IP, IP, 4)  # Non-zero? Skip offset.
 NEXT()
 
 
@@ -741,7 +741,7 @@ dw(EXIT)
 # It could be a number, so let's try that...
 dw(NUMBER)
 dw(ZBRANCH)  # No chars left?  It is a number!
-dw(s_to_u_32(4 * 3))
+dw(s_to_u_32(4 * 2))
 
 # It wasn't a number, even though it started with '$'
 ##dw(ERROR)

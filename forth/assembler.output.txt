@@ -368,8 +368,8 @@ IMMEDIATE_dfa: 0x004f8 0x000004cc                                        line: 1
                0x005bc Load_word(0, 10)                                  line: 108     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
                0x005c0 Add_imm(10, 10, 0x4, u=False, v=False)            line: 109     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
                0x005c4 Add_imm(0, 0, 0x0, u=False, v=False)              line: 692 Add_imm(R0, R0, 0)  # Set condition flags.
-               0x005c8 NE_imm(0xfffff3)                                  line: 693 NE_imm(BRANCH + 4)  # Non-zero? BRANCH.
-               0x005cc Add_imm(14, 14, 0x4, u=False, v=False)            line: 694 Add_imm(IP, IP, 4)  # Zero? Skip offset.
+               0x005c8 EQ_imm(0xfffff3)                                  line: 693 EQ_imm(BRANCH + 4)  # Zero? BRANCH.
+               0x005cc Add_imm(14, 14, 0x4, u=False, v=False)            line: 694 Add_imm(IP, IP, 4)  # Non-zero? Skip offset.
                0x005d0 Load_word(3, 14)                                  line:  82     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
                0x005d4 Load_word(4, 3)                                   line:  83     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
                0x005d8 Add_imm(14, 14, 0x4, u=False, v=False)            line:  84     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
