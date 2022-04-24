@@ -772,7 +772,7 @@ NEXT()
 
 label(_intrp_exe)  # Execute the word.
 Load_word(R0, R2, 8)  # Get the address to which its codeword points...
-T_imm(R0)  # and jump to it.
+T(R0)  # and jump to it.
 
 
 label(QUIT)

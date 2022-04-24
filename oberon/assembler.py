@@ -118,6 +118,7 @@ def assemble_file(in_file, out_file, sym_file=None,
             raise ValueError(
                 f'non-int in program machine code {repr(item)}'
                 )
+        # TODO: improve this, make a nice error message or something.
     data = pack(f'<{len(program_list)}I', *program_list)
     out_file.write(data)
     if epilog:
@@ -138,18 +139,18 @@ class DebugDict(dict):
         dict.__init__(self)
         self.debug_info = defaultdict(list)
 
-    def __setitem__(self, name, value):
-        dict.__setitem__(self, name, value)
-        self.debug_info[name].extend(self._debug_line())
+    def __setitem__(self, addr, value):
+        dict.__setitem__(self, addr, value)
+        self.debug_info[addr].extend(self._debug_line())
 
     def print_debug(self, out=None):
         if out is None:
             import sys
             out = sys.stderr
-        for addr, (frame, *frames) in sorted(self.debug_info.items()):
+        for addr, (frame, *_frames) in sorted(self.debug_info.items()):
             lineno, line, function = frame
-            function = f'(in {function})' if function != '<module>' else ''
-            print(f'0x{addr:08x} line: {lineno} {line} {function}')
+            function = f' (in {function})' if function != '<module>' else ''
+            print(f'0x{addr:08x} line: {lineno} {line}{function}')
 ##            for lineno, line, function in frames:
 ##                print(f'           line: {lineno} {line} {function}')
 
@@ -504,11 +505,17 @@ class Context(dict):
 
     def __getitem__(self, name):
         try:
-            return dict.__getitem__(self, name)
+            item = dict.__getitem__(self, name)
         except KeyError:
-            # print('# New unassigned label:', name)
-            thunk = self[name] = self.symbol_table[name] = LabelThunk(name)
-            return thunk
+            try:
+                # For some reason the auto-search for builtins
+                # doesn't work.  I don't want to figure it out
+                # now, so just look 'em up manually.  ( TODO )
+                item = __builtins__[name]  # somehow it's a dict not a module here. ??
+            except KeyError:
+                # print('# New unassigned label:', name)
+                item = self[name] = self.symbol_table[name] = LabelThunk(name)
+        return item
 
 
 def thunkify_arithmetic_logic(method):
@@ -592,15 +599,6 @@ class Assembler:
         self.here = 0
 
         self.context = Context(self.symbol_table)
-        # wtf w/ builtins?
-        self.context['print'] = print
-        self.context['len'] = len
-        self.context['ord'] = ord
-        self.context['globals'] = globals
-        self.context['bytes'] = bytes
-        self.context['range'] = range
-        self.context['isinstance'] = isinstance
-
         for name in dir(Assembler):
             if not name.startswith('_'):
                 value = getattr(self, name)
