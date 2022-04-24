@@ -129,6 +129,10 @@ def def_(name, LABEL, flags=0):
     for i in range(0, len(name_bytes), 4):
         d, c, b, a = name_bytes[i:i+4]
         dw((a<<24) + (b<<16) + (c<<8) + d)
+        break  # We are only using the count and first three letters
+               # to distinguish words.  This makes some things easier
+               # to implement without imposing an unduly restrictive
+               # burden on the namer-of-new-words.
     label(LABEL)
 
 
@@ -243,11 +247,9 @@ dw(REPL)
 ##  \_/\_/\___/_| \__,_/__/
 
 defword(b'REPL', REPL)
-dw(WORD)
-dw(FIND)
-#dw(CREATE)
+dw(INTERPRET)
 dw(BRANCH)
-dw(s_to_u_32(-12))
+dw(s_to_u_32(-8))
 
 
 defcode(b'DROP', DROP)
@@ -705,11 +707,72 @@ PUSH(R0)
 NEXT()
 
 
+defcode(b'#?', IS_NUMBER)
+# Is the most recently parsed word (probably) a numeric literal?
+# (This check does not affect the word buffer, unlike NUMBER.)
+Mov_imm(word_pointer, WORD_BUFFER)
+Add_imm(word_pointer, word_pointer, 1)
+Load_byte(R0, word_pointer)
+Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
+PUSH(R0)  # Let the result be the result:
+NEXT()    # 0 -> true / !=0 -> false
 
 
+##  ___ _  _ _____ ___ ___ ___ ___ ___ _____ 
+## |_ _| \| |_   _| __| _ \ _ \ _ \ __|_   _|
+##  | || .` | | | | _||   /  _/   / _|  | |  
+## |___|_|\_| |_| |___|_|_\_| |_|_\___| |_|  
+
+defword(b'INTERPRET', INTERPRET)
+dw(WORD)
+dw(IS_NUMBER)
+dw(ZBRANCH)
+dw(s_to_u_32(4 * 6))  # It could be a number...
+
+# It's not a number but it might be a word.
+dw(FIND)
+dw(ZBRANCH)  # Zero means it wasn't in the dictionary,
+dw(s_to_u_32(4 * 6))
+
+# It's in the dictionary and its LFA is in TOS
+dw(_INTERP)
+dw(EXIT)
+
+# It could be a number, so let's try that...
+dw(NUMBER)
+dw(ZBRANCH)  # No chars left?  It is a number!
+dw(s_to_u_32(4 * 3))
+
+# It wasn't a number, even though it started with '$'
+##dw(ERROR)
+dw(EXIT)
+
+# It IS a number.  DROP the word count (which is zero.)
+dw(DROP)
+dw(EXIT)  # Just leave the number itself on the stack.
 
 
+defcode(b'_INTERP', _INTERP)
+# Do the thing with the LFA in TOS.
+POP(R2)
 
+# If we are interpreting, or the word is IMMEDIATE, execute it.
+Mov_imm(R0, STATE_var)  # R0 <- &STATE
+Load_word(R0, R0)  # R0 <- ram[STATE]
+EQ_imm(_intrp_exe)  # STATE = 0 -> interpreting.
+Load_word(R0, R2, 4)  # R0 <- Name field
+And_imm(R0, R0, F_IMMED)
+NE_imm(_intrp_exe)  # word is IMMEDIATE.
+
+# We are compiling and the word is not immediate.
+Add_imm(R2, R2, 8)  # Point from LFA to codeword.
+Mov_imm(R1, _COMMA)  # Call comma to store it and increment HERE.
+T_link(R1)
+NEXT()
+
+label(_intrp_exe)  # Execute the word.
+Load_word(R0, R2, 8)  # Get the address to which its codeword points...
+T_imm(R0)  # and jump to it.
 
 
 label(QUIT)

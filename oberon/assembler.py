@@ -112,6 +112,12 @@ def assemble_file(in_file, out_file, sym_file=None,
     program_list.insert(0, len(program_list) * 4)
     program_list.insert(1, 0)  # address 0x00000000
     program_list.append(0)  # stop loading
+    for item in program_list:
+        if not isinstance(item, int):
+            # print(repr(item))
+            raise ValueError(
+                f'non-int in program machine code {repr(item)}'
+                )
     data = pack(f'<{len(program_list)}I', *program_list)
     out_file.write(data)
     if epilog:
