@@ -505,30 +505,30 @@ class Context(dict):
             return thunk
 
 
-def deco(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
+def deco(method):
+    '''
+    Wrap a method that uses ASM.*() to make bits.
+    '''
+    bits_maker = getattr(ASM, method.__name__)
 
-    def inner(_method):
+    def wrapper(self, a, b, K, v=0, u=0):
 
-        def wrapper(self, a, b, K, v=0, u=0):
+        if isinstance(K, LabelThunk):
 
-            if isinstance(K, LabelThunk):
+            # For thunks build a function to do fix up.
+            def fixup(value):
+                wrapper(self, a, b, value, v, u)
 
-                # For thunks build a function to do fix up.
-                def fixup(value):
-                    wrapper(self, a, b, value, v, u)
+            instruction = (fixup,)
+            self.fixups[K].append(self.here)
 
-                instruction = (fixup,)
-                self.fixups[K].append(self.here)
+        else:  # Otherwise just make the bits now.
+            instruction = bits_maker(a, b, K, v=v, u=u)
 
-            else:  # Otherwise just make the bits now.
-                instruction = bits_maker(a, b, K, v=v, u=u)
+        self.program[self.here] = instruction
+        self.here += 4
 
-            self.program[self.here] = instruction
-            self.here += 4
-
-        return wrapper
-
-    return inner
+    return wrapper
 
 
 def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
@@ -715,7 +715,7 @@ class Assembler:
         self.program[self.here] = ASM.Add(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Add_imm)
+    @deco
     def Add_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -723,7 +723,7 @@ class Assembler:
         self.program[self.here] = ASM.And(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.And_imm)
+    @deco
     def And_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -731,7 +731,7 @@ class Assembler:
         self.program[self.here] = ASM.Ann(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Ann_imm)
+    @deco
     def Ann_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -739,7 +739,7 @@ class Assembler:
         self.program[self.here] = ASM.Asr(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Asr_imm)
+    @deco
     def Asr_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -747,7 +747,7 @@ class Assembler:
         self.program[self.here] = ASM.Div(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Div_imm)
+    @deco
     def Div_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -755,7 +755,7 @@ class Assembler:
         self.program[self.here] = ASM.Ior(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Ior_imm)
+    @deco
     def Ior_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -763,7 +763,7 @@ class Assembler:
         self.program[self.here] = ASM.Lsl(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Lsl_imm)
+    @deco
     def Lsl_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -771,7 +771,7 @@ class Assembler:
         self.program[self.here] = ASM.Mul(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Mul_imm)
+    @deco
     def Mul_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -779,7 +779,7 @@ class Assembler:
         self.program[self.here] = ASM.Ror(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Ror_imm)
+    @deco
     def Ror_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -787,7 +787,7 @@ class Assembler:
         self.program[self.here] = ASM.Sub(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Sub_imm)
+    @deco
     def Sub_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -795,7 +795,7 @@ class Assembler:
         self.program[self.here] = ASM.Xor(a, b, c, u)
         self.here += 4
 
-    @deco(ASM.Xor_imm)
+    @deco
     def Xor_imm(self, a, b, K, v=0, u=0):
         pass
 
