@@ -413,7 +413,7 @@ INTERPRET_dfa: 0x00644 0x00000610                                        line: 1
                0x00670 0x000000a4                                        line: 739 dw(EXIT)
                0x00674 0x00000290                                        line: 742 dw(NUMBER)
                0x00678 0x000005b8                                        line: 743 dw(ZBRANCH)  # No chars left?  It is a number!
-               0x0067c 0x0000000c                                        line: 744 dw(s_to_u_32(4 * 3))
+               0x0067c 0x00000008                                        line: 744 dw(s_to_u_32(4 * 2))
                0x00680 0x000000a4                                        line: 748 dw(EXIT)
                0x00684 0x00000084                                        line: 751 dw(DROP)
                0x00688 0x000000a4                                        line: 752 dw(EXIT)  # Just leave the number itself on the stack.
