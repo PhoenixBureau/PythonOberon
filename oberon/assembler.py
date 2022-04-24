@@ -488,6 +488,20 @@ class LabelThunk:
 class Context(dict):
     '''
     Execution namespace for asm code.
+
+    When identifiers are referenced and are not being assigned to
+    the namespace Context __getitem__ method will be called
+    with the name.
+
+    The Context searches itself (and __builtins__) for the name and
+    returns the value if found, otherwise it creates a new named
+    :py:class:`LabelThunk` with that name, enters it in the
+    :py:attr:`symbol_table`, and returns it.
+
+    Later, when the named thunk is assigned a value, that value replaces
+    the thunk in the :py:attr:`symbol_table`.  This class will raise
+    a RuntimeError if you attempt to assign a value to a label more than
+    once.
     '''
 
     def __init__(self, symbol_table):
@@ -520,7 +534,7 @@ class Context(dict):
 
 def thunkify_arithmetic_logic(method):
     '''
-    Wrap a method that uses ASM.*() to make bits.  If it's called with a
+    Wrap a method that uses :py:class:`ASM` to make bits.  If it's called with a
     :py:class:`LabelThunk` it sets up a fixup function that resolves the
     actual instuction when the label is assigned to a concrete address.
     '''
