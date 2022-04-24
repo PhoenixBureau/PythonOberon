@@ -143,6 +143,15 @@ class DebugDict(dict):
         dict.__setitem__(self, addr, value)
         self.debug_info[addr].extend(self._debug_line())
 
+    def get_line_for(self, addr):
+        try:
+            frames = self.debug_info[addr]
+        except KeyError:
+            return ''
+        lineno, line, function = frames[0]
+        function = f' -- (in {function})' if function != '<module>' else ''
+        return f'line: {lineno:-3} {line}{function}'
+
     def print_debug(self, out=None):
         if out is None:
             import sys
@@ -639,16 +648,21 @@ class Assembler:
                 print(f'{prefix}0x{addr:05x} 0x00000000')
                 continue
             i = self.program[addr]
+            suffix = self.program.get_line_for(addr)
             if addr in self.data_addrs:
-                print(f'{prefix}0x{addr:05x} 0x{i:08x}')
-                continue
-            print(f'{prefix}0x{addr:05x} {dis(i)}')
+                line = f'{prefix}0x{addr:05x} 0x{i:08x}'
+            else:
+                line = f'{prefix}0x{addr:05x} {dis(i)}'
+            n = 72 - len(line)
+            if n > 0:
+                line += ' ' * n
+            print(line, suffix)
 
     def __call__(self, text):
         # pylint: disable=exec-used
         exec(text, self.context)
         del self.context['__builtins__']
-        self.program.print_debug()
+        # self.program.print_debug()
         return self.program
 
     def dw(self, data):
