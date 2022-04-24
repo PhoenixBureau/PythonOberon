@@ -505,9 +505,11 @@ class Context(dict):
             return thunk
 
 
-def deco(method):
+def thunkify_arithmetic_logic(method):
     '''
-    Wrap a method that uses ASM.*() to make bits.
+    Wrap a method that uses ASM.*() to make bits.  If it's called with a
+    :py:class:`LabelThunk` it sets up a fixup function that resolves the
+    actual instuction when the label is assigned to a concrete address.
     '''
     bits_maker = getattr(ASM, method.__name__)
 
@@ -531,33 +533,44 @@ def deco(method):
     return wrapper
 
 
-def deco0(bits_maker):  # Wrap a method that uses ASM.*() to make bits.
+def thunkify_branch(method):
+    '''
+    Wrap a branch method.  If it's called with a
+    :py:class:`LabelThunk` it sets up a fixup function that resolves the
+    actual instuction when the label is assigned to a concrete address.
+    '''
+    bits_maker = getattr(ASM, method.__name__)
 
-    def inner(_method):
+    def wrapper(self, offset):
+        # Note that the offset here is actually the destination address.
+        # The actual offset value is calculated in this wrapper function.
 
-        def wrapper(self, offset):
+        if isinstance(offset, LabelThunk):
 
-            if isinstance(offset, LabelThunk):
+            def fixup(value):
+                wrapper(self, value)
 
-                def fixup(value):
-                    wrapper(self, value)
-                instruction = (fixup,)
-                self.fixups[offset].append(self.here)
+            instruction = (fixup,)
+            self.fixups[offset].append(self.here)
 
-            else:
-                if offset % 4:
-                    raise RuntimeError(f'bad offset {offset:x}')
-                offset = (offset - self.here) // 4 - 1
-                if offset < 0:
-                    offset = s_to_u_32(offset) & 0xffffff # 2**24 -1
-                instruction = bits_maker(offset)
+        else:
+            if offset % 4:
+                raise RuntimeError(f'bad offset {offset:x}')
 
-            self.program[self.here] = instruction
-            self.here += 4
+            # offset counts bytes, but the instruction counts words,
+            # the cpu will have already incremented PC,
+            # so: subtract "here", divide by four, subtract one.
+            offset = ((offset - self.here) >> 2) - 1
 
-        return wrapper
+            if offset < 0:
+                offset = s_to_u_32(offset) & 0xffffff # 2**24 - 1
 
-    return inner
+            instruction = bits_maker(offset)
+
+        self.program[self.here] = instruction
+        self.here += 4
+
+    return wrapper
 
 
 class Assembler:
@@ -715,7 +728,7 @@ class Assembler:
         self.program[self.here] = ASM.Add(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Add_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -723,7 +736,7 @@ class Assembler:
         self.program[self.here] = ASM.And(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def And_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -731,7 +744,7 @@ class Assembler:
         self.program[self.here] = ASM.Ann(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Ann_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -739,7 +752,7 @@ class Assembler:
         self.program[self.here] = ASM.Asr(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Asr_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -747,7 +760,7 @@ class Assembler:
         self.program[self.here] = ASM.Div(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Div_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -755,7 +768,7 @@ class Assembler:
         self.program[self.here] = ASM.Ior(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Ior_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -763,7 +776,7 @@ class Assembler:
         self.program[self.here] = ASM.Lsl(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Lsl_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -771,7 +784,7 @@ class Assembler:
         self.program[self.here] = ASM.Mul(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Mul_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -779,7 +792,7 @@ class Assembler:
         self.program[self.here] = ASM.Ror(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Ror_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -787,7 +800,7 @@ class Assembler:
         self.program[self.here] = ASM.Sub(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Sub_imm(self, a, b, K, v=0, u=0):
         pass
 
@@ -795,18 +808,23 @@ class Assembler:
         self.program[self.here] = ASM.Xor(a, b, c, u)
         self.here += 4
 
-    @deco
+    @thunkify_arithmetic_logic
     def Xor_imm(self, a, b, K, v=0, u=0):
         pass
 
     #==------------------------------------------------------------------
     #  Branch instructions
+    #
+    # Note that the parameter called "offset" here is actually the
+    # destination or target label/address.  The thunkify_branch()
+    # decorator will adjust that to the actual offset value based
+    # on the address of the instruction being assembled.
 
     def CC(self, c):
         self.program[self.here] = ASM.CC(c)
         self.here += 4
 
-    @deco0(ASM.CC_imm)
+    @thunkify_branch
     def CC_imm(self, offset):
         pass
 
@@ -818,7 +836,7 @@ class Assembler:
         self.program[self.here] = ASM.CS(c)
         self.here += 4
 
-    @deco0(ASM.CS_imm)
+    @thunkify_branch
     def CS_imm(self, offset):
         pass
 
@@ -830,7 +848,7 @@ class Assembler:
         self.program[self.here] = ASM.EQ(c)
         self.here += 4
 
-    @deco0(ASM.EQ_imm)
+    @thunkify_branch
     def EQ_imm(self, offset):
         pass
 
@@ -842,7 +860,7 @@ class Assembler:
         self.program[self.here] = ASM.F(c)
         self.here += 4
 
-    @deco0(ASM.F_imm)
+    @thunkify_branch
     def F_imm(self, offset):
         pass
 
@@ -854,7 +872,7 @@ class Assembler:
         self.program[self.here] = ASM.GE(c)
         self.here += 4
 
-    @deco0(ASM.GE_imm)
+    @thunkify_branch
     def GE_imm(self, offset):
         pass
 
@@ -866,7 +884,7 @@ class Assembler:
         self.program[self.here] = ASM.GT(c)
         self.here += 4
 
-    @deco0(ASM.GT_imm)
+    @thunkify_branch
     def GT_imm(self, offset):
         pass
 
@@ -878,7 +896,7 @@ class Assembler:
         self.program[self.here] = ASM.HI(c)
         self.here += 4
 
-    @deco0(ASM.HI_imm)
+    @thunkify_branch
     def HI_imm(self, offset):
         pass
 
@@ -890,7 +908,7 @@ class Assembler:
         self.program[self.here] = ASM.LE(c)
         self.here += 4
 
-    @deco0(ASM.LE_imm)
+    @thunkify_branch
     def LE_imm(self, offset):
         pass
 
@@ -902,7 +920,7 @@ class Assembler:
         self.program[self.here] = ASM.LS(c)
         self.here += 4
 
-    @deco0(ASM.LS_imm)
+    @thunkify_branch
     def LS_imm(self, offset):
         pass
 
@@ -914,7 +932,7 @@ class Assembler:
         self.program[self.here] = ASM.LT(c)
         self.here += 4
 
-    @deco0(ASM.LT_imm)
+    @thunkify_branch
     def LT_imm(self, offset):
         pass
 
@@ -926,7 +944,7 @@ class Assembler:
         self.program[self.here] = ASM.MI(c)
         self.here += 4
 
-    @deco0(ASM.MI_imm)
+    @thunkify_branch
     def MI_imm(self, offset):
         pass
 
@@ -938,7 +956,7 @@ class Assembler:
         self.program[self.here] = ASM.NE(c)
         self.here += 4
 
-    @deco0(ASM.NE_imm)
+    @thunkify_branch
     def NE_imm(self, offset):
         pass
 
@@ -950,7 +968,7 @@ class Assembler:
         self.program[self.here] = ASM.PL(c)
         self.here += 4
 
-    @deco0(ASM.PL_imm)
+    @thunkify_branch
     def PL_imm(self, offset):
         pass
 
@@ -962,7 +980,7 @@ class Assembler:
         self.program[self.here] = ASM.T(c)
         self.here += 4
 
-    @deco0(ASM.T_imm)
+    @thunkify_branch
     def T_imm(self, offset):
         pass
 
@@ -974,7 +992,7 @@ class Assembler:
         self.program[self.here] = ASM.VC(c)
         self.here += 4
 
-    @deco0(ASM.VC_imm)
+    @thunkify_branch
     def VC_imm(self, offset):
         pass
 
@@ -986,7 +1004,7 @@ class Assembler:
         self.program[self.here] = ASM.VS(c)
         self.here += 4
 
-    @deco0(ASM.VS_imm)
+    @thunkify_branch
     def VS_imm(self, offset):
         pass
 
