@@ -33,17 +33,54 @@ print(len(DATA), len(DATA) / 13)
 ##with open('8x13.bin', 'wb') as f:
 ##    f.write(binary)
 
+def pixy(word, one='@', zero=' '):
+    bits = bin(word)[2:]
+    bits = '0' * max(0, 32 - len(bits)) + bits
+    return bits .replace('0', zero).replace('1', one)
+
+
+
+# Repack the data to fit four chars per thirteen words.
+char_blocks = [DATA[i:i+13] for i in range(0, len(DATA), 13)]
+
+four_chars = [char_blocks[i:i+4] for i in range(0, len(char_blocks), 4)]
+
+def four_bytes_to_word(bs):
+    return _four_bytes_to_word(*bs)
+
+def _four_bytes_to_word(d, c, b=0, a=0):
+    return (a<<24) + (b<<16) + (c<<8) + d
+
+ks = [
+    list(zip(*fchars))
+    for fchars in four_chars
+    ]
+
+js = [
+    list(map(four_bytes_to_word, k))
+    for k in ks
+    ]
+
+DATA = array('I')
+DATA.extend(chain.from_iterable(js))
 DATA.insert(0, 0xE7F00)  # DISPLAY_START
 with open('8x13.bintoo', 'wb') as f:
     DATA.tofile(f)
 
 
-G = (
-    islice(DATA, i, i + 13)
-    for i in range(len(DATA) // 13)
-    )
+##G = (
+##    islice(DATA, i, i + 13)
+##    for i in range(len(DATA) // 13)
+##    )
+##
+##LINES = list(zip(*G))
 
-LINES = list(zip(*G))
+
+##for i, n in enumerate(DATA):
+##for i, n in enumerate(chain.from_iterable(js)):
+##    print(pixy(n))
+##    if 0 == (i % 13):
+##        print('-------|' * 4)
 
 
 
@@ -51,12 +88,11 @@ LINES = list(zip(*G))
 ##
 ####a = font[ord('a')]
 ####print (a)
-##for i, n in enumerate(DATA):
 ##    b = bin(n)[2:]
 ##    pad = '0' * (8 - len(b))
 ##    print(f'{pad}{b}'.replace('0', ' ').replace('1', '0'))
-####    DATA.append(n)
-##
+##    DATA.append(n)
+
 
 WORDS_IN_SCANLINE = 32
 
