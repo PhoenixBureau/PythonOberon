@@ -790,23 +790,75 @@ move_immediate_word_to_register(R0, DISPLAY_START)
 move_immediate_word_to_register(R1, DISPLAY_LENGTH)
 move_immediate_word_to_register(R8, 0xffffffff)
 Add(R1, R1, R0)
-Sub_imm(R0, R0, 312 * 4)
+Sub_imm(R0, R0, 312 * 4)  # 312 words in font data.
 Mov_imm(R2, 13 * 24)
 
-label(_pchr_loop)  # <-------------
+label(_pai_loop)  # <-------------
 Load_word(R7, R0)
 Xor(R7, R7, R8)  #  Reverse video.
 Store_word(R7, R1)
 Add_imm(R0, R0, 4)
 Sub_imm(R1, R1, 128)
 Sub_imm(R2, R2, 1)
-EQ_imm(_done)
-T_imm(_pchr_loop)
-label(_done)  # <-------------
+EQ_imm(_pai_done)
+T_imm(_pai_loop)
+label(_pai_done)  # <-------------
 NEXT()
 
 
 
+
+defcode(b'paint_char', PAINT_CHAR)
+# (y x chr -- )
+# paint a char onto the screen
+
+move_immediate_word_to_register(R0, DISPLAY_START)
+Sub_imm(R0, R0, 312 * 4)  # 312 words in font data.
+# R0 points to start of font data.
+
+POP(R1)  # chr in R1
+Sub_imm(R1, R1, ord('!'))
+# R1 counts byte offset of char.
+
+
+Asr_imm(R2, R1, 2)  # We need the 13-word offset in ram.
+Mul_imm(R2, R2, 13)  # R2 *= 13 words per char.
+Add(R0, R0, R2)  # Point R0 to start of char's word in font.
+
+And_imm(R1, R1, 0b11)  # We need the byte offset in the words.
+Add(R0, R0, R1)  # Point R0 to start of char's data in font.
+
+POP(R1)  # x
+Lsl_imm(R1, R1, 3)  # x * 8
+move_immediate_word_to_register(R2, DISPLAY_START)
+Add(R1, R1, R2)  # R1 = (x * 8) + DISPLAY_START
+
+Mov_imm(R7, 768)  # Display width in pixels TODO don't hardcod3 this.
+POP(R2)             # R2 = y in lines
+Mul_imm(R2, R2, 13) # R2 = y in px  (13px per char line)
+Sub(R2, R7, R2)     # R2 = 768 - y
+Sub_imm(R2, R2, 1)  # R2 = 768 - y - 1
+Lsl_imm(R2, R2, 7)  # R2 = (768 - y - 1) * 128 bytes per line.
+Add(R1, R1, R2)     # R1 = (768 - y - 1) * 128 + (x * 8) + DISPLAY_START
+
+# So at this point, if I got everything above right,
+# R0 points to start of char's first byte in font.
+# R1 points to the first destination byte in screen RAM.
+
+Mov_imm(R2, 13)  # Counter
+move_immediate_word_to_register(R8, 0xffffffff)
+
+label(_pchr_loop)  # <-------------
+Load_byte(R7, R0)
+Xor(R7, R7, R8)  #  Reverse video.
+Store_byte(R7, R1)
+Add_imm(R0, R0, 4)
+Sub_imm(R1, R1, 128)
+Sub_imm(R2, R2, 1)
+EQ_imm(_pchr_done)
+T_imm(_pchr_loop)
+label(_pchr_done)  # <-------------
+NEXT()
 
 
 defcode(b'DUP', DUP)
