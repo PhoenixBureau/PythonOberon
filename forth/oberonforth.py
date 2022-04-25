@@ -781,11 +781,55 @@ Load_word(R0, R2, 8)  # Get the address to which its codeword points...
 T(R0)  # and jump to it.
 
 
+
+##defcode(b'pai', PAI)
+##NEXT()
+
+
+
+##
+##
+##DISPLAY_START = 0xE7F00
+##DISPLAY_LENGTH = 0x18000
+##R7 = 7
+##
+##move_immediate_word_to_register(R0, DISPLAY_START)
+##move_immediate_word_to_register(R1, DISPLAY_LENGTH)
+##Add_imm(R1, R1, R0)
+##Mov_imm(R2, 52)
+##
+##label(_pchr_loop)  # <-------------
+##Load_word(R7, R0)
+##Store_word(R7, R1)
+##Add_imm(R0, R0, 4)
+##Sub_imm(R1, R1, 128)
+##Sub_imm(R2, R2, 1)
+##EQ_imm(_done)
+##T_imm(_pchr_loop)
+##label(_done)  # <-------------
+##NEXT()
+##
+##
+
+
+
 defcode(b'DUP', DUP)
 POP(R0)
 PUSH(R0)
 PUSH(R0)
 NEXT()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
