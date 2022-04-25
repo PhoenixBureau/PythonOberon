@@ -51,19 +51,12 @@ def four_bytes_to_word(bs):
 def _four_bytes_to_word(d, c, b=0, a=0):
     return (a<<24) + (b<<16) + (c<<8) + d
 
-ks = [
-    list(zip(*fchars))
-    for fchars in four_chars
-    ]
+ks = (zip(*fchars) for fchars in four_chars)
 
-js = [
-    list(map(four_bytes_to_word, k))
-    for k in ks
-    ]
+js = (map(four_bytes_to_word, k) for k in ks)
 
-DATA = array('I')
+DATA = array('I', [0xE7F00])  # DISPLAY_START
 DATA.extend(chain.from_iterable(js))
-DATA.insert(0, 0xE7F00)  # DISPLAY_START
 with open('8x13.bintoo', 'wb') as f:
     DATA.tofile(f)
 
