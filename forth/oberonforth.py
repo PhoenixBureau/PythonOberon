@@ -543,7 +543,7 @@ NEXT()
 ##   \_/\__,_|_| |_\__,_|_.__/_\___/__/
 
 defvar(b'HERE', HERE_, initial=END)
-defvar(b'LATEST', LATEST, initial=FETCH_dfa)
+defvar(b'LATEST', LATEST, initial=DUP_dfa)
 defvar(b'STATE', STATE)
 
 
@@ -584,6 +584,10 @@ Mov_imm(R0, STATE_var)
 Mov_imm(R1, 1)
 Store_word(R1, R0)
 NEXT()
+
+
+#    : : WORD CREATE LIT DOCOL , LATEST @ HIDDEN ] ;
+#    : ;             LIT EXIT  , LATEST @ HIDDEN [ ;
 
 
 ##   ___ ___  _    ___  _  _
@@ -727,12 +731,13 @@ defword(b'INTERPRET', INTERPRET)
 dw(WORD)
 dw(IS_NUMBER)
 dw(ZBRANCH)
-dw(s_to_u_32(4 * 6))  # It could be a number...
+dw(s_to_u_32(4 * 7))  # It could be a number...
 
 # It's not a number but it might be a word.
 dw(FIND)
+dw(DUP)
 dw(ZBRANCH)  # Zero means it wasn't in the dictionary,
-dw(s_to_u_32(4 * 6))
+dw(s_to_u_32(4 * 7))
 
 # It's in the dictionary and its LFA is in TOS
 dw(_INTERP)
@@ -740,6 +745,7 @@ dw(EXIT)
 
 # It could be a number, so let's try that...
 dw(NUMBER)
+dw(DUP)
 dw(ZBRANCH)  # No chars left?  It is a number!
 dw(s_to_u_32(4 * 2))
 
@@ -773,6 +779,14 @@ NEXT()
 label(_intrp_exe)  # Execute the word.
 Load_word(R0, R2, 8)  # Get the address to which its codeword points...
 T(R0)  # and jump to it.
+
+
+defcode(b'DUP', DUP)
+POP(R0)
+PUSH(R0)
+PUSH(R0)
+NEXT()
+
 
 
 label(QUIT)

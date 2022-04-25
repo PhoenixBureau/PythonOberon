@@ -30,6 +30,7 @@ https://raw.githubusercontent.com/tebeka/pythonwise/master/assembler.pdf
 
 
 '''
+from array import array
 from collections import defaultdict
 from inspect import stack
 from struct import pack
@@ -48,6 +49,7 @@ _filename = ''
 
 def assemble_file(in_file, out_file, sym_file=None,
                   print_program=False,
+                  additional_data=None,
                   epilog=None,  # Bytes to follow image
                   # in serial stream.  Not part of the program.
                   ):
@@ -111,6 +113,8 @@ def assemble_file(in_file, out_file, sym_file=None,
         ]
     program_list.insert(0, len(program_list) * 4)
     program_list.insert(1, 0)  # address 0x00000000
+    if additional_data:
+        _append_data(additional_data, program_list)
     program_list.append(0)  # stop loading
     for item in program_list:
         if not isinstance(item, int):
@@ -132,6 +136,14 @@ def assemble_file(in_file, out_file, sym_file=None,
             )
     if print_program:
         assembler.print_program()
+
+
+def _append_data(additional_data, program_list):
+    data = array('I')
+    data.frombytes(additional_data.read())
+    data.insert(0, (len(data) - 1) * 4)
+    # Subtract one to account for the destination address.
+    program_list.extend(data)
 
 
 class DebugDict(dict):

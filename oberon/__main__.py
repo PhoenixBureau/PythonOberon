@@ -31,10 +31,11 @@ parser = ArgumentParser(
     #usage='python -i -m oberon [-d DISK_IMAGE]',
     description='An emulator for Prof Wirth\'s RISC CPU for Project Oberon.',
     )
+
 subparsers = parser.add_subparsers(help='sub-command help')
-asm_subparser = subparsers.add_parser(
-    'assemble'
-    )
+
+asm_subparser = subparsers.add_parser('assemble')
+
 asm_subparser.add_argument(
     'source',
     type=FileType('rb'),
@@ -54,9 +55,13 @@ asm_subparser.add_argument(
 asm_subparser.add_argument(
     '-e', '--epilog',
     )
-emu_subparser= subparsers.add_parser(
-    'emulate'
+asm_subparser.add_argument(
+    '-a', '--additional-data',
+    type=FileType('rb'),
     )
+
+emu_subparser= subparsers.add_parser('emulate')
+
 emu_subparser.add_argument(
     '-d', '--disk-image',
     type=FileType('rb'),
@@ -79,6 +84,7 @@ if hasattr(args, 'output'):  # We are assembling
         args.output,
         args.symbol_file,
         print_program=args.print_program,
+        additional_data=args.additional_data,
         epilog=epilog,
         )
 

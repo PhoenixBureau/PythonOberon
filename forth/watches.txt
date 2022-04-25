@@ -1,3 +1,4 @@
 ram[WORD_BUFFER]
 ram[HERE__var]
 ram[LATEST_var]
+ram[R[10]]

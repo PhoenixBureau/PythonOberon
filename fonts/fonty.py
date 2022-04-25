@@ -33,6 +33,7 @@ print(len(DATA), len(DATA) / 13)
 ##with open('8x13.bin', 'wb') as f:
 ##    f.write(binary)
 
+DATA.insert(0, 0xE7F00)  # DISPLAY_START
 with open('8x13.bintoo', 'wb') as f:
     DATA.tofile(f)
 
