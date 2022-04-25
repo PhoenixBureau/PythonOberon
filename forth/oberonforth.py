@@ -390,21 +390,19 @@ And(word_counter, word_counter, R1)
 
 Mov_imm(R0, LATEST_var)
 label(_FIND_1)  # <==============================( _FIND_1 )===
-Load_word(R1, R0)  # Load the address of the word's link field
-Load_word(R0, R1, 4)  # load a word of the name field.
-Sub(R0, R0, word_counter)  # Compare.
-NE_imm(_FIND_2)  # If these two words differ then load the next word.
+Load_word(R1, R0, 4)  # load a word of the name field.
+Sub(R1, R1, word_counter)  # Compare.
+EQ_imm(_found)  # If this is the word...
 # The two word are the same: same count and same first three letters.
 # That's plenty for now.  (I believe I've heard of Chuck Moore using
 # this heuristic.)
-PUSH(R1)
-NEXT()
 
-label(_FIND_2)  # <==============================( _FIND_2 )===
-Load_word(R0, R1)  # Load the address of the next link field into R0
+# If it's not a match...
+Load_word(R0, R0)  # Load the address of the next link field into R0
 NE_imm(_FIND_1)  # Check the next word.
-
 # We know R0 is 0x00000000, so push it to signal failure.
+
+label(_found)  # <================================( _found )===
 PUSH(R0)
 NEXT()
 
@@ -782,34 +780,32 @@ T(R0)  # and jump to it.
 
 
 
-##defcode(b'pai', PAI)
-##NEXT()
+
+DISPLAY_START = 0xE7F00
+DISPLAY_LENGTH = 0x18000
+R7, R8 = 7, 8
+
+defcode(b'pai', PAI)
+move_immediate_word_to_register(R0, DISPLAY_START)
+move_immediate_word_to_register(R1, DISPLAY_LENGTH)
+move_immediate_word_to_register(R8, 0xffffffff)
+Add(R1, R1, R0)
+Sub_imm(R0, R0, 312 * 4)
+Mov_imm(R2, 13 * 24)
+
+label(_pchr_loop)  # <-------------
+Load_word(R7, R0)
+Xor(R7, R7, R8)  #  Reverse video.
+Store_word(R7, R1)
+Add_imm(R0, R0, 4)
+Sub_imm(R1, R1, 128)
+Sub_imm(R2, R2, 1)
+EQ_imm(_done)
+T_imm(_pchr_loop)
+label(_done)  # <-------------
+NEXT()
 
 
-
-##
-##
-##DISPLAY_START = 0xE7F00
-##DISPLAY_LENGTH = 0x18000
-##R7 = 7
-##
-##move_immediate_word_to_register(R0, DISPLAY_START)
-##move_immediate_word_to_register(R1, DISPLAY_LENGTH)
-##Add_imm(R1, R1, R0)
-##Mov_imm(R2, 52)
-##
-##label(_pchr_loop)  # <-------------
-##Load_word(R7, R0)
-##Store_word(R7, R1)
-##Add_imm(R0, R0, 4)
-##Sub_imm(R1, R1, 128)
-##Sub_imm(R2, R2, 1)
-##EQ_imm(_done)
-##T_imm(_pchr_loop)
-##label(_done)  # <-------------
-##NEXT()
-##
-##
 
 
 

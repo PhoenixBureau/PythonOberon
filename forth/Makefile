@@ -1,6 +1,6 @@
 PYOBERON=python -m oberon
 OFRTH=oberonforth
-EPILOG=' $$48 EMIT $$69 EMIT $$48 EMIT '
+EPILOG=' $$48 EMIT $$69 EMIT pai $$48 EMIT '
 ADD=../fonts/8x13.bintoo
 
 .PHONY: clean

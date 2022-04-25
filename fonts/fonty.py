@@ -55,8 +55,25 @@ ks = (zip(*fchars) for fchars in four_chars)
 
 js = (map(four_bytes_to_word, k) for k in ks)
 
-DATA = array('I', [0xE7F00])  # DISPLAY_START
-DATA.extend(chain.from_iterable(js))
+def mirror_bits(word):
+    '''
+    It turns out the font data is reversed right<->left from
+    the POV of the Oberon chip.
+
+    It's not an endian thing, it's at the bit level.
+    '''
+    bits = bin(word)[2:]
+    bits = '0' * max(0, 32 - len(bits)) + bits
+    stib = bits[::-1]
+    return int(stib, base=2)
+
+DISPLAY_START = 0xE7F00
+WORDS_IN_FONT = 312 * 4
+
+ls = map(mirror_bits, chain.from_iterable(js))
+
+DATA = array('I', [DISPLAY_START - WORDS_IN_FONT])  #
+DATA.extend(ls)
 with open('8x13.bintoo', 'wb') as f:
     DATA.tofile(f)
 
