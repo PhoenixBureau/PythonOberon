@@ -1,0 +1,4 @@
+ ; Hi $2 $5 $48 paint_char $2 $6 $69 paint_char ;
+Hi
+: '\n' $a  ;
+: BL   $20 ;
