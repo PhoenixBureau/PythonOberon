@@ -759,6 +759,20 @@ dw(EXIT)
 
 # It IS a number.  DROP the word count (which is zero.)
 dw(DROP)
+# If we are interpreting, we are done, the number is on
+# the stack already.  If we are compiling we need to write
+# the address of the codeword of LIT, then the value itself.
+dw(STATE)
+dw(FETCH)
+dw(ZBRANCH)  #  STATE = 0 -> interpreting.
+dw(s_to_u_32(4 * 5))  # to EXIT
+
+# we are compiling
+dw(LIT)
+dw(LIT)
+dw(COMMA)  # write the address of the codeword of LIT
+dw(COMMA)  # then the value itself.
+
 dw(EXIT)  # Just leave the number itself on the stack.
 
 
