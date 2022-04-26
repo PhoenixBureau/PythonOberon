@@ -316,6 +316,28 @@ EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
 T(15)  # return
 
 
+
+label(_blank)
+# Expects a char in R0
+# clobbers R2
+# sets Z flag to indicate blank space.
+#    [   9,   10,     11,     12,   13,  32]
+#    ['\t', '\n', '\x0b', '\x0c', '\r', ' ']
+Sub_imm(R2, R0, 32)  # Is it a space char?
+EQ_imm(_blank_out)
+Sub_imm(R2, R0, 10)  # Is it a newline char?
+EQ_imm(_blank_out)
+Sub_imm(R2, R0, 9)  # Is it a tab char?
+EQ_imm(_blank_out)
+Sub_imm(R2, R0, 11)  # Is it a '\x0b' char?
+EQ_imm(_blank_out)
+Sub_imm(R2, R0, 12)  # Is it a '\x0c' char?
+EQ_imm(_blank_out)
+Sub_imm(R2, R0, 13)  # Is it a carriage return char?
+label(_blank_out)
+T(15)  # return
+
+
 ## __      _____  ___ ___
 ## \ \    / / _ \| _ \   \
 ##  \ \/\/ / (_) |   / |) |
@@ -336,7 +358,8 @@ busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
 # Is it a space char?
-Sub_imm(R2, R0, ord(' '))
+Mov_imm(R1, _blank)
+T_link(R1)
 EQ_imm(_word_key)  # then get another char
 
 # Set up buffer and counter.
@@ -362,7 +385,8 @@ busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
 # Is it a space char?
-Sub_imm(R2, R0, ord(' '))
+Mov_imm(R1, _blank)
+T_link(R1)
 NE_imm(_find_length)  # No, keep getting chars to the buffer
 
 # Otherwise, if it's a space, save the length and return.

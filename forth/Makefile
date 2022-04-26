@@ -10,5 +10,8 @@ all: $(OFRTH).bin
 clean:
 	$(RM) $(OFRTH).bin $(OFRTH).symbols
 
-$(OFRTH).bin: $(OFRTH).py
-	$(PYOBERON) assemble $(OFRTH).py $(OFRTH).bin -s $(OFRTH).symbols -e $(EPILOG) -a $(ADD) -p > assembler.output.txt
+$(OFRTH).bin: $(OFRTH).py $(OFRTH).$(OFRTH)
+	$(PYOBERON) assemble $(OFRTH).py $(OFRTH).0.bin -s $(OFRTH).symbols -a $(ADD) -p > assembler.output.txt
+	cat $(OFRTH).0.bin $(OFRTH).$(OFRTH) > $(OFRTH).bin
+
+#  -e $(EPILOG)
