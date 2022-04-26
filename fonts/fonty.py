@@ -141,3 +141,24 @@ def foo(x, y, display_start):
 ####for i in range(0, 52, 4):
 ####    Load_word(R1, R0, i)
 ####    Store_word(R1, R2, i * WORDS_IN_SCANLINE)
+
+
+
+
+
+##
+##
+###  r0 = 0x000e7a98
+###  r1 = 0x000ff808
+##
+##
+##for n in range(0, 100, 4):
+##    print(pixy(cpu.ram[0xe7a20 + n]))
+##
+##for n in range(0, 100, 4):
+##    print(pixy(cpu.ram[0xe7bf4 + n]))
+##
+##
+##
+
+

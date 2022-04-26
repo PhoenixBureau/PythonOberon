@@ -709,9 +709,15 @@ PUSH(R0)
 NEXT()
 
 
-defcode(b'#?', IS_NUMBER)
+##    _ _  ___
+##  _| | ||__ \
+## |_  .  _|/_/
+## |_     _(_)
+##   |_|_|
 # Is the most recently parsed word (probably) a numeric literal?
 # (This check does not affect the word buffer, unlike NUMBER.)
+
+defcode(b'#?', IS_NUMBER)
 Mov_imm(word_pointer, WORD_BUFFER)
 Add_imm(word_pointer, word_pointer, 1)
 Load_byte(R0, word_pointer)
@@ -720,10 +726,10 @@ PUSH(R0)  # Let the result be the result:
 NEXT()    # 0 -> true / !=0 -> false
 
 
-##  ___ _  _ _____ ___ ___ ___ ___ ___ _____ 
+##  ___ _  _ _____ ___ ___ ___ ___ ___ _____
 ## |_ _| \| |_   _| __| _ \ _ \ _ \ __|_   _|
-##  | || .` | | | | _||   /  _/   / _|  | |  
-## |___|_|\_| |_| |___|_|_\_| |_|_\___| |_|  
+##  | || .` | | | | _||   /  _/   / _|  | |
+## |___|_|\_| |_| |___|_|_\_| |_|_\___| |_|
 
 defword(b'INTERPRET', INTERPRET)
 dw(WORD)
@@ -756,7 +762,7 @@ dw(DROP)
 dw(EXIT)  # Just leave the number itself on the stack.
 
 
-defcode(b'_INTERP', _INTERP)
+defcode(b'_INTERP', _INTERP, F_HIDDEN)
 # Do the thing with the LFA in TOS.
 POP(R2)
 
@@ -785,6 +791,13 @@ DISPLAY_START = 0xE7F00
 DISPLAY_LENGTH = 0x18000
 R7, R8 = 7, 8
 
+
+##             _
+##  _ __  __ _(_)
+## | '_ \/ _` | |
+## | .__/\__,_|_|
+## |_|
+
 defcode(b'pai', PAI)
 move_immediate_word_to_register(R0, DISPLAY_START)
 move_immediate_word_to_register(R1, DISPLAY_LENGTH)
@@ -806,48 +819,46 @@ label(_pai_done)  # <-------------
 NEXT()
 
 
-
-
-defcode(b'paint_char', PAINT_CHAR)
+##             _     _        _
+##  _ __  __ _(_)_ _| |_   __| |_  __ _ _ _
+## | '_ \/ _` | | ' \  _| / _| ' \/ _` | '_|
+## | .__/\__,_|_|_||_\__|_\__|_||_\__,_|_|
+## |_|                 |___|
+#
 # (y x chr -- )
 # paint a char onto the screen
 
-move_immediate_word_to_register(R0, DISPLAY_START)
-Sub_imm(R0, R0, 312 * 4)  # 312 words in font data.
+defcode(b'paint_char', PAINT_CHAR)
+
+move_immediate_word_to_register(R0, DISPLAY_START - 312 * 4)
+# DISPLAY_START - 312 words in font data * 4 bytes/word.
 # R0 points to start of font data.  0x000e7a20
 
 POP(R1)  # chr in R1
-Sub_imm(R1, R1, ord('!'))
-# R1 counts byte offset of char.
+Sub_imm(R1, R1, ord('!'))  # R1 counts byte offset of char.
 
-
-Asr_imm(R2, R1, 2)  #  The word offset.
-Mul_imm(R2, R2, 13 * 4)  # R2 *= 13 words per char * 4 bytes per word.
-Add(R0, R0, R2)  # Point R0 to start of char's word in font.
-
-And_imm(R1, R1, 0b11)  # We need the byte offset in the words.
-Add(R0, R0, R1)  # Point R0 to start of char's data in font.
+Asr_imm(R2, R1, 2)  # R2 = R1 / 4  Trim the two least bits.
+Mul_imm(R2, R2, 52)  # R2 *= 13 words/char * 4 bytes/word.
+Add(R0, R0, R2)  # Point R0 to char's first word in font.
+And_imm(R1, R1, 0b11)  # Which byte in the words?
+Add(R0, R0, R1)  # Point R0 to char's first byte in font.
 
 POP(R1)  # x
-##Lsl_imm(R1, R1, 3)  # x * 8  # x is already counting bytes
 move_immediate_word_to_register(R2, DISPLAY_START)
-Add(R1, R1, R2)  # R1 = (x * 8) + DISPLAY_START
-
-Mov_imm(R7, 768)  # Display width in pixels TODO don't hardcod3 this.
+Add(R1, R1, R2)  # R1 = x + DISPLAY_START
+Mov_imm(R7, 767)  # Display width - 1 in pixels. (TODO don't hardcod3 this.)
 POP(R2)             # R2 = y in lines
-Mul_imm(R2, R2, 13) # R2 = y in px  (13px per char line)
-Sub(R2, R7, R2)     # R2 = 768 - y
-Sub_imm(R2, R2, 1)  # R2 = 768 - y - 1
-Lsl_imm(R2, R2, 7)  # R2 = (768 - y - 1) * 128 bytes per line.
-Add(R1, R1, R2)     # R1 = (768 - y - 1) * 128 + (x * 8) + DISPLAY_START
+Mul_imm(R2, R2, 13) # R2 = y in px  (13px/char height)
+Sub(R2, R7, R2)     # R2 = 768 - 1 - y
+Lsl_imm(R2, R2, 7)  # R2 = (768 - 1 - y) * 128 bytes per line.
+Add(R1, R1, R2)     # R1 = (768 - 1 - y) * 128 + x + DISPLAY_START
 
 # So at this point, if I got everything above right,
-# R0 points to start of char's first byte in font.
+# R0 points to start of char's first byte in font data.
 # R1 points to the first destination byte in screen RAM.
 
 Mov_imm(R2, 13)  # Counter
 ##move_immediate_word_to_register(R8, 0xffffffff)
-
 label(_pchr_loop)  # <-------------
 Load_byte(R7, R0)
 ##Xor(R7, R7, R8)  #  Reverse video.
@@ -861,31 +872,16 @@ label(_pchr_done)  # <-------------
 NEXT()
 
 
+##  ___  _   _ ___
+## |   \| | | | _ \
+## | |) | |_| |  _/
+## |___/ \___/|_|
+
 defcode(b'DUP', DUP)
 POP(R0)
 PUSH(R0)
 PUSH(R0)
 NEXT()
-
-##
-##
-###  r0 = 0x000e7a98
-###  r1 = 0x000ff808
-##
-##
-##for n in range(0, 100, 4):
-##    print(pixy(cpu.ram[0xe7a20 + n]))
-##
-##for n in range(0, 100, 4):
-##    print(pixy(cpu.ram[0xe7bf4 + n]))
-##
-##
-##
-
-
-
-
-
 
 
 label(QUIT)
