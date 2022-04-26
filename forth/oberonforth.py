@@ -814,22 +814,22 @@ defcode(b'paint_char', PAINT_CHAR)
 
 move_immediate_word_to_register(R0, DISPLAY_START)
 Sub_imm(R0, R0, 312 * 4)  # 312 words in font data.
-# R0 points to start of font data.
+# R0 points to start of font data.  0x000e7a20
 
 POP(R1)  # chr in R1
 Sub_imm(R1, R1, ord('!'))
 # R1 counts byte offset of char.
 
 
-Asr_imm(R2, R1, 2)  # We need the 13-word offset in ram.
-Mul_imm(R2, R2, 13)  # R2 *= 13 words per char.
+Asr_imm(R2, R1, 2)  #  The word offset.
+Mul_imm(R2, R2, 13 * 4)  # R2 *= 13 words per char * 4 bytes per word.
 Add(R0, R0, R2)  # Point R0 to start of char's word in font.
 
 And_imm(R1, R1, 0b11)  # We need the byte offset in the words.
 Add(R0, R0, R1)  # Point R0 to start of char's data in font.
 
 POP(R1)  # x
-Lsl_imm(R1, R1, 3)  # x * 8
+##Lsl_imm(R1, R1, 3)  # x * 8  # x is already counting bytes
 move_immediate_word_to_register(R2, DISPLAY_START)
 Add(R1, R1, R2)  # R1 = (x * 8) + DISPLAY_START
 
@@ -846,11 +846,11 @@ Add(R1, R1, R2)     # R1 = (768 - y - 1) * 128 + (x * 8) + DISPLAY_START
 # R1 points to the first destination byte in screen RAM.
 
 Mov_imm(R2, 13)  # Counter
-move_immediate_word_to_register(R8, 0xffffffff)
+##move_immediate_word_to_register(R8, 0xffffffff)
 
 label(_pchr_loop)  # <-------------
 Load_byte(R7, R0)
-Xor(R7, R7, R8)  #  Reverse video.
+##Xor(R7, R7, R8)  #  Reverse video.
 Store_byte(R7, R1)
 Add_imm(R0, R0, 4)
 Sub_imm(R1, R1, 128)
@@ -867,13 +867,20 @@ PUSH(R0)
 PUSH(R0)
 NEXT()
 
-
-
-
-
-
-
-
+##
+##
+###  r0 = 0x000e7a98
+###  r1 = 0x000ff808
+##
+##
+##for n in range(0, 100, 4):
+##    print(pixy(cpu.ram[0xe7a20 + n]))
+##
+##for n in range(0, 100, 4):
+##    print(pixy(cpu.ram[0xe7bf4 + n]))
+##
+##
+##
 
 
 

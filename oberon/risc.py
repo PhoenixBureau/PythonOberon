@@ -560,7 +560,7 @@ class ByteAddressed32BitRAM(object):
             # AND mask with the memory word to clear the bits for the
             # pre-shifted byte and OR the result with it.
             byte |= word & self.BYTE_MASKS[byte_offset]
-        self.store[word_addr] = byte
+        self.put(word_addr << 2, byte)
 
     def __len__(self):
         return (4 * (1 + max(self.store))) if self.store else 0

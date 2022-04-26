@@ -48,7 +48,7 @@ four_chars = [char_blocks[i:i+4] for i in range(0, len(char_blocks), 4)]
 def four_bytes_to_word(bs):
     return _four_bytes_to_word(*bs)
 
-def _four_bytes_to_word(d, c, b=0, a=0):
+def _four_bytes_to_word(a, b, c=0, d=0):
     return (a<<24) + (b<<16) + (c<<8) + d
 
 ks = (zip(*fchars) for fchars in four_chars)
