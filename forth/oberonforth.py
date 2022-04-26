@@ -307,7 +307,7 @@ NEXT()
 
 label(_KEY)
 move_immediate_word_to_register(R1, SERIAL_STATUS)
-Load_word(R2, R1, 0)
+Load_word(R2, R1)
 EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
 # Note that the machine will have incremented the PC
 # by four already, so we jump back two words (-8 bytes)
@@ -324,18 +324,33 @@ label(_blank)
 #    [   9,   10,     11,     12,   13,  32]
 #    ['\t', '\n', '\x0b', '\x0c', '\r', ' ']
 Sub_imm(R2, R0, 32)  # Is it a space char?
-EQ_imm(_blank_out)
+EQ(15)
 Sub_imm(R2, R0, 10)  # Is it a newline char?
-EQ_imm(_blank_out)
+EQ(15)
 Sub_imm(R2, R0, 9)  # Is it a tab char?
-EQ_imm(_blank_out)
+EQ(15)
 Sub_imm(R2, R0, 11)  # Is it a '\x0b' char?
-EQ_imm(_blank_out)
+EQ(15)
 Sub_imm(R2, R0, 12)  # Is it a '\x0c' char?
-EQ_imm(_blank_out)
+EQ(15)
 Sub_imm(R2, R0, 13)  # Is it a carriage return char?
-label(_blank_out)
 T(15)  # return
+
+
+label(_skip_comment)
+# Expects a char in R0,
+# and for R1 to already be set to SERIAL_STATUS.
+# clobbers R2
+Sub_imm(R2, R0, ord('\\'))  # Is it a \ char?
+NE(15)  # It's not a \ char, return.
+# Consume chars until the next newline.
+label(_skip_cmt_loop)  # repeat
+Load_word(R2, R1)  # Get the serial port status.
+EQ_imm(_skip_cmt_loop)  # until serial port status != 0
+Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+Sub_imm(R2, R0, ord('\n'))  # Is it a newline char?
+EQ(15)  # We have reached the end of the line, return.
+T_imm(_skip_cmt_loop)
 
 
 ## __      _____  ___ ___
@@ -356,6 +371,9 @@ label(_word_key)  # <=================================( _word_key )======
 # Get a byte from the serial port.
 busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+
+Mov_imm(R2, _skip_comment)
+T_link(R2)
 
 # Is it a space char?
 Mov_imm(R1, _blank)
