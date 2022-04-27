@@ -203,7 +203,7 @@ class ASM:
     # pylint: disable=multiple-statements
 
     @staticmethod
-    def Mov(a, c, u=0): return make_F0(u, 0, a, 0, c)
+    def Mov(a, c, v=0, u=0): return make_F0(u, 0, a, 0, c, v)
     @staticmethod
     def Mov_imm(a, K, v=0, u=0): return make_F1(u, v, 0, a, 0, K)
 
@@ -409,14 +409,16 @@ cmps = {
 
 
 # pylint: disable=invalid-name, missing-function-docstring
-def make_F0(u, op, a, b, c):
+def make_F0(u, op, a, b, c, v=0):
     assert bool(u) == u, repr(u)
+    assert bool(v) == v, repr(v)
     assert ops['Mov'] <= op <= ops['Div'], repr(op)
     assert 0 <= a < 0x10, repr(a)
     assert 0 <= b < 0x10, repr(b)
     assert 0 <= c < 0x10, repr(c)
     return bint(
         (u << 29) +
+        (v << 28) +
         (a << 24) +
         (b << 20) +
         (op << 16) +
@@ -732,8 +734,8 @@ class Assembler:
     #==------------------------------------------------------------------
     #  Move instructions
 
-    def Mov(self, a, c, u=0):
-        self.program[self.here] = ASM.Mov(a, c, u)
+    def Mov(self, a, c, v=0, u=0):
+        self.program[self.here] = ASM.Mov(a, c, u, v)
         self.here += 4
 
     def Mov_imm(self, a, K, v=0, u=0):

@@ -277,6 +277,39 @@ PUSH(R1)
 NEXT()
 
 
+defcode(b'-', SUB)
+POP(R0)
+POP(R1)
+Sub(R1, R1, R0)
+PUSH(R1)
+NEXT()
+
+
+defcode(b'=', EQU)
+POP(R0)
+POP(R1)
+Sub(R1, R1, R0)
+Mov(R0, 0, u=True, v=True)  # Get flags, c register is ignored.
+Asr_imm(R0, R0, 30)  # Z is the 31st bit, penultimate from the MSB.
+And_imm(R0, R0, 1)  # Mask out N flag.
+Xor_imm(R0, R0, 1)  # flip the (shifted) Z bit.
+NEXT()
+
+
+defcode(b'1+', INCR)
+POP(R0)
+Add_imm(R0, R0, 1)
+PUSH(R0)
+NEXT()
+
+
+defcode(b'1-', DECR)
+POP(R0)
+Sub_imm(R0, R0, 1)
+PUSH(R0)
+NEXT()
+
+
 ##  ___   _____
 ## |_ _| / / _ \
 ##  | | / / (_) |
@@ -749,6 +782,19 @@ POP(R0)
 Load_word(R0, R0)
 PUSH(R0)
 NEXT()
+
+
+##  ___ _____ ___  ___ ___
+## / __|_   _/ _ \| _ \ __|
+## \__ \ | || (_) |   / _|
+## |___/ |_| \___/|_|_\___|
+
+defcode(b'!', STORE)
+POP(R0)
+POP(R1)
+Store_word(R1, R0)
+NEXT()
+
 
 
 ##    _ _  ___

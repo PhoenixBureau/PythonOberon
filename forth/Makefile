@@ -8,7 +8,7 @@ ADD=../fonts/8x13.bintoo
 all: $(OFRTH).bin
 
 clean:
-	$(RM) $(OFRTH).bin $(OFRTH).symbols
+	$(RM) $(OFRTH).bin $(OFRTH).symbols $(OFRTH).0.bin
 
 $(OFRTH).bin: $(OFRTH).py $(OFRTH).$(OFRTH)
 	$(PYOBERON) assemble $(OFRTH).py $(OFRTH).0.bin -s $(OFRTH).symbols -a $(ADD) -p > assembler.output.txt
