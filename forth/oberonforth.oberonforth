@@ -1,2 +1,3 @@
- : Hi $2 $5 $48 paint_char $2 $6 $69 paint_char ;
-Hi
+ : Hi DUP $5 $48 paint_char $6 $69 paint_char ;
+
+$2 Hi  $7 Hi

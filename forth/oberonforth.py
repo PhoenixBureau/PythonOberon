@@ -414,8 +414,13 @@ T_link(R1)
 EQ_imm(_word_key)  # then get another char
 
 # Set up buffer and counter.
-Mov_imm(word_pointer, WORD_BUFFER + 1)  # Leave a byte for the length.
+Mov_imm(word_pointer, WORD_BUFFER)
 Mov_imm(word_counter, 0)
+Store_word(word_counter, word_pointer)  # Zero out the first word of WORD_BUFFER.
+# We use it for FIND so any leftover chars will mess up the buffer for words of
+# just of length 1 or 2.
+Add_imm(word_pointer, word_pointer, 1)  # Leave a byte for the length.
+
 
 # I think we're going to want to put the length in the first
 # byte of the buffer to make word-by-word comparison easier?
