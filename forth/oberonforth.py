@@ -60,8 +60,8 @@ F_IMMED = 0x80  #   0b0_1000_0000
 F_HIDDEN = 0x20  #  0b0_0010_0000
 F_LENMASK = 0x1f  # 0b0_0001_1111
 
-FIND_MASK = 0xFFFFFF00 | F_HIDDEN | F_LENMASK
-# 0b0_11111111_11111111_11111111_00111111
+FIND_MASK = 0xFFFFFFFF ^ F_IMMED
+# 0b0_11111111_11111111_11111111_01111111
 
 # I/O
 SERIAL_PORT = s_to_u_32(-56)  # io_ports[8]
@@ -459,13 +459,15 @@ defcode(b'FIND', FIND)
 Mov_imm(word_pointer, WORD_BUFFER)
 # Reuse the counter to get first word of the name.
 Load_word(word_counter, word_pointer)
-# Allow for the HIDDEN bit in the flags to hide a word from FIND.
-move_immediate_word_to_register(R1, FIND_MASK)
-And(word_counter, word_counter, R1)
+# Allow for the HIDDEN bit (but not IMMEDIATE bit) in the flags
+# to hide a word from FIND.
+move_immediate_word_to_register(R2, FIND_MASK)
 
 Mov_imm(R0, LATEST_var)
+Load_word(R0, R0)  # Point R0 to latest word's LFA.
 label(_FIND_1)  # <==============================( _FIND_1 )===
 Load_word(R1, R0, 4)  # load a word of the name field.
+And(R1, R1, R2)  # Clear the IMMEDIATE flag, if any.
 Sub(R1, R1, word_counter)  # Compare.
 EQ_imm(_found)  # If this is the word...
 # The two word are the same: same count and same first three letters.
@@ -696,8 +698,6 @@ dw(HIDDEN)
 dw(LBRAC)  # "Go back to IMMEDIATE mode."
 dw(EXIT)  # "Return from the function."
 
-label(END)
-
 
 ##  ___ __  __ __  __ ___ ___ ___   _ _____ ___
 ## |_ _|  \/  |  \/  | __|   \_ _| /_\_   _| __|
@@ -883,7 +883,9 @@ T_link(R1)
 NEXT()
 
 label(_intrp_exe)  # Execute the word.
-Load_word(R0, R2, 8)  # Get the address to which its codeword points...
+Add_imm(R2, R2, 8)  # Point to the codeword
+Load_word(R0, R2)  # Get the address to which its codeword points...
+Mov(next_function, R2)  # DOCOL depends on this.
 T(R0)  # and jump to it.
 
 
@@ -987,3 +989,5 @@ NEXT()
 
 
 label(QUIT)
+
+label(END)
