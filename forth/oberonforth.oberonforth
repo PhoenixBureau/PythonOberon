@@ -14,6 +14,39 @@
 	SWAP !
 ;
 
-: Ooo IF $2 Hi THEN ;
+: ELSE IMMEDIATE
+	' BRANCH ,
+	HERE @
+	$0 ,
+	SWAP DUP
+	HERE @ SWAP -
+	SWAP !
+;
 
-$7 Hi $1 Ooo
+: BEGIN IMMEDIATE HERE @ ;
+: UNTIL IMMEDIATE
+	' 0BRANCH ,
+	HERE @ -
+	,
+;
+
+: ( IMMEDIATE
+	$1
+	BEGIN
+		KEY
+		DUP $28 = IF	\ ')' is 0x28
+			DROP 1+
+		ELSE
+			$29 = IF 1- THEN
+		THEN
+	DUP $0 = UNTIL
+	DROP
+;
+
+
+( I can haz ( nested! ) parentheses comments? )
+
+
+: Ooo IF $2 Hi ELSE $8 Hi THEN ;
+
+$7 Hi $1 Ooo $0 Ooo
