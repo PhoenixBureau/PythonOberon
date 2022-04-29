@@ -1,0 +1,82 @@
+Fri Apr 29 08:05:58 PDT 2022
+
+So I spent most of the day yesterday tracking down a bug that turned out
+to be a simple bone-head error: I had marked the COMMA word as IMMEDIATE.
+Due to that, when the definition of IF was compiled instead of compiling
+the CFA of COMMA into the definition of IF it was executed.  This left
+the field of the IF def set to all 0's, so later when IF was running the
+NEXT machinery would load 0x00000000 as the address of the next codefield,
+which location in RAM contains the initial "jump past the reserved
+storage" instruction, which is itself NOT a valid location in RAM (it's
+way to high.) So when the CPU tried to jump to the "address" which was
+really a Mov instruction, it "launched into the void" instead.  Boo.
+
+The hard thing to debug was that the problem happened later than the
+cause.  Also my tools are still crude.  Also I'm out of practice.  I
+should have been able to locate the bug in an hour or two.  There are a
+lot of distractions going on right now, but still, this system is way too
+small for bugs to hide for long.
+
+And that brings me to my main point:  only bonehead bugs like this one
+could lurk in the code.  It's too simple and straight forward to hide
+other classes of bugs.  Forth itself is composed of tiny little programs
+each remarkably simple, and they are composed in patterns that are
+themselves remarkably simple, so "if you do it right" the result is
+elegant and highly reliable.
+
+Two factors (at least) uh, factor into this:  The stack, and Forth's
+simple fractal structure that facilitates refactoring.
+
+Once you get used to it, the stack as sole (or nearly sole) interface
+between small programs seems to make it very easy to analyze, factor
+(there's that word again!) and compose mentally-convenient "chunks" of
+program.  It favors small and simple interfaces even when dealing with
+large and complex datastructures and algorithms.
+
+The structure of Forth allows (even encourages) refacoring to a degree
+that is rare in other languages.  (IIRC Forth is the origin of the formal
+idea of "refactoring" in programming, but I could be wrong about that.)
+This helps to keep programs simple and small both physically in terms of
+LoC and conceptually.  Each refactored definition becomes a new "unit" or
+"chunck" of thought, available to be plugged in where ever it would be
+useful.  As an example, I've already factored out to tiny little
+programs from the control-flow words, and another two just from the
+defintion of '(' for nested parentheses comments.
+
+    : H@ HERE @ ;
+    : kj DUP H@ SWAP - SWAP ! ;
+
+    : =1- = IF 1- THEN ;
+    : 0? DUP $0 = ;
+
+The first one is "HERE FETCH" which puts the value of the HERE variable
+onto the stack.  It's used nearly a half-dozen times in the definitions
+immediately following it.
+
+The second one is poorly named (I just picked to letters at random) and
+although it would take a whole paragraph to describe what it does in
+words, mentally it's a single unit.  (It fixes up a location in a word
+definition that's being compiled.)
+
+The third one is very straightforward.  It compares two numbers and if
+they are equal it subtracts 1 from a third number.
+
+The fourth word is even simpler, it leaves a Boolean value on the stack
+indicating if the item below it is zero or not.  That's it.
+
+So there you go, there are four tiny little programs, each one is a bit
+idiosyncratic, but you could imagine using them in other definitions (or,
+like H@ they are already used in several definitions.)  Each is flawless,
+there is no scope for bugs in them.
+
+As I said above, when I had finally tracked down the bug (and there were
+clues: the stack underflowed for one) and was musing on it later, it
+struck me that only such a bone-headed "D'oh!" kind of bug could lurk in
+this code base.  It's just too small.  I'm sure I have more bugs in the
+asembly code, but not too many, because there just isn't that much of it,
+and the things that are in there are (again) all very small and simple.
+The core code right now is just over six hundred words of RAM.  It could
+almost fit in the bootloader ROM!  (But I'm not going to mess with that.
+Code golf for a rainy day.)
+
+

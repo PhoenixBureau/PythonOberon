@@ -27,6 +27,15 @@
 Now that I have an emulator and assembler the obvious thing to do is
 implement a Forth.  I grabbed a copy of Jonesforth and set to.
 '''
+
+# In re: the FIGlet banners, I use: http://www.patorjk.com/software/taag/
+
+# (My eyesight is not great, I lost my glasses, and I'm using
+# a TV as a monitor, so I use these FIGlet banners to help me
+# navigate.  Normally code has a lot of visual structure that
+# helps with that, but asm is linear.)
+
+
 # The chip uses two's complement.
 from oberon.util import s_to_u_32
 
@@ -191,10 +200,6 @@ negative_offset_24 = lambda n: s_to_u_32(n) & 0xffffff
 negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
 
 
-# FIGlet SaaS:
-# http://www.patorjk.com/software/taag/
-
-
 ##  _              _
 ## | |__  ___ __ _(_)_ _
 ## | '_ \/ -_) _` | | ' \
@@ -225,8 +230,6 @@ label(main)
 Mov_imm(Dstack, DATA_STACK)
 Mov_imm(Rstack, RETURN_STACK)
 Mov_imm(IP, cold_start)
-##Mov_imm(R1, 38)  # push ASCII '&' onto stack
-##PUSH(R1)
 NEXT()
 
 
@@ -236,9 +239,9 @@ NEXT()
 ## \__\___/_\__,_|_/__/\__\__,_|_|  \__|
 ##              |___|
 label(cold_start)
-dw(REPL)
-#dw(QUIT)  # IP starts pointing here so this RAM address must
-          # contain the address of the codeword of QUIT.
+dw(REPL)  # IP set to point here at start
+# so this RAM address must contain the address
+# of the codeword of REPL.
 
 
 ##                    _
@@ -249,7 +252,7 @@ dw(REPL)
 defword(b'REPL', REPL)
 dw(INTERPRET)
 dw(BRANCH)
-dw(s_to_u_32(-8))
+dw(s_to_u_32(-8))  # Loop back to INTERPRET.
 
 
 defcode(b'DROP', DROP)
@@ -263,16 +266,16 @@ NEXT()
 
 
 defcode(b'LIT', LIT)
-Load_word(R0, IP)  # Don't run the next word, load it,
-PUSH(R0)  # push the value,
-Add_imm(IP, IP, 4)  # then skip it and run the word after it (EXIT).
+Load_word(R0, IP)   # Don't run the next cell, load it,
+PUSH(R0)            # push the value,
+Add_imm(IP, IP, 4)  # then skip it.
 NEXT()
 
 
 defcode(b'SWAP', SWAP)
 POP(R0)
-Load_word(1, 10)
-Store_word(0, 10)
+Load_word(R1, 10)
+Store_word(R0, 10)
 PUSH(R1)
 NEXT()
 
@@ -334,7 +337,7 @@ NEXT()
 ##  __|_|\_\___| |_|
 ## |___|
 #
-# subroutine to busywait on serial port status.
+# Subroutine to busywait on serial port status.
 # Sets R1 to point to SERIAL_STATUS i/o port.
 # Clobbers R2.
 
@@ -349,13 +352,21 @@ EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
 T(15)  # return
 
 
+##     _    _           _
+##    | |__| |__ _ _ _ | |__
+##    | '_ \ / _` | ' \| / /
+##  __|_.__/_\__,_|_||_|_\_\
+## |___|
+#
+# Subroutine to check for blank space.
+# Expects a char in R0.
+# Clobbers R2.
+# Sets Z flag to indicate blank space.
+#       9,   10,     11,     12,   13,  32
+#    '\t', '\n', '\x0b', '\x0c', '\r', ' '
+# Check for most common (' ' and '\n') first.
 
 label(_blank)
-# Expects a char in R0
-# clobbers R2
-# sets Z flag to indicate blank space.
-#    [   9,   10,     11,     12,   13,  32]
-#    ['\t', '\n', '\x0b', '\x0c', '\r', ' ']
 Sub_imm(R2, R0, 32)  # Is it a space char?
 EQ(15)
 Sub_imm(R2, R0, 10)  # Is it a newline char?
@@ -369,21 +380,28 @@ EQ(15)
 Sub_imm(R2, R0, 13)  # Is it a carriage return char?
 T(15)  # return
 
-
-label(_skip_comment)
+##        _   _                                   _
+##     __| |_(_)_ __   __ ___ _ __  _ __  ___ _ _| |_
+##    (_-< / / | '_ \ / _/ _ \ '  \| '  \/ -_) ' \  _|
+##  __/__/_\_\_| .__/_\__\___/_|_|_|_|_|_\___|_||_\__|
+## |___|       |_| |___|
+#
+# Subroutine to skip line ('\...') comments.
 # Expects a char in R0,
 # and for R1 to already be set to SERIAL_STATUS.
-# clobbers R2
-Sub_imm(R2, R0, ord('\\'))  # Is it a \ char?
-NE(15)  # It's not a \ char, return.
+# Clobbers R2.
+
+label(_skip_comment)
+Sub_imm(R2, R0, ord('\\'))  # Is it a '\' char?
+NE(15)                      # It's not a '\' char, return.
 # Consume chars until the next newline.
-label(_skip_cmt_loop)  # repeat
-Load_word(R2, R1)  # Get the serial port status.
-EQ_imm(_skip_cmt_loop)  # until serial port status != 0
+label(_skip_cmt_loop)   # repeat...
+Load_word(R2, R1)           # Get the serial port status.
+EQ_imm(_skip_cmt_loop)      # until serial port status != 0
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 Sub_imm(R2, R0, ord('\n'))  # Is it a newline char?
 EQ(15)  # We have reached the end of the line, return.
-T_imm(_skip_cmt_loop)
+T_imm(_skip_cmt_loop)   # ...until newline.
 
 
 ## __      _____  ___ ___
@@ -405,11 +423,10 @@ label(_word_key)  # <=================================( _word_key )======
 busywait_on_serial_ready()
 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
 
-Mov_imm(R2, _skip_comment)
+Mov_imm(R2, _skip_comment)  # Skip line comments.
 T_link(R2)
 
-# Is it a space char?
-Mov_imm(R1, _blank)
+Mov_imm(R1, _blank)  # Is it a space char?
 T_link(R1)
 EQ_imm(_word_key)  # then get another char
 
@@ -417,14 +434,9 @@ EQ_imm(_word_key)  # then get another char
 Mov_imm(word_pointer, WORD_BUFFER)
 Mov_imm(word_counter, 0)
 Store_word(word_counter, word_pointer)  # Zero out the first word of WORD_BUFFER.
-# We use it for FIND so any leftover chars will mess up the buffer for words of
-# just of length 1 or 2.
+# We use it for FIND so any leftover chars will mess it up for short words (of
+# length 1 or 2.)
 Add_imm(word_pointer, word_pointer, 1)  # Leave a byte for the length.
-
-
-# I think we're going to want to put the length in the first
-# byte of the buffer to make word-by-word comparison easier?
-# (For finding words in the dictionary.)
 
 # Have we overflowed the buffer yet?
 label(_find_length)  # <==============================( _find_length )===
@@ -469,12 +481,12 @@ Load_word(word_counter, word_pointer)
 move_immediate_word_to_register(R2, FIND_MASK)
 
 Mov_imm(R0, LATEST_var)
-Load_word(R0, R0)  # Point R0 to latest word's LFA.
+Load_word(R0, R0)          # Point R0 to latest word's LFA.
 label(_FIND_1)  # <==============================( _FIND_1 )===
-Load_word(R1, R0, 4)  # load a word of the name field.
-And(R1, R1, R2)  # Clear the IMMEDIATE flag, if any.
+Load_word(R1, R0, 4)       # load a word of the name field.
+And(R1, R1, R2)            # Clear the IMMEDIATE flag, if any.
 Sub(R1, R1, word_counter)  # Compare.
-EQ_imm(_found)  # If this is the word...
+EQ_imm(_found)             # If this is the word...
 # The two word are the same: same count and same first three letters.
 # That's plenty for now.  (I believe I've heard of Chuck Moore using
 # this heuristic.)
@@ -498,6 +510,7 @@ NEXT()
 # To keep things simple, numbers are in hexidecimal only (no BASE)
 # and must begin with a '$' and {abcdef} must be lowercase.
 # No negative literals (subtract from zero to get negative numbers.)
+
 defcode(b'NUMBER', NUMBER)
 
 ## ASCII ch
@@ -580,14 +593,15 @@ defcode(b'CREATE', CREATE)
 
 # Link field.
 Mov_imm(R0, HERE__var)  # R0 <- &HERE
-Load_word(R0, R0)  # R0 <- ram[HERE]
+Load_word(R0, R0)       # R0 <- ram[HERE]
 
 Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
-Load_word(R2, R1)  # R2 <- ram[LATEST]
+Load_word(R2, R1)        # R2 <- ram[LATEST]
+
 Store_word(R2, R0)  # value of LATEST -> ram[HERE]
-Store_word(R0, R1)  # value of HERE (now dfa for new word) -> ram[LATEST_var]
+Store_word(R0, R1)  # value of HERE (now LFA for new word) -> ram[LATEST_var]
+
 Add_imm(R0, R0, 4)  # HERE += 4
-# I think that's right...
 
 # Name field.
 Mov_imm(word_pointer, WORD_BUFFER)
@@ -611,9 +625,10 @@ Add_imm(R0, R0, 4)  # HERE += 4
 ##T_imm(_CREATE_loop)
 ##
 ##label(_CREATE_fin)  # <==========================( _CREATE_fin )===
+
 # Update HERE.
 Mov_imm(R1, HERE__var)  # R1 <- &HERE
-Store_word(R0, R1)
+Store_word(R0, R1)      # value of HERE -> ram[HERE]
 NEXT()
 
 
@@ -642,12 +657,17 @@ Mov_imm(R1, _COMMA)
 T_link(R1)
 NEXT()
 
+# Subroutine to store a value to HERE and
+# increment HERE (by four bytes to the next word.)
+# Expects the value in R2.
+# Clobbers R0 and R1.
+# Used in _INTERP.
 label(_COMMA)
 Mov_imm(R0, HERE__var)  # R0 <- &HERE
-Load_word(R1, R0)  # R1 <- ram[&HERE]
-Store_word(R2, R1)  # R2 -> ram[HERE]
-Add_imm(R1, R1, 4)
-Store_word(R1, R0)  # R1+4 -> ram[&HERE]
+Load_word(R1, R0)       # R1 <- ram[HERE]
+Store_word(R2, R1)      # R2 -> ram[HERE]
+Add_imm(R1, R1, 4)      # HERE += 4
+Store_word(R1, R0)      # HERE -> ram[HERE]
 T(15)  # return
 
 
@@ -656,6 +676,10 @@ T(15)  # return
 ## | |  > _|_ _|  | |
 ## | |  \_____|   | |
 ## |__|          |__|
+#
+# Switch off ('[' executing)
+#     and on (']' compiling)
+# the STATE variable.
 
 defcode(b'[', LBRAC, F_IMMED)
 Mov_imm(R0, STATE_var)
@@ -670,9 +694,18 @@ Store_word(R1, R0)
 NEXT()
 
 
-#    : : WORD CREATE LIT DOCOL , LATEST @ HIDDEN ] ;
-#    : ;             LIT EXIT  , LATEST @ HIDDEN [ ;
-
+# If COLON and SEMICOLON were defined in Forth
+# they might look like this:
+#
+# : : WORD CREATE LIT DOCOL , LATEST @ HIDDEN ] ;
+# : ;             LIT EXIT  , LATEST @ HIDDEN [ ;
+#                 ^^^^^^^^^^^ ^^^^^^^^^^^^^^^ ^
+#                      |             |        |
+#                 Store a CFA        |        |
+#                                    |        |
+#         Toggle hidden bit on current word.  |
+#                                             |
+#                    Switch on/off compiling mode.
 
 ##   ___ ___  _    ___  _  _
 ##  / __/ _ \| |  / _ \| \| |
@@ -715,10 +748,10 @@ dw(EXIT)  # "Return from the function."
 
 defcode(b'IMMEDIATE', IMMEDIATE, F_IMMED)
 Mov_imm(R0, LATEST_var)  # R0 <- &LATEST
-Load_word(R1, R0)  # R1 <- ram[LATEST]
-Add_imm(R1, R1, 4)  # "Point to name/flags byte."
+Load_word(R1, R0)        # R1 <- ram[LATEST]
+Add_imm(R1, R1, 4)       # "Point to name/flags byte."
 Load_word(R0, R1)
-Xor_imm(R0, R0, F_IMMED)
+Xor_imm(R0, R0, F_IMMED) # Toggle IMMEDIATE bit.
 Store_word(R0, R1)
 NEXT()
 
@@ -729,10 +762,10 @@ NEXT()
 ## |_||_|___|___/|___/|___|_|\_|
 
 defcode(b'HIDDEN', HIDDEN)
-POP(R1)  # dfa OF A WORD IS ON THE STACK
+POP(R1)  # LFA is on the stack.
 Add_imm(R1, R1, 4)  # "Point to name/flags byte."
-Load_word(R0, R1)  # "Toggle the HIDDEN bit."
-Xor_imm(R0, R0, F_HIDDEN)
+Load_word(R0, R1)
+Xor_imm(R0, R0, F_HIDDEN)  # "Toggle the HIDDEN bit."
 Store_word(R0, R1)
 NEXT()
 
@@ -750,7 +783,7 @@ NEXT()
 # > immediate mode too.
 
 defcode(b"'", TICK)
-Load_word(R0, IP)  # Get the address of the next codeword.
+Load_word(R0, IP)   # Get the address of the next codeword.
 Add_imm(IP, IP, 4)  # Skip it.
 PUSH(R0)
 NEXT()
@@ -776,7 +809,7 @@ NEXT()
 defcode(b'0BRANCH', ZBRANCH)
 POP(R0)
 Add_imm(R0, R0, 0)  # Set condition flags.
-EQ_imm(BRANCH + 4)  # Zero? BRANCH.
+EQ_imm(BRANCH + 4)  # Zero? Delegate to BRANCH.
 Add_imm(IP, IP, 4)  # Non-zero? Skip offset.
 NEXT()
 
@@ -811,16 +844,17 @@ NEXT()
 ## |_  .  _|/_/
 ## |_     _(_)
 ##   |_|_|
+#
 # Is the most recently parsed word (probably) a numeric literal?
 # (This check does not affect the word buffer, unlike NUMBER.)
+# Leaves a value on the stack: 0 for true or non-0 for false.
 
 defcode(b'#?', IS_NUMBER)
 Mov_imm(word_pointer, WORD_BUFFER)
-Add_imm(word_pointer, word_pointer, 1)
-Load_byte(R0, word_pointer)
+Load_byte(R0, word_pointer, 1)  # Load first char of word.
 Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
 PUSH(R0)  # Let the result be the result:
-NEXT()    # 0 -> true / !=0 -> false
+NEXT()    # 0 -> true / != 0 -> false
 
 
 ##  ___ _  _ _____ ___ ___ ___ ___ ___ _____
@@ -910,6 +944,8 @@ R7, R8 = 7, 8
 ## | '_ \/ _` | |
 ## | .__/\__,_|_|
 ## |_|
+#
+# "pai"nt the font data to the screen so we can see it.
 
 defcode(b'pai', PAI)
 move_immediate_word_to_register(R0, DISPLAY_START)
@@ -939,7 +975,20 @@ NEXT()
 ## |_|                 |___|
 #
 # (y x chr -- )
-# paint a char onto the screen
+# Paint a char onto the screen.
+# The coordinates are in character "space":
+# 0, 0 is the upper left corner,
+# there are 1024/8 = 128 characters per line
+# and 768/13 ~= 59 lines.
+# So 0 <= x < 128 and 0 <= y < 58 (not checked.)
+# The chr value should be ASCII.  (The font I'm
+# using includes Unicode characters but I
+# haven't worked out how I want to use them just
+# yet.
+# I'm thinking about a 32-bit parallel port?
+# But then how to represent things like mode keys?
+# Press/release events? Maybe emulating the PS/2
+# isn't such a gnarly idea?)
 
 defcode(b'paint_char', PAINT_CHAR)
 
@@ -950,16 +999,16 @@ move_immediate_word_to_register(R0, DISPLAY_START - 312 * 4)
 POP(R1)  # chr in R1
 Sub_imm(R1, R1, ord('!'))  # R1 counts byte offset of char.
 
-Asr_imm(R2, R1, 2)  # R2 = R1 / 4  Trim the two least bits.
-Mul_imm(R2, R2, 52)  # R2 *= 13 words/char * 4 bytes/word.
-Add(R0, R0, R2)  # Point R0 to char's first word in font.
-And_imm(R1, R1, 0b11)  # Which byte in the words?
-Add(R0, R0, R1)  # Point R0 to char's first byte in font.
+Asr_imm(R2, R1, 2)     # R2 = R1 / 4  Trim the two least bits.
+Mul_imm(R2, R2, 52)    # R2 *= 13 words/char * 4 bytes/word.
+Add(R0, R0, R2)        # Point R0 to char's first word in font.
+And_imm(R1, R1, 0b11)  # Which byte in the word?
+Add(R0, R0, R1)        # Point R0 to char's first byte in font.
 
 POP(R1)  # x
 move_immediate_word_to_register(R2, DISPLAY_START)
-Add(R1, R1, R2)  # R1 = x + DISPLAY_START
-Mov_imm(R7, 767)  # Display width - 1 in pixels. (TODO don't hardcod3 this.)
+Add(R1, R1, R2)     # R1 = x + DISPLAY_START
+Mov_imm(R7, 767)    # Display width - 1 in pixels. (TODO don't hardcod3 this.)
 POP(R2)             # R2 = y in lines
 Mul_imm(R2, R2, 13) # R2 = y in px  (13px/char height)
 Sub(R2, R7, R2)     # R2 = 768 - 1 - y
@@ -995,8 +1044,5 @@ POP(R0)
 PUSH(R0)
 PUSH(R0)
 NEXT()
-
-
-label(QUIT)
 
 label(END)
