@@ -2,51 +2,36 @@
 
 \ I can haz line comments?
 
-: IF IMMEDIATE
-	' 0BRANCH ,
-	HERE @
-	$0 ,
-;
+: H@ HERE @ ;
+: kj DUP H@ SWAP - SWAP ! ;
+: IF IMMEDIATE ' 0BRANCH , H@ $0 , ;
+: THEN IMMEDIATE kj ;
+: ELSE IMMEDIATE ' BRANCH , H@ $0 , SWAP kj ;
+: BEGIN IMMEDIATE H@ ;
+: UNTIL IMMEDIATE ' 0BRANCH , H@ - , ;
 
-: THEN IMMEDIATE
-	DUP
-	HERE @ SWAP -
-	SWAP !
-;
-
-: ELSE IMMEDIATE
-	' BRANCH ,
-	HERE @
-	$0 ,
-	SWAP DUP
-	HERE @ SWAP -
-	SWAP !
-;
-
-: BEGIN IMMEDIATE HERE @ ;
-: UNTIL IMMEDIATE
-	' 0BRANCH ,
-	HERE @ -
-	,
-;
+: =1- = IF 1- THEN ;
+: 0? DUP $0 = ;
 
 : ( IMMEDIATE
-	$1
+	$1  \ Count the number of '(' encountered.
 	BEGIN
-		KEY
-		DUP $28 = IF	\ ')' is 0x28
-			DROP 1+
+		KEY          \ Consume a character.
+		DUP $28 =	 \ '(' is 0x28
+		IF           \ For opening parens
+			DROP     \ drop the character
+			1+       \ increment the count.
 		ELSE
-			$29 = IF 1- THEN
+			$29      \ ')' is 0x29
+			=1-      \ For closing parens decrement the count.
 		THEN
-	DUP $0 = UNTIL
-	DROP
+		0?       \ Have we found the final closing parenthesis
+	UNTIL    \ Then we are finished.
+	DROP     \ Drop the (zero'd) counter.
 ;
 
+( I can haz (nested) parentheses comments! )
 
-( I can haz ( nested! ) parentheses comments? )
-
-
-: Ooo IF $2 Hi ELSE $8 Hi THEN ;
-
-$7 Hi $1 Ooo $0 Ooo
+$2 Hi
+$3 Hi
+$4 Hi
