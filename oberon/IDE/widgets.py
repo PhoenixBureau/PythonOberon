@@ -178,15 +178,15 @@ class DebugApp(object):
         )
         self.step10_button = Button(
             self.controls,
-            text='10>>',
+            text='10 >>',
             font=self.font,
             command=lambda: self._step(10),
         )
         self.step104_button = Button(
             self.controls,
-            text='10^4>>',
+            text='1,000,000 >>',
             font=self.font,
-            command=lambda: self._step(10**4),
+            command=lambda: self._step(10**6),
         )
         self.save_button = Button(
             self.controls,
@@ -259,7 +259,7 @@ class LabelText(LabelFrame):
 
 class RAMInspector(LabelText):
     def __init__(self, root, font):
-        LabelText.__init__(self, root, 'RAM', font, height=13, width=68)
+        LabelText.__init__(self, root, 'RAM', font, height=13, width=80)
 
     def update(self, cpu, syms):
         s = StringIO()
@@ -410,6 +410,7 @@ class RegisterWidget(Frame):
         ),
         '%i',
         (lambda n: hex(n).rstrip('Ll')),
+        (lambda n: (lambda s: f'{chr(int(s[4:6],16))}{chr(int(s[2:4],16))}{chr(int(s[:2],16))}:{s[6:]}')(f'{n:08x}'))
     ]
     '''\
     A list of format strings or callables that are used to convert

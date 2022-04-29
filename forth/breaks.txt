@@ -1,5 +1,3 @@
-PC == 0xd1
-PC == 0xa
 PC == 0x0
-PC == (0x00734 >> 2)
-PC == (0x370 >> 2)
+PC == _FIND_1 + 1
+PC == CREATE + 1

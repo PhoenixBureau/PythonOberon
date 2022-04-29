@@ -1,3 +1,19 @@
  : Hi DUP $5 $48 paint_char $6 $69 paint_char ;
 
-$2 Hi  $7 Hi
+\ I can haz line comments?
+
+: IF IMMEDIATE
+	' 0BRANCH ,
+	HERE @
+	$0 ,
+;
+
+: THEN IMMEDIATE
+	DUP
+	HERE @ SWAP -
+	SWAP !
+;
+
+: Ooo IF $2 Hi THEN ;
+
+$7 Hi $1 Ooo

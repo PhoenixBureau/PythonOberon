@@ -591,22 +591,26 @@ Add_imm(R0, R0, 4)  # HERE += 4
 
 # Name field.
 Mov_imm(word_pointer, WORD_BUFFER)
-Load_byte(word_counter, word_pointer)
-And_imm(word_counter, word_counter, F_LENMASK)
-Asr_imm(word_counter, word_counter, 2)  # How many words?
+# When I decided that words would only store 4 bytes of name field
+# I forgot to remove the code here that copied the whole name from
+# the WORD_BUFFER, which resulted in a bug when I tried to define
+# THEN in Forth.
+##Load_byte(word_counter, word_pointer)
+##And_imm(word_counter, word_counter, F_LENMASK)
+##Asr_imm(word_counter, word_counter, 2)  # How many words?
 
-label(_CREATE_loop)  # <========================( _CREATE_loop )===
+##label(_CREATE_loop)  # <========================( _CREATE_loop )===
 
 Load_word(R1, word_pointer)  # Get the word from WORD_BUFFER.
 Store_word(R1, R0)  # Store word to HERE.
 Add_imm(R0, R0, 4)  # HERE += 4
-Sub_imm(word_counter, word_counter, 1)
-LT_imm(_CREATE_fin)  # There are no more words.
-# There are more words.
-Add_imm(word_pointer, word_pointer, 4)
-T_imm(_CREATE_loop)
-
-label(_CREATE_fin)  # <==========================( _CREATE_fin )===
+##Sub_imm(word_counter, word_counter, 1)
+##LT_imm(_CREATE_fin)  # There are no more words.
+### There are more words.
+##Add_imm(word_pointer, word_pointer, 4)
+##T_imm(_CREATE_loop)
+##
+##label(_CREATE_fin)  # <==========================( _CREATE_fin )===
 # Update HERE.
 Mov_imm(R1, HERE__var)  # R1 <- &HERE
 Store_word(R0, R1)
@@ -632,7 +636,7 @@ defvar(b'STATE', STATE)
 ## | (_| (_) | |\/| | |\/| |/ _ \
 ##  \___\___/|_|  |_|_|  |_/_/ \_\
 
-defcode(b',', COMMA, F_IMMED)
+defcode(b',', COMMA)
 POP(R2)
 Mov_imm(R1, _COMMA)
 T_link(R1)
