@@ -26,6 +26,14 @@
 
 Now that I have an emulator and assembler the obvious thing to do is
 implement a Forth.  I grabbed a copy of Jonesforth and set to.
+
+This isn't going to be standard or complete.  It's first job is to
+exercise the emulator and assembler.  It's second job is to stand in
+between the machine & machine code on one side, and the higher-level
+interface and language(s) on the other, and bridge the gap.
+It's also just fun and cool.  Forth is awesome.  C. Moore is a genius.
+
+
 '''
 
 # In re: the FIGlet banners, I use: http://www.patorjk.com/software/taag/

@@ -8,7 +8,7 @@ the field of the IF def set to all 0's, so later when IF was running the
 NEXT machinery would load 0x00000000 as the address of the next codefield,
 which location in RAM contains the initial "jump past the reserved
 storage" instruction, which is itself NOT a valid location in RAM (it's
-way to high.) So when the CPU tried to jump to the "address" which was
+way too high.) So when the CPU tried to jump to the "address" which was
 really a Mov instruction, it "launched into the void" instead.  Boo.
 
 The hard thing to debug was that the problem happened later than the
@@ -78,5 +78,12 @@ and the things that are in there are (again) all very small and simple.
 The core code right now is just over six hundred words of RAM.  It could
 almost fit in the bootloader ROM!  (But I'm not going to mess with that.
 Code golf for a rainy day.)
+
+
+Sat Apr 30 07:08:39 PDT 2022
+Thing is, it was a spec bug, not a logic bug or an off-by-one or
+something.  I implemented the wrong spec (COMMA is not IMMEDIATE) but the
+system worked, or at least the parts of it worked, they just did the
+wrong thing because I didn't follow the blueprint closely enough.
 
 
