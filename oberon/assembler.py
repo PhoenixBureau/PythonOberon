@@ -24,8 +24,20 @@
 Assembler
 =========================================
 
-Miki Tebeka’s Clever Idea
+If you want to use the assembler you should read and understand the
+documents (in docs/extras) from Project Oberon describing the RISC
+processor and its machine code.  It's simple and well-documented so I
+don't see any reason to repeat it all here.  Look at the example asm
+projects for, uh, examples.)
+
+If you want to understand how the assembler works you should read about
+Miki Tebeka’s clever idea to leverage Python as the execution enviroment
+for a kind of assembly DSL.  It's a very ingenious idea that results in a
+simple but very sophisticated "assembly language" where you can use
+Python as your macro language.
+
 http://pythonwise.blogspot.com/2012/06/python-based-assembler.html
+
 https://raw.githubusercontent.com/tebeka/pythonwise/master/assembler.pdf
 
 
