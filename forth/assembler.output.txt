@@ -1,4 +1,4 @@
-                0x00000 T_imm(0x10)                                      line: 208 T_imm(main)
+                0x00000 T_imm(0x10)                                      line: 233 T_imm(main)
      _reserved: 0x00004 0x00000000
                 0x00008 0x00000000
                 0x0000c 0x00000000
@@ -8,596 +8,632 @@
                 0x0001c 0x00000000
                 0x00020 0x00000000
                 0x00024 0x00000000
-         DOCOL: 0x00028 Sub_imm(12, 12, 0x4, u=False, v=False)           line:  99     Sub_imm(Rstack, Rstack, 4)  # Rstack -= 4 -- (in PUSHRSP)
-                0x0002c Store_word(14, 12)                               line: 100     Store_word(reg, Rstack)     # reg -> RAM[Rstack] -- (in PUSHRSP)
-                0x00030 Add_imm(14, 3, 0x4, u=False, v=False)            line: 220 Add_imm(IP, next_function, 4)
-                0x00034 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00038 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x0003c Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00040 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-          main: 0x00044 Mov_imm(10, 0x4000, u=False, v=False)            line: 230 Mov_imm(Dstack, DATA_STACK)
-                0x00048 Mov_imm(12, 0x6000, u=False, v=False)            line: 231 Mov_imm(Rstack, RETURN_STACK)
-                0x0004c Mov_imm(14, 0x60, u=False, v=False)              line: 232 Mov_imm(IP, cold_start)
-                0x00050 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00054 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00058 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x0005c T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-    cold_start: 0x00060 0x0000006c                                       line: 242 dw(REPL)  # IP set to point here at start
-      REPL_dfa: 0x00064 0x00000000                                       line: 131     dw(LINK) -- (in def_)
-                0x00068 0x50455204                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          REPL: 0x0006c 0x00000028                                       line: 153     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
-                0x00070 0x00000784                                       line: 253 dw(INTERPRET)
-                0x00074 0x000006a0                                       line: 254 dw(BRANCH)
-                0x00078 0xfffffff8                                       line: 255 dw(s_to_u_32(-8))  # Loop back to INTERPRET.
-      DROP_dfa: 0x0007c 0x00000064                                       line: 131     dw(LINK) -- (in def_)
-                0x00080 0x4f524404                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          DROP: 0x00084 0x00000088                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00088 Add_imm(10, 10, 0x4, u=False, v=False)           line: 259 Add_imm(Dstack, Dstack, 4)  # drop top of stack
-                0x0008c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00090 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00094 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00098 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      EXIT_dfa: 0x0009c 0x0000007c                                       line: 131     dw(LINK) -- (in def_)
-                0x000a0 0x49584504                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          EXIT: 0x000a4 0x000000a8                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x000a8 Load_word(14, 12)                                line: 105     Load_word(reg, Rstack)      # reg <- RAM[Rstack] -- (in POPRSP)
-                0x000ac Add_imm(12, 12, 0x4, u=False, v=False)           line: 106     Add_imm(Rstack, Rstack, 4)  # Rstack += 4 -- (in POPRSP)
-                0x000b0 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x000b4 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x000b8 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x000bc T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-       LIT_dfa: 0x000c0 0x0000009c                                       line: 131     dw(LINK) -- (in def_)
-                0x000c4 0x54494c03                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-           LIT: 0x000c8 0x000000cc                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x000cc Load_word(0, 14)                                 line: 269 Load_word(R0, IP)   # Don't run the next cell, load it,
-                0x000d0 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x000d4 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x000d8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 271 Add_imm(IP, IP, 4)  # then skip it.
-                0x000dc Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x000e0 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x000e4 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x000e8 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      SWAP_dfa: 0x000ec 0x000000c0                                       line: 131     dw(LINK) -- (in def_)
-                0x000f0 0x41575304                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          SWAP: 0x000f4 0x000000f8                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x000f8 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x000fc Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00100 Load_word(1, 10)                                 line: 277 Load_word(R1, 10)
-                0x00104 Store_word(0, 10)                                line: 278 Store_word(R0, 10)
-                0x00108 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x0010c Store_word(1, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x00110 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00114 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00118 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x0011c T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-       SUB_dfa: 0x00120 0x000000ec                                       line: 131     dw(LINK) -- (in def_)
-                0x00124 0x00002d01                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-           SUB: 0x00128 0x0000012c                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x0012c Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00130 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00134 Load_word(1, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00138 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x0013c Sub(1, 1, 0, u=False)                            line: 286 Sub(R1, R1, R0)
-                0x00140 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00144 Store_word(1, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x00148 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0014c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00150 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00154 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-       EQU_dfa: 0x00158 0x00000120                                       line: 131     dw(LINK) -- (in def_)
-                0x0015c 0x00003d01                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-           EQU: 0x00160 0x00000164                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00164 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00168 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x0016c Load_word(1, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00170 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00174 Sub(1, 1, 0, u=False)                            line: 294 Sub(R1, R1, R0)
-                0x00178 Mov(0, 0, u=True, v=True)  # R0 <- (N,Z,C,OV, 0..01010000) line: 295 Mov(R0, 0, u=True, v=True)  # Get flags, c register is ignored.
-                0x0017c Asr_imm(0, 0, 0x1e, u=False, v=False)            line: 296 Asr_imm(R0, R0, 30)  # Z is the 31st bit, penultimate from the MSB.
-                0x00180 And_imm(0, 0, 0x1, u=False, v=False)             line: 297 And_imm(R0, R0, 1)  # Mask out N flag.
-                0x00184 Xor_imm(0, 0, 0x1, u=False, v=False)             line: 298 Xor_imm(R0, R0, 1)  # flip the (shifted) Z bit.
-                0x00188 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0018c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00190 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00194 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      INCR_dfa: 0x00198 0x00000158                                       line: 131     dw(LINK) -- (in def_)
-                0x0019c 0x002b3102                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          INCR: 0x001a0 0x000001a4                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x001a4 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x001a8 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x001ac Add_imm(0, 0, 0x1, u=False, v=False)             line: 304 Add_imm(R0, R0, 1)
-                0x001b0 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x001b4 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x001b8 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x001bc Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x001c0 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x001c4 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      DECR_dfa: 0x001c8 0x00000198                                       line: 131     dw(LINK) -- (in def_)
-                0x001cc 0x002d3102                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          DECR: 0x001d0 0x000001d4                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x001d4 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x001d8 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x001dc Sub_imm(0, 0, 0x1, u=False, v=False)             line: 311 Sub_imm(R0, R0, 1)
-                0x001e0 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x001e4 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x001e8 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x001ec Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x001f0 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x001f4 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-       KEY_dfa: 0x001f8 0x000001c8                                       line: 131     dw(LINK) -- (in def_)
-                0x001fc 0x59454b03                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-           KEY: 0x00200 0x00000204                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00204 Mov_imm(1, 0x258, u=False, v=False)              line: 187     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
-                0x00208 T_link(1)                                        line: 188     T_link(R1) -- (in busywait_on_serial_ready)
-                0x0020c Load_word(0, 1, offset=0xffffc)                  line: 323 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
-                0x00210 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00214 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x00218 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0021c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00220 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00224 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      EMIT_dfa: 0x00228 0x000001f8                                       line: 131     dw(LINK) -- (in def_)
-                0x0022c 0x494d4504                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          EMIT: 0x00230 0x00000234                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00234 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00238 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x0023c Mov_imm(1, 0x258, u=False, v=False)              line: 187     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
-                0x00240 T_link(1)                                        line: 188     T_link(R1) -- (in busywait_on_serial_ready)
-                0x00244 Store_word(0, 1, offset=0xffffc)                 line: 330 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
-                0x00248 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0024c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00250 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00254 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-          _KEY: 0x00258 Mov_imm(1, 0xffff, u=True, v=False)              line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x0025c Ior_imm(1, 1, 0xffcc, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x00260 Load_word(2, 1)                                  line: 346 Load_word(R2, R1)
-                0x00264 EQ_imm(0x3fff64)                                 line: 347 EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
-                0x00268 T(15)                                            line: 352 T(15)  # return
-        _blank: 0x0026c Sub_imm(2, 0, 0x20, u=False, v=False)            line: 370 Sub_imm(R2, R0, 32)  # Is it a space char?
-                0x00270 EQ(15)                                           line: 371 EQ(15)
-                0x00274 Sub_imm(2, 0, 0xa, u=False, v=False)             line: 372 Sub_imm(R2, R0, 10)  # Is it a newline char?
-                0x00278 EQ(15)                                           line: 373 EQ(15)
-                0x0027c Sub_imm(2, 0, 0x9, u=False, v=False)             line: 374 Sub_imm(R2, R0, 9)  # Is it a tab char?
-                0x00280 EQ(15)                                           line: 375 EQ(15)
-                0x00284 Sub_imm(2, 0, 0xb, u=False, v=False)             line: 376 Sub_imm(R2, R0, 11)  # Is it a '\x0b' char?
-                0x00288 EQ(15)                                           line: 377 EQ(15)
-                0x0028c Sub_imm(2, 0, 0xc, u=False, v=False)             line: 378 Sub_imm(R2, R0, 12)  # Is it a '\x0c' char?
-                0x00290 EQ(15)                                           line: 379 EQ(15)
-                0x00294 Sub_imm(2, 0, 0xd, u=False, v=False)             line: 380 Sub_imm(R2, R0, 13)  # Is it a carriage return char?
-                0x00298 T(15)                                            line: 381 T(15)  # return
- _skip_comment: 0x0029c Sub_imm(2, 0, 0x5c, u=False, v=False)            line: 395 Sub_imm(R2, R0, ord('\\'))  # Is it a '\' char?
-                0x002a0 NE(15)                                           line: 396 NE(15)                      # It's not a '\' char, return.
-_skip_cmt_loop: 0x002a4 Load_word(2, 1)                                  line: 399 Load_word(R2, R1)           # Get the serial port status.
-                0x002a8 EQ_imm(0xfffffe)                                 line: 400 EQ_imm(_skip_cmt_loop)      # until serial port status != 0
-                0x002ac Load_word(0, 1, offset=0xffffc)                  line: 401 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
-                0x002b0 Sub_imm(2, 0, 0xa, u=False, v=False)             line: 402 Sub_imm(R2, R0, ord('\n'))  # Is it a newline char?
-                0x002b4 EQ(15)                                           line: 403 EQ(15)  # We have reached the end of the line, return.
-                0x002b8 T_imm(0xfffffa)                                  line: 404 T_imm(_skip_cmt_loop)   # ...until newline.
-   WORD_BUFFER: 0x002bc 0x00000000
-                0x002c0 0x00000000
-                0x002c4 0x00000000
-                0x002c8 0x00000000
-                0x002cc 0x00000000
-                0x002d0 0x00000000
-                0x002d4 0x00000000
-                0x002d8 0x00000000
-      WORD_dfa: 0x002dc 0x00000228                                       line: 131     dw(LINK) -- (in def_)
-                0x002e0 0x524f5704                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          WORD: 0x002e4 0x000002e8                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-     _word_key: 0x002e8 Mov_imm(1, 0x258, u=False, v=False)              line: 187     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
-                0x002ec T_link(1)                                        line: 188     T_link(R1) -- (in busywait_on_serial_ready)
-                0x002f0 Load_word(0, 1, offset=0xffffc)                  line: 424 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
-                0x002f4 Mov_imm(2, 0x29c, u=False, v=False)              line: 426 Mov_imm(R2, _skip_comment)  # Skip line comments.
-                0x002f8 T_link(2)                                        line: 427 T_link(R2)
-                0x002fc Mov_imm(1, 0x26c, u=False, v=False)              line: 429 Mov_imm(R1, _blank)  # Is it a space char?
-                0x00300 T_link(1)                                        line: 430 T_link(R1)
-                0x00304 EQ_imm(0xfffff8)                                 line: 431 EQ_imm(_word_key)  # then get another char
-                0x00308 Mov_imm(6, 0x2bc, u=False, v=False)              line: 434 Mov_imm(word_pointer, WORD_BUFFER)
-                0x0030c Mov_imm(5, 0x0, u=False, v=False)                line: 435 Mov_imm(word_counter, 0)
-                0x00310 Store_word(5, 6)                                 line: 436 Store_word(word_counter, word_pointer)  # Zero out the first word of WORD_BUFFER.
-                0x00314 Add_imm(6, 6, 0x1, u=False, v=False)             line: 439 Add_imm(word_pointer, word_pointer, 1)  # Leave a byte for the length.
-  _find_length: 0x00318 Sub_imm(2, 5, 0x20, u=False, v=False)            line: 443 Sub_imm(R2, word_counter, 32)
-                0x0031c EQ_imm(0xfffff2)                                 line: 444 EQ_imm(_word_key)  # try again.
-                0x00320 Store_byte(0, 6)                                 line: 447 Store_byte(R0, word_pointer)
-                0x00324 Add_imm(6, 6, 0x1, u=False, v=False)             line: 448 Add_imm(word_pointer, word_pointer, 1)
-                0x00328 Add_imm(5, 5, 0x1, u=False, v=False)             line: 449 Add_imm(word_counter, word_counter, 1)
-                0x0032c Mov_imm(1, 0x258, u=False, v=False)              line: 187     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
-                0x00330 T_link(1)                                        line: 188     T_link(R1) -- (in busywait_on_serial_ready)
-                0x00334 Load_word(0, 1, offset=0xffffc)                  line: 453 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
-                0x00338 Mov_imm(1, 0x26c, u=False, v=False)              line: 456 Mov_imm(R1, _blank)
-                0x0033c T_link(1)                                        line: 457 T_link(R1)
-                0x00340 NE_imm(0xfffff5)                                 line: 458 NE_imm(_find_length)  # No, keep getting chars to the buffer
-                0x00344 Mov_imm(6, 0x2bc, u=False, v=False)              line: 462 Mov_imm(word_pointer, WORD_BUFFER)
-                0x00348 Store_byte(5, 6)                                 line: 463 Store_byte(word_counter, word_pointer)
-                0x0034c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00350 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00354 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00358 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      FIND_dfa: 0x0035c 0x000002dc                                       line: 131     dw(LINK) -- (in def_)
-                0x00360 0x4e494604                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          FIND: 0x00364 0x00000368                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00368 Mov_imm(6, 0x2bc, u=False, v=False)              line: 476 Mov_imm(word_pointer, WORD_BUFFER)
-                0x0036c Load_word(5, 6)                                  line: 478 Load_word(word_counter, word_pointer)
-                0x00370 Mov_imm(2, 0xffff, u=True, v=False)              line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x00374 Ior_imm(2, 2, 0xff7f, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x00378 Mov_imm(0, 0x4e0, u=False, v=False)              line: 483 Mov_imm(R0, LATEST_var)
-                0x0037c Load_word(0, 0)                                  line: 484 Load_word(R0, R0)          # Point R0 to latest word's LFA.
-       _FIND_1: 0x00380 Load_word(1, 0, offset=0x4)                      line: 486 Load_word(R1, R0, 4)       # load a word of the name field.
-                0x00384 And(1, 1, 2, u=False)                            line: 487 And(R1, R1, R2)            # Clear the IMMEDIATE flag, if any.
-                0x00388 Sub(1, 1, 5, u=False)                            line: 488 Sub(R1, R1, word_counter)  # Compare.
-                0x0038c EQ_imm(0x2)                                      line: 489 EQ_imm(_found)             # If this is the word...
-                0x00390 Load_word(0, 0)                                  line: 495 Load_word(R0, R0)  # Load the address of the next link field into R0
-                0x00394 NE_imm(0xfffffa)                                 line: 496 NE_imm(_FIND_1)  # Check the next word.
-        _found: 0x00398 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x0039c Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x003a0 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x003a4 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x003a8 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x003ac T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-    NUMBER_dfa: 0x003b0 0x0000035c                                       line: 131     dw(LINK) -- (in def_)
-                0x003b4 0x4d554e06                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-        NUMBER: 0x003b8 0x000003bc                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x003bc Mov_imm(6, 0x2bc, u=False, v=False)              line: 535 Mov_imm(word_pointer, WORD_BUFFER)
-                0x003c0 Load_byte(5, 6)                                  line: 536 Load_byte(word_counter, word_pointer)
-                0x003c4 Mov_imm(2, 0x0, u=False, v=False)                line: 537 Mov_imm(R2, 0)  # use R2 as the accumulator for the number's value
-                0x003c8 Add_imm(6, 6, 0x1, u=False, v=False)             line: 539 Add_imm(word_pointer, word_pointer, 1)  # Point to first char.
-                0x003cc Load_byte(0, 6)                                  line: 540 Load_byte(R0, word_pointer)  # Load it.
-                0x003d0 Sub_imm(0, 0, 0x24, u=False, v=False)            line: 541 Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
-                0x003d4 NE_imm(0xf)                                      line: 542 NE_imm(_NUM_fin)
-                0x003d8 Sub_imm(5, 5, 0x1, u=False, v=False)             line: 545 Sub_imm(word_counter, word_counter, 1)  # we have parsed one '$' char.
-      _NUM_hex: 0x003dc Add_imm(6, 6, 0x1, u=False, v=False)             line: 548 Add_imm(word_pointer, word_pointer, 1)  # Point to next char.
-                0x003e0 Load_byte(0, 6)                                  line: 549 Load_byte(R0, word_pointer)  # Load it.
-                0x003e4 Sub_imm(0, 0, 0x30, u=False, v=False)            line: 551 Sub_imm(R0, R0, ord('0'))
-                0x003e8 LT_imm(0xa)                                      line: 552 LT_imm(_NUM_fin)  # Is its ASCII value lower than '0'?
-                0x003ec Sub_imm(1, 0, 0x9, u=False, v=False)             line: 554 Sub_imm(R1, R0, 9)  # Is it 0-9?
-                0x003f0 LE_imm(0x5)                                      line: 555 LE_imm(_NUM_add)  # It is!
-                0x003f4 Sub_imm(0, 0, 0x31, u=False, v=False)            line: 561 Sub_imm(R0, R0, 49)  # so now '1'..'6' -> 0..5
-                0x003f8 LT_imm(0x6)                                      line: 562 LT_imm(_NUM_fin)  # Its ASCII value is less than 'a', nope out.
-                0x003fc Sub_imm(1, 0, 0x5, u=False, v=False)             line: 565 Sub_imm(R1, R0, 5)  # Is it a-f?
-                0x00400 GT_imm(0x4)                                      line: 566 GT_imm(_NUM_fin)  # nope, nope out
-                0x00404 Add_imm(0, 0, 0xa, u=False, v=False)             line: 568 Add_imm(R0, R0, 10)  # 0..5 -> 10..15
-      _NUM_add: 0x00408 Add(2, 2, 0, u=False)                            line: 571 Add( R2, R2, R0)  # Add it to the accumulator.
-                0x0040c Sub_imm(5, 5, 0x1, u=False, v=False)             line: 573 Sub_imm(word_counter, word_counter, 1)  # we have parsed a digit char.
-                0x00410 NE_imm(0x8)                                      line: 574 NE_imm(_NUM_foo)  # More digits? Keep going.
-      _NUM_fin: 0x00414 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00418 Store_word(2, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x0041c Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00420 Store_word(5, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x00424 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00428 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x0042c Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00430 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      _NUM_foo: 0x00434 Lsl_imm(2, 2, 0x4, u=False, v=False)             line: 583 Lsl_imm(R2, R2, 4)  # accumulator *= 16
-                0x00438 T_imm(0xffffe8)                                  line: 584 T_imm(_NUM_hex)  # Go get the next digit.
-    CREATE_dfa: 0x0043c 0x000003b0                                       line: 131     dw(LINK) -- (in def_)
-                0x00440 0x45524306                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-        CREATE: 0x00444 0x00000448                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00448 Mov_imm(0, 0x4b4, u=False, v=False)              line: 595 Mov_imm(R0, HERE__var)  # R0 <- &HERE
-                0x0044c Load_word(0, 0)                                  line: 596 Load_word(R0, R0)       # R0 <- ram[HERE]
-                0x00450 Mov_imm(1, 0x4e0, u=False, v=False)              line: 598 Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
-                0x00454 Load_word(2, 1)                                  line: 599 Load_word(R2, R1)        # R2 <- ram[LATEST]
-                0x00458 Store_word(2, 0)                                 line: 601 Store_word(R2, R0)  # value of LATEST -> ram[HERE]
-                0x0045c Store_word(0, 1)                                 line: 602 Store_word(R0, R1)  # value of HERE (now LFA for new word) -> ram[LATEST_var]
-                0x00460 Add_imm(0, 0, 0x4, u=False, v=False)             line: 604 Add_imm(R0, R0, 4)  # HERE += 4
-                0x00464 Mov_imm(6, 0x2bc, u=False, v=False)              line: 607 Mov_imm(word_pointer, WORD_BUFFER)
-                0x00468 Load_word(1, 6)                                  line: 618 Load_word(R1, word_pointer)  # Get the word from WORD_BUFFER.
-                0x0046c Store_word(1, 0)                                 line: 619 Store_word(R1, R0)  # Store word to HERE.
-                0x00470 Add_imm(0, 0, 0x4, u=False, v=False)             line: 620 Add_imm(R0, R0, 4)  # HERE += 4
-                0x00474 Mov_imm(1, 0x4b4, u=False, v=False)              line: 630 Mov_imm(R1, HERE__var)  # R1 <- &HERE
-                0x00478 Store_word(0, 1)                                 line: 631 Store_word(R0, R1)      # value of HERE -> ram[HERE]
-                0x0047c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00480 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00484 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00488 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     HERE__dfa: 0x0048c 0x0000043c                                       line: 131     dw(LINK) -- (in def_)
-                0x00490 0x52454804                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         HERE_: 0x00494 0x00000498                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00498 Mov_imm(0, 0x4b4, u=False, v=False)              line: 171     Mov_imm(R0, LABEL_var) -- (in defvar)
-                0x0049c Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x004a0 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x004a4 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x004a8 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x004ac Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x004b0 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     HERE__var: 0x004b4 0x0000096c                                       line: 176     dw(initial) -- (in defvar)
-    LATEST_dfa: 0x004b8 0x0000048c                                       line: 131     dw(LINK) -- (in def_)
-                0x004bc 0x54414c06                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-        LATEST: 0x004c0 0x000004c4                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x004c4 Mov_imm(0, 0x4e0, u=False, v=False)              line: 171     Mov_imm(R0, LABEL_var) -- (in defvar)
-                0x004c8 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x004cc Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x004d0 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x004d4 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x004d8 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x004dc T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-    LATEST_var: 0x004e0 0x00000938                                       line: 176     dw(initial) -- (in defvar)
-     STATE_dfa: 0x004e4 0x000004b8                                       line: 131     dw(LINK) -- (in def_)
-                0x004e8 0x41545305                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         STATE: 0x004ec 0x000004f0                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x004f0 Mov_imm(0, 0x50c, u=False, v=False)              line: 171     Mov_imm(R0, LABEL_var) -- (in defvar)
-                0x004f4 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x004f8 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x004fc Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00500 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00504 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00508 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     STATE_var: 0x0050c 0x00000000                                       line: 176     dw(initial) -- (in defvar)
-     COMMA_dfa: 0x00510 0x000004e4                                       line: 131     dw(LINK) -- (in def_)
-                0x00514 0x00002c01                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         COMMA: 0x00518 0x0000051c                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x0051c Load_word(2, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00520 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00524 Mov_imm(1, 0x53c, u=False, v=False)              line: 656 Mov_imm(R1, _COMMA)
-                0x00528 T_link(1)                                        line: 657 T_link(R1)
-                0x0052c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00530 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00534 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00538 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-        _COMMA: 0x0053c Mov_imm(0, 0x4b4, u=False, v=False)              line: 666 Mov_imm(R0, HERE__var)  # R0 <- &HERE
-                0x00540 Load_word(1, 0)                                  line: 667 Load_word(R1, R0)       # R1 <- ram[HERE]
-                0x00544 Store_word(2, 1)                                 line: 668 Store_word(R2, R1)      # R2 -> ram[HERE]
-                0x00548 Add_imm(1, 1, 0x4, u=False, v=False)             line: 669 Add_imm(R1, R1, 4)      # HERE += 4
-                0x0054c Store_word(1, 0)                                 line: 670 Store_word(R1, R0)      # HERE -> ram[HERE]
-                0x00550 T(15)                                            line: 671 T(15)  # return
-     LBRAC_dfa: 0x00554 0x00000510                                       line: 131     dw(LINK) -- (in def_)
-                0x00558 0x00005b81                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         LBRAC: 0x0055c 0x00000560                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00560 Mov_imm(0, 0x50c, u=False, v=False)              line: 685 Mov_imm(R0, STATE_var)
-                0x00564 Mov_imm(1, 0x0, u=False, v=False)                line: 686 Mov_imm(R1, 0)
-                0x00568 Store_word(1, 0)                                 line: 687 Store_word(R1, R0)
-                0x0056c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00570 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00574 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00578 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     RBRAC_dfa: 0x0057c 0x00000554                                       line: 131     dw(LINK) -- (in def_)
-                0x00580 0x00005d01                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         RBRAC: 0x00584 0x00000588                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00588 Mov_imm(0, 0x50c, u=False, v=False)              line: 691 Mov_imm(R0, STATE_var)
-                0x0058c Mov_imm(1, 0x1, u=False, v=False)                line: 692 Mov_imm(R1, 1)
-                0x00590 Store_word(1, 0)                                 line: 693 Store_word(R1, R0)
-                0x00594 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00598 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x0059c Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x005a0 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     COLON_dfa: 0x005a4 0x0000057c                                       line: 131     dw(LINK) -- (in def_)
-                0x005a8 0x00003a01                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         COLON: 0x005ac 0x00000028                                       line: 153     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
-                0x005b0 0x000002e4                                       line: 716 dw(WORD)  # "Get the name of the new word"
-                0x005b4 0x00000444                                       line: 717 dw(CREATE)  # "CREATE the dictionary entry / header"
-                0x005b8 0x000000c8                                       line: 718 dw(LIT)  # "Append DOCOL  (the codeword)."
-                0x005bc 0x00000028                                       line: 719 dw(DOCOL)
-                0x005c0 0x00000518                                       line: 720 dw(COMMA)
-                0x005c4 0x000004c0                                       line: 721 dw(LATEST)  # "Make the word hidden (see below for definition)."
-                0x005c8 0x000006f4                                       line: 722 dw(FETCH)
-                0x005cc 0x00000640                                       line: 723 dw(HIDDEN)
-                0x005d0 0x00000584                                       line: 724 dw(RBRAC)  # "Go into compile mode."
-                0x005d4 0x000000a4                                       line: 725 dw(EXIT)  # "Return from the function."
- SEMICOLON_dfa: 0x005d8 0x000005a4                                       line: 131     dw(LINK) -- (in def_)
-                0x005dc 0x00003b81                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-     SEMICOLON: 0x005e0 0x00000028                                       line: 153     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
-                0x005e4 0x000000c8                                       line: 734 dw(LIT)  # "Append EXIT (so the word will return)."
-                0x005e8 0x000000a4                                       line: 735 dw(EXIT)
-                0x005ec 0x00000518                                       line: 736 dw(COMMA)
-                0x005f0 0x000004c0                                       line: 737 dw(LATEST)  # "Toggle hidden flag -- unhide the word (see below for definition)."
-                0x005f4 0x000006f4                                       line: 738 dw(FETCH)
-                0x005f8 0x00000640                                       line: 739 dw(HIDDEN)
-                0x005fc 0x0000055c                                       line: 740 dw(LBRAC)  # "Go back to IMMEDIATE mode."
-                0x00600 0x000000a4                                       line: 741 dw(EXIT)  # "Return from the function."
- IMMEDIATE_dfa: 0x00604 0x000005d8                                       line: 131     dw(LINK) -- (in def_)
-                0x00608 0x4d4d4989                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-     IMMEDIATE: 0x0060c 0x00000610                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00610 Mov_imm(0, 0x4e0, u=False, v=False)              line: 750 Mov_imm(R0, LATEST_var)  # R0 <- &LATEST
-                0x00614 Load_word(1, 0)                                  line: 751 Load_word(R1, R0)        # R1 <- ram[LATEST]
-                0x00618 Add_imm(1, 1, 0x4, u=False, v=False)             line: 752 Add_imm(R1, R1, 4)       # "Point to name/flags byte."
-                0x0061c Load_word(0, 1)                                  line: 753 Load_word(R0, R1)
-                0x00620 Xor_imm(0, 0, 0x80, u=False, v=False)            line: 754 Xor_imm(R0, R0, F_IMMED) # Toggle IMMEDIATE bit.
-                0x00624 Store_word(0, 1)                                 line: 755 Store_word(R0, R1)
-                0x00628 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0062c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00630 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00634 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-    HIDDEN_dfa: 0x00638 0x00000604                                       line: 131     dw(LINK) -- (in def_)
-                0x0063c 0x44494806                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-        HIDDEN: 0x00640 0x00000644                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00644 Load_word(1, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00648 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x0064c Add_imm(1, 1, 0x4, u=False, v=False)             line: 766 Add_imm(R1, R1, 4)  # "Point to name/flags byte."
-                0x00650 Load_word(0, 1)                                  line: 767 Load_word(R0, R1)
-                0x00654 Xor_imm(0, 0, 0x20, u=False, v=False)            line: 768 Xor_imm(R0, R0, F_HIDDEN)  # "Toggle the HIDDEN bit."
-                0x00658 Store_word(0, 1)                                 line: 769 Store_word(R0, R1)
-                0x0065c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00660 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00664 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00668 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-      TICK_dfa: 0x0066c 0x00000638                                       line: 131     dw(LINK) -- (in def_)
-                0x00670 0x00002701                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-          TICK: 0x00674 0x00000678                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00678 Load_word(0, 14)                                 line: 786 Load_word(R0, IP)   # Get the address of the next codeword.
-                0x0067c Add_imm(14, 14, 0x4, u=False, v=False)           line: 787 Add_imm(IP, IP, 4)  # Skip it.
-                0x00680 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00684 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x00688 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0068c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00690 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00694 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-    BRANCH_dfa: 0x00698 0x0000066c                                       line: 131     dw(LINK) -- (in def_)
-                0x0069c 0x41524206                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-        BRANCH: 0x006a0 0x000006a4                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x006a4 Load_word(0, 14)                                 line: 798 Load_word(R0, IP)  # Get the offset.
-                0x006a8 Add(14, 14, 0, u=False)                          line: 800 Add(IP, IP, R0)    # IP += offset
-                0x006ac Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x006b0 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x006b4 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x006b8 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-   ZBRANCH_dfa: 0x006bc 0x00000698                                       line: 131     dw(LINK) -- (in def_)
-                0x006c0 0x52423007                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-       ZBRANCH: 0x006c4 0x000006c8                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x006c8 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x006cc Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x006d0 Add_imm(0, 0, 0x0, u=False, v=False)             line: 811 Add_imm(R0, R0, 0)  # Set condition flags.
-                0x006d4 EQ_imm(0xfffff3)                                 line: 812 EQ_imm(BRANCH + 4)  # Zero? Delegate to BRANCH.
-                0x006d8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 813 Add_imm(IP, IP, 4)  # Non-zero? Skip offset.
-                0x006dc Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x006e0 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x006e4 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x006e8 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     FETCH_dfa: 0x006ec 0x000006bc                                       line: 131     dw(LINK) -- (in def_)
-                0x006f0 0x00004001                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         FETCH: 0x006f4 0x000006f8                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x006f8 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x006fc Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00700 Load_word(0, 0)                                  line: 824 Load_word(R0, R0)
-                0x00704 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00708 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x0070c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00710 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00714 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00718 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-     STORE_dfa: 0x0071c 0x000006ec                                       line: 131     dw(LINK) -- (in def_)
-                0x00720 0x00002101                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-         STORE: 0x00724 0x00000728                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00728 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x0072c Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00730 Load_word(1, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00734 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00738 Store_word(1, 0)                                 line: 837 Store_word(R1, R0)
-                0x0073c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00740 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00744 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00748 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
- IS_NUMBER_dfa: 0x0074c 0x0000071c                                       line: 131     dw(LINK) -- (in def_)
-                0x00750 0x003f2302                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-     IS_NUMBER: 0x00754 0x00000758                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00758 Mov_imm(6, 0x2bc, u=False, v=False)              line: 853 Mov_imm(word_pointer, WORD_BUFFER)
-                0x0075c Load_byte(0, 6, offset=0x1)                      line: 854 Load_byte(R0, word_pointer, 1)  # Load first char of word.
-                0x00760 Sub_imm(0, 0, 0x24, u=False, v=False)            line: 855 Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
-                0x00764 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00768 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x0076c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00770 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00774 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00778 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
- INTERPRET_dfa: 0x0077c 0x0000074c                                       line: 131     dw(LINK) -- (in def_)
-                0x00780 0x544e4909                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-     INTERPRET: 0x00784 0x00000028                                       line: 153     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
-                0x00788 0x000002e4                                       line: 866 dw(WORD)
-                0x0078c 0x00000754                                       line: 867 dw(IS_NUMBER)
-                0x00790 0x000006c4                                       line: 868 dw(ZBRANCH)
-                0x00794 0x0000001c                                       line: 869 dw(s_to_u_32(4 * 7))  # It could be a number...
-                0x00798 0x00000364                                       line: 872 dw(FIND)
-                0x0079c 0x00000940                                       line: 873 dw(DUP)
-                0x007a0 0x000006c4                                       line: 874 dw(ZBRANCH)  # Zero means it wasn't in the dictionary,
-                0x007a4 0x0000001c                                       line: 875 dw(s_to_u_32(4 * 7))
-                0x007a8 0x000007f4                                       line: 878 dw(_INTERP)
-                0x007ac 0x000000a4                                       line: 879 dw(EXIT)
-                0x007b0 0x000003b8                                       line: 882 dw(NUMBER)
-                0x007b4 0x00000940                                       line: 883 dw(DUP)
-                0x007b8 0x000006c4                                       line: 884 dw(ZBRANCH)  # No chars left?  It is a number!
-                0x007bc 0x00000008                                       line: 885 dw(s_to_u_32(4 * 2))
-                0x007c0 0x000000a4                                       line: 889 dw(EXIT)
-                0x007c4 0x00000084                                       line: 892 dw(DROP)
-                0x007c8 0x000004ec                                       line: 896 dw(STATE)
-                0x007cc 0x000006f4                                       line: 897 dw(FETCH)
-                0x007d0 0x000006c4                                       line: 898 dw(ZBRANCH)  #  STATE = 0 -> interpreting.
-                0x007d4 0x00000014                                       line: 899 dw(s_to_u_32(4 * 5))  # to EXIT
-                0x007d8 0x000000c8                                       line: 902 dw(LIT)
-                0x007dc 0x000000c8                                       line: 903 dw(LIT)
-                0x007e0 0x00000518                                       line: 904 dw(COMMA)  # write the address of the codeword of LIT
-                0x007e4 0x00000518                                       line: 905 dw(COMMA)  # then the value itself.
-                0x007e8 0x000000a4                                       line: 907 dw(EXIT)  # Just leave the number itself on the stack.
-   _INTERP_dfa: 0x007ec 0x0000077c                                       line: 131     dw(LINK) -- (in def_)
-                0x007f0 0x4e495f27                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-       _INTERP: 0x007f4 0x000007f8                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x007f8 Load_word(2, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x007fc Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x00800 Mov_imm(0, 0x50c, u=False, v=False)              line: 915 Mov_imm(R0, STATE_var)  # R0 <- &STATE
-                0x00804 Load_word(0, 0)                                  line: 916 Load_word(R0, R0)  # R0 <- ram[STATE]
-                0x00808 EQ_imm(0xa)                                      line: 917 EQ_imm(_intrp_exe)  # STATE = 0 -> interpreting.
-                0x0080c Load_word(0, 2, offset=0x4)                      line: 918 Load_word(R0, R2, 4)  # R0 <- Name field
-                0x00810 And_imm(0, 0, 0x80, u=False, v=False)            line: 919 And_imm(R0, R0, F_IMMED)
-                0x00814 NE_imm(0x7)                                      line: 920 NE_imm(_intrp_exe)  # word is IMMEDIATE.
-                0x00818 Add_imm(2, 2, 0x8, u=False, v=False)             line: 923 Add_imm(R2, R2, 8)  # Point from LFA to codeword.
-                0x0081c Mov_imm(1, 0x53c, u=False, v=False)              line: 924 Mov_imm(R1, _COMMA)  # Call comma to store it and increment HERE.
-                0x00820 T_link(1)                                        line: 925 T_link(R1)
-                0x00824 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00828 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x0082c Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00830 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-    _intrp_exe: 0x00834 Add_imm(2, 2, 0x8, u=False, v=False)             line: 929 Add_imm(R2, R2, 8)  # Point to the codeword
-                0x00838 Load_word(0, 2)                                  line: 930 Load_word(R0, R2)  # Get the address to which its codeword points...
-                0x0083c Mov(3, 2, u=False)                               line: 931 Mov(next_function, R2)  # DOCOL depends on this.
-                0x00840 T(0)                                             line: 932 T(R0)  # and jump to it.
-       PAI_dfa: 0x00844 0x000007ec                                       line: 131     dw(LINK) -- (in def_)
-                0x00848 0x69617003                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-           PAI: 0x0084c 0x00000850                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00850 Mov_imm(0, 0xe, u=True, v=False)                 line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x00854 Ior_imm(0, 0, 0x7f00, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x00858 Mov_imm(1, 0x1, u=True, v=False)                 line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x0085c Ior_imm(1, 1, 0x8000, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x00860 Mov_imm(8, 0xffff, u=True, v=False)              line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x00864 Ior_imm(8, 8, 0xffff, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x00868 Add(1, 1, 0, u=False)                            line: 954 Add(R1, R1, R0)
-                0x0086c Sub_imm(0, 0, 0x4e0, u=False, v=False)           line: 955 Sub_imm(R0, R0, 312 * 4)  # 312 words in font data.
-                0x00870 Mov_imm(2, 0x138, u=False, v=False)              line: 956 Mov_imm(R2, 13 * 24)
-     _pai_loop: 0x00874 Load_word(7, 0)                                  line: 959 Load_word(R7, R0)
-                0x00878 Xor(7, 7, 8, u=False)                            line: 960 Xor(R7, R7, R8)  #  Reverse video.
-                0x0087c Store_word(7, 1)                                 line: 961 Store_word(R7, R1)
-                0x00880 Add_imm(0, 0, 0x4, u=False, v=False)             line: 962 Add_imm(R0, R0, 4)
-                0x00884 Sub_imm(1, 1, 0x80, u=False, v=False)            line: 963 Sub_imm(R1, R1, 128)
-                0x00888 Sub_imm(2, 2, 0x1, u=False, v=False)             line: 964 Sub_imm(R2, R2, 1)
-                0x0088c EQ_imm(0x1)                                      line: 965 EQ_imm(_pai_done)
-                0x00890 T_imm(0xfffff8)                                  line: 966 T_imm(_pai_loop)
-     _pai_done: 0x00894 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00898 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x0089c Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x008a0 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-PAINT_CHAR_dfa: 0x008a4 0x00000844                                       line: 131     dw(LINK) -- (in def_)
-                0x008a8 0x6961700a                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-    PAINT_CHAR: 0x008ac 0x000008b0                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x008b0 Mov_imm(0, 0xe, u=True, v=False)                 line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x008b4 Ior_imm(0, 0, 0x7a20, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x008b8 Load_word(1, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x008bc Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x008c0 Sub_imm(1, 1, 0x21, u=False, v=False)            line: 1000 Sub_imm(R1, R1, ord('!'))  # R1 counts byte offset of char.
-                0x008c4 Asr_imm(2, 1, 0x2, u=False, v=False)             line: 1002 Asr_imm(R2, R1, 2)     # R2 = R1 / 4  Trim the two least bits.
-                0x008c8 Mul_imm(2, 2, 0x34, u=False, v=False)            line: 1003 Mul_imm(R2, R2, 52)    # R2 *= 13 words/char * 4 bytes/word.
-                0x008cc Add(0, 0, 2, u=False)                            line: 1004 Add(R0, R0, R2)        # Point R0 to char's first word in font.
-                0x008d0 And_imm(1, 1, 0x3, u=False, v=False)             line: 1005 And_imm(R1, R1, 0b11)  # Which byte in the word?
-                0x008d4 Add(0, 0, 1, u=False)                            line: 1006 Add(R0, R0, R1)        # Point R0 to char's first byte in font.
-                0x008d8 Load_word(1, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x008dc Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x008e0 Mov_imm(2, 0xe, u=True, v=False)                 line: 181     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
-                0x008e4 Ior_imm(2, 2, 0x7f00, u=False, v=False)          line: 182     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
-                0x008e8 Add(1, 1, 2, u=False)                            line: 1010 Add(R1, R1, R2)     # R1 = x + DISPLAY_START
-                0x008ec Mov_imm(7, 0x2ff, u=False, v=False)              line: 1011 Mov_imm(R7, 767)    # Display width - 1 in pixels. (TODO don't hardcod3 this.)
-                0x008f0 Load_word(2, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x008f4 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x008f8 Mul_imm(2, 2, 0xd, u=False, v=False)             line: 1013 Mul_imm(R2, R2, 13) # R2 = y in px  (13px/char height)
-                0x008fc Sub(2, 7, 2, u=False)                            line: 1014 Sub(R2, R7, R2)     # R2 = 768 - 1 - y
-                0x00900 Lsl_imm(2, 2, 0x7, u=False, v=False)             line: 1015 Lsl_imm(R2, R2, 7)  # R2 = (768 - 1 - y) * 128 bytes per line.
-                0x00904 Add(1, 1, 2, u=False)                            line: 1016 Add(R1, R1, R2)     # R1 = (768 - 1 - y) * 128 + x + DISPLAY_START
-                0x00908 Mov_imm(2, 0xd, u=False, v=False)                line: 1022 Mov_imm(R2, 13)  # Counter
-    _pchr_loop: 0x0090c Load_byte(7, 0)                                  line: 1025 Load_byte(R7, R0)
-                0x00910 Store_byte(7, 1)                                 line: 1027 Store_byte(R7, R1)
-                0x00914 Add_imm(0, 0, 0x4, u=False, v=False)             line: 1028 Add_imm(R0, R0, 4)
-                0x00918 Sub_imm(1, 1, 0x80, u=False, v=False)            line: 1029 Sub_imm(R1, R1, 128)
-                0x0091c Sub_imm(2, 2, 0x1, u=False, v=False)             line: 1030 Sub_imm(R2, R2, 1)
-                0x00920 EQ_imm(0x1)                                      line: 1031 EQ_imm(_pchr_done)
-                0x00924 T_imm(0xfffff9)                                  line: 1032 T_imm(_pchr_loop)
-    _pchr_done: 0x00928 Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x0092c Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00930 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00934 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
-       DUP_dfa: 0x00938 0x000008a4                                       line: 131     dw(LINK) -- (in def_)
-                0x0093c 0x50554403                                       line: 140         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
-           DUP: 0x00940 0x00000944                                       line: 161     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
-                0x00944 Load_word(0, 10)                                 line: 117     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
-                0x00948 Add_imm(10, 10, 0x4, u=False, v=False)           line: 118     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
-                0x0094c Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00950 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x00954 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 111     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
-                0x00958 Store_word(0, 10)                                line: 112     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
-                0x0095c Load_word(3, 14)                                 line:  91     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
-                0x00960 Load_word(4, 3)                                  line:  92     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
-                0x00964 Add_imm(14, 14, 0x4, u=False, v=False)           line:  93     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
-                0x00968 T(4)                                             line:  94     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+         DOCOL: 0x00028 Sub_imm(12, 12, 0x4, u=False, v=False)           line: 119     Sub_imm(Rstack, Rstack, 4)  # Rstack -= 4 -- (in PUSHRSP)
+                0x0002c Store_word(14, 12)                               line: 120     Store_word(reg, Rstack)     # reg -> RAM[Rstack] -- (in PUSHRSP)
+                0x00030 Add_imm(14, 3, 0x4, u=False, v=False)            line: 245 Add_imm(IP, next_function, 4)
+                0x00034 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00038 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0003c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00040 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+          main: 0x00044 Mov_imm(10, 0x4000, u=False, v=False)            line: 255 Mov_imm(Dstack, DATA_STACK)
+                0x00048 Mov_imm(12, 0x6000, u=False, v=False)            line: 256 Mov_imm(Rstack, RETURN_STACK)
+                0x0004c Mov_imm(14, 0x60, u=False, v=False)              line: 257 Mov_imm(IP, cold_start)
+                0x00050 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00054 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00058 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0005c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+    cold_start: 0x00060 0x0000006c                                       line: 267 dw(REPL)  # IP set to point here at start
+      REPL_dfa: 0x00064 0x00000000                                       line: 151     dw(LINK) -- (in def_)
+                0x00068 0x50455204                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          REPL: 0x0006c 0x00000028                                       line: 173     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
+                0x00070 0x0000081c                                       line: 278 dw(INTERPRET)
+                0x00074 0x00000738                                       line: 279 dw(BRANCH)
+                0x00078 0xfffffff8                                       line: 280 dw(s_to_u_32(-8))  # Loop back to INTERPRET.
+      DROP_dfa: 0x0007c 0x00000064                                       line: 151     dw(LINK) -- (in def_)
+                0x00080 0x4f524404                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          DROP: 0x00084 0x00000088                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00088 Add_imm(10, 10, 0x4, u=False, v=False)           line: 284 Add_imm(Dstack, Dstack, 4)  # drop top of stack
+                0x0008c Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00090 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00094 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00098 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      EXIT_dfa: 0x0009c 0x0000007c                                       line: 151     dw(LINK) -- (in def_)
+                0x000a0 0x49584504                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          EXIT: 0x000a4 0x000000a8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x000a8 Load_word(14, 12)                                line: 125     Load_word(reg, Rstack)      # reg <- RAM[Rstack] -- (in POPRSP)
+                0x000ac Add_imm(12, 12, 0x4, u=False, v=False)           line: 126     Add_imm(Rstack, Rstack, 4)  # Rstack += 4 -- (in POPRSP)
+                0x000b0 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x000b4 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x000b8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x000bc T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+       LIT_dfa: 0x000c0 0x0000009c                                       line: 151     dw(LINK) -- (in def_)
+                0x000c4 0x54494c03                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           LIT: 0x000c8 0x000000cc                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x000cc Load_word(0, 14)                                 line: 294 Load_word(R0, IP)   # Don't run the next cell, load it,
+                0x000d0 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x000d4 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x000d8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 296 Add_imm(IP, IP, 4)  # then skip it.
+                0x000dc Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x000e0 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x000e4 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x000e8 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      SWAP_dfa: 0x000ec 0x000000c0                                       line: 151     dw(LINK) -- (in def_)
+                0x000f0 0x41575304                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          SWAP: 0x000f4 0x000000f8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x000f8 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x000fc Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00100 Load_word(1, 10)                                 line: 302 Load_word(R1, 10)
+                0x00104 Store_word(0, 10)                                line: 303 Store_word(R0, 10)
+                0x00108 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x0010c Store_word(1, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00110 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00114 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00118 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0011c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+       SUB_dfa: 0x00120 0x000000ec                                       line: 151     dw(LINK) -- (in def_)
+                0x00124 0x00002d01                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           SUB: 0x00128 0x0000012c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0012c Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00130 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00134 Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00138 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x0013c Sub(1, 1, 0, u=False)                            line: 311 Sub(R1, R1, R0)
+                0x00140 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00144 Store_word(1, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00148 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x0014c Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00150 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00154 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+       MUL_dfa: 0x00158 0x00000120                                       line: 151     dw(LINK) -- (in def_)
+                0x0015c 0x00002a01                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           MUL: 0x00160 0x00000164                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00164 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00168 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x0016c Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00170 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00174 Mul(1, 1, 0, u=False)                            line: 319 Mul(R1, R1, R0)
+                0x00178 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x0017c Store_word(1, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00180 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00184 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00188 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0018c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+       EQU_dfa: 0x00190 0x00000158                                       line: 151     dw(LINK) -- (in def_)
+                0x00194 0x00003d01                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           EQU: 0x00198 0x0000019c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0019c Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x001a0 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x001a4 Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x001a8 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x001ac Sub(1, 1, 0, u=False)                            line: 327 Sub(R1, R1, R0)
+                0x001b0 Mov(0, 0, u=True, v=True)  # R0 <- (N,Z,C,OV, 0..01010000) line: 328 Mov(R0, 0, u=True, v=True)  # Get flags, c register is ignored.
+                0x001b4 Asr_imm(0, 0, 0x1e, u=False, v=False)            line: 329 Asr_imm(R0, R0, 30)  # Z is the 31st bit, penultimate from the MSB.
+                0x001b8 And_imm(0, 0, 0x1, u=False, v=False)             line: 330 And_imm(R0, R0, 1)  # Mask out N flag.
+                0x001bc Xor_imm(0, 0, 0x1, u=False, v=False)             line: 331 Xor_imm(R0, R0, 1)  # flip the (shifted) Z bit.
+                0x001c0 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x001c4 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x001c8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x001cc T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      INCR_dfa: 0x001d0 0x00000190                                       line: 151     dw(LINK) -- (in def_)
+                0x001d4 0x002b3102                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          INCR: 0x001d8 0x000001dc                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x001dc Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x001e0 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x001e4 Add_imm(0, 0, 0x1, u=False, v=False)             line: 337 Add_imm(R0, R0, 1)
+                0x001e8 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x001ec Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x001f0 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x001f4 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x001f8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x001fc T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      DECR_dfa: 0x00200 0x000001d0                                       line: 151     dw(LINK) -- (in def_)
+                0x00204 0x002d3102                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          DECR: 0x00208 0x0000020c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0020c Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00210 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00214 Sub_imm(0, 0, 0x1, u=False, v=False)             line: 344 Sub_imm(R0, R0, 1)
+                0x00218 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x0021c Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00220 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00224 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00228 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0022c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+  ADDSTORE_dfa: 0x00230 0x00000200                                       line: 151     dw(LINK) -- (in def_)
+                0x00234 0x00212b02                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+      ADDSTORE: 0x00238 0x0000023c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0023c Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00240 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00244 Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00248 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x0024c Load_word(2, 0)                                  line: 352 Load_word(R2, R0)
+                0x00250 Add(2, 2, 1, u=False)                            line: 353 Add(R2, R2, R1)
+                0x00254 Store_word(2, 0)                                 line: 354 Store_word(R2, R0)
+                0x00258 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x0025c Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00260 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00264 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+       KEY_dfa: 0x00268 0x00000230                                       line: 151     dw(LINK) -- (in def_)
+                0x0026c 0x59454b03                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           KEY: 0x00270 0x00000274                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00274 Mov_imm(1, 0x2c8, u=False, v=False)              line: 212     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
+                0x00278 T_link(1)                                        line: 213     T_link(R1) -- (in busywait_on_serial_ready)
+                0x0027c Load_word(0, 1, offset=0xffffc)                  line: 365 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+                0x00280 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00284 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00288 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x0028c Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00290 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00294 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      EMIT_dfa: 0x00298 0x00000268                                       line: 151     dw(LINK) -- (in def_)
+                0x0029c 0x494d4504                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          EMIT: 0x002a0 0x000002a4                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x002a4 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x002a8 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x002ac Mov_imm(1, 0x2c8, u=False, v=False)              line: 212     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
+                0x002b0 T_link(1)                                        line: 213     T_link(R1) -- (in busywait_on_serial_ready)
+                0x002b4 Store_word(0, 1, offset=0xffffc)                 line: 372 Store_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+                0x002b8 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x002bc Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x002c0 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x002c4 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+          _KEY: 0x002c8 Mov_imm(1, 0xffff, u=True, v=False)              line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x002cc Ior_imm(1, 1, 0xffcc, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x002d0 Load_word(2, 1)                                  line: 388 Load_word(R2, R1)
+                0x002d4 EQ_imm(0x3fff48)                                 line: 389 EQ_imm(negative_offset_24(-8))  # if R2==0 repeat
+                0x002d8 T(15)                                            line: 394 T(15)  # return
+        _blank: 0x002dc Sub_imm(2, 0, 0x20, u=False, v=False)            line: 412 Sub_imm(R2, R0, 32)  # Is it a space char?
+                0x002e0 EQ(15)                                           line: 413 EQ(15)
+                0x002e4 Sub_imm(2, 0, 0xa, u=False, v=False)             line: 414 Sub_imm(R2, R0, 10)  # Is it a newline char?
+                0x002e8 EQ(15)                                           line: 415 EQ(15)
+                0x002ec Sub_imm(2, 0, 0x9, u=False, v=False)             line: 416 Sub_imm(R2, R0, 9)  # Is it a tab char?
+                0x002f0 EQ(15)                                           line: 417 EQ(15)
+                0x002f4 Sub_imm(2, 0, 0xb, u=False, v=False)             line: 418 Sub_imm(R2, R0, 11)  # Is it a '\x0b' char?
+                0x002f8 EQ(15)                                           line: 419 EQ(15)
+                0x002fc Sub_imm(2, 0, 0xc, u=False, v=False)             line: 420 Sub_imm(R2, R0, 12)  # Is it a '\x0c' char?
+                0x00300 EQ(15)                                           line: 421 EQ(15)
+                0x00304 Sub_imm(2, 0, 0xd, u=False, v=False)             line: 422 Sub_imm(R2, R0, 13)  # Is it a carriage return char?
+                0x00308 T(15)                                            line: 423 T(15)  # return
+ _skip_comment: 0x0030c Sub_imm(2, 0, 0x5c, u=False, v=False)            line: 437 Sub_imm(R2, R0, ord('\\'))  # Is it a '\' char?
+                0x00310 NE(15)                                           line: 438 NE(15)                      # It's not a '\' char, return.
+_skip_cmt_loop: 0x00314 Load_word(2, 1)                                  line: 441 Load_word(R2, R1)           # Get the serial port status.
+                0x00318 EQ_imm(0xfffffe)                                 line: 442 EQ_imm(_skip_cmt_loop)      # until serial port status != 0
+                0x0031c Load_word(0, 1, offset=0xffffc)                  line: 443 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+                0x00320 Sub_imm(2, 0, 0xa, u=False, v=False)             line: 444 Sub_imm(R2, R0, ord('\n'))  # Is it a newline char?
+                0x00324 EQ(15)                                           line: 445 EQ(15)  # We have reached the end of the line, return.
+                0x00328 T_imm(0xfffffa)                                  line: 446 T_imm(_skip_cmt_loop)   # ...until newline.
+   WORD_BUFFER: 0x0032c 0x00000000
+                0x00330 0x00000000
+                0x00334 0x00000000
+                0x00338 0x00000000
+                0x0033c 0x00000000
+                0x00340 0x00000000
+                0x00344 0x00000000
+                0x00348 0x00000000
+      WORD_dfa: 0x0034c 0x00000298                                       line: 151     dw(LINK) -- (in def_)
+                0x00350 0x524f5704                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          WORD: 0x00354 0x00000358                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+     _word_key: 0x00358 Mov_imm(1, 0x2c8, u=False, v=False)              line: 212     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
+                0x0035c T_link(1)                                        line: 213     T_link(R1) -- (in busywait_on_serial_ready)
+                0x00360 Load_word(0, 1, offset=0xffffc)                  line: 466 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+                0x00364 Mov_imm(2, 0x30c, u=False, v=False)              line: 468 Mov_imm(R2, _skip_comment)  # Skip line comments.
+                0x00368 T_link(2)                                        line: 469 T_link(R2)
+                0x0036c Mov_imm(1, 0x2dc, u=False, v=False)              line: 471 Mov_imm(R1, _blank)  # Is it a space char?
+                0x00370 T_link(1)                                        line: 472 T_link(R1)
+                0x00374 EQ_imm(0xfffff8)                                 line: 473 EQ_imm(_word_key)  # then get another char
+                0x00378 Mov_imm(6, 0x32c, u=False, v=False)              line: 476 Mov_imm(word_pointer, WORD_BUFFER)
+                0x0037c Mov_imm(5, 0x0, u=False, v=False)                line: 477 Mov_imm(word_counter, 0)
+                0x00380 Store_word(5, 6)                                 line: 478 Store_word(word_counter, word_pointer)  # Zero out the first word of WORD_BUFFER.
+                0x00384 Add_imm(6, 6, 0x1, u=False, v=False)             line: 481 Add_imm(word_pointer, word_pointer, 1)  # Leave a byte for the length.
+  _find_length: 0x00388 Sub_imm(2, 5, 0x20, u=False, v=False)            line: 485 Sub_imm(R2, word_counter, 32)
+                0x0038c EQ_imm(0xfffff2)                                 line: 486 EQ_imm(_word_key)  # try again.
+                0x00390 Store_byte(0, 6)                                 line: 489 Store_byte(R0, word_pointer)
+                0x00394 Add_imm(6, 6, 0x1, u=False, v=False)             line: 490 Add_imm(word_pointer, word_pointer, 1)
+                0x00398 Add_imm(5, 5, 0x1, u=False, v=False)             line: 491 Add_imm(word_counter, word_counter, 1)
+                0x0039c Mov_imm(1, 0x2c8, u=False, v=False)              line: 212     Mov_imm(R1, _KEY) -- (in busywait_on_serial_ready)
+                0x003a0 T_link(1)                                        line: 213     T_link(R1) -- (in busywait_on_serial_ready)
+                0x003a4 Load_word(0, 1, offset=0xffffc)                  line: 495 Load_word(R0, R1, negative_offset_20(-4))  # serial port is 4 bytes lower.
+                0x003a8 Mov_imm(1, 0x2dc, u=False, v=False)              line: 498 Mov_imm(R1, _blank)
+                0x003ac T_link(1)                                        line: 499 T_link(R1)
+                0x003b0 NE_imm(0xfffff5)                                 line: 500 NE_imm(_find_length)  # No, keep getting chars to the buffer
+                0x003b4 Mov_imm(6, 0x32c, u=False, v=False)              line: 504 Mov_imm(word_pointer, WORD_BUFFER)
+                0x003b8 Store_byte(5, 6)                                 line: 505 Store_byte(word_counter, word_pointer)
+                0x003bc Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x003c0 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x003c4 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x003c8 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      FIND_dfa: 0x003cc 0x0000034c                                       line: 151     dw(LINK) -- (in def_)
+                0x003d0 0x4e494604                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          FIND: 0x003d4 0x000003d8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x003d8 Mov_imm(6, 0x32c, u=False, v=False)              line: 518 Mov_imm(word_pointer, WORD_BUFFER)
+                0x003dc Load_word(5, 6)                                  line: 520 Load_word(word_counter, word_pointer)
+                0x003e0 Mov_imm(2, 0xffff, u=True, v=False)              line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x003e4 Ior_imm(2, 2, 0xff7f, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x003e8 Mov_imm(0, 0x550, u=False, v=False)              line: 525 Mov_imm(R0, LATEST_var)
+                0x003ec Load_word(0, 0)                                  line: 526 Load_word(R0, R0)          # Point R0 to latest word's LFA.
+       _FIND_1: 0x003f0 Load_word(1, 0, offset=0x4)                      line: 528 Load_word(R1, R0, 4)       # load a word of the name field.
+                0x003f4 And(1, 1, 2, u=False)                            line: 529 And(R1, R1, R2)            # Clear the IMMEDIATE flag, if any.
+                0x003f8 Sub(1, 1, 5, u=False)                            line: 530 Sub(R1, R1, word_counter)  # Compare.
+                0x003fc EQ_imm(0x2)                                      line: 531 EQ_imm(_found)             # If this is the word...
+                0x00400 Load_word(0, 0)                                  line: 537 Load_word(R0, R0)  # Load the address of the next link field into R0
+                0x00404 NE_imm(0xfffffa)                                 line: 538 NE_imm(_FIND_1)  # Check the next word.
+        _found: 0x00408 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x0040c Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00410 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00414 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00418 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0041c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+    NUMBER_dfa: 0x00420 0x000003cc                                       line: 151     dw(LINK) -- (in def_)
+                0x00424 0x4d554e06                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+        NUMBER: 0x00428 0x0000042c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0042c Mov_imm(6, 0x32c, u=False, v=False)              line: 577 Mov_imm(word_pointer, WORD_BUFFER)
+                0x00430 Load_byte(5, 6)                                  line: 578 Load_byte(word_counter, word_pointer)
+                0x00434 Mov_imm(2, 0x0, u=False, v=False)                line: 579 Mov_imm(R2, 0)  # use R2 as the accumulator for the number's value
+                0x00438 Add_imm(6, 6, 0x1, u=False, v=False)             line: 581 Add_imm(word_pointer, word_pointer, 1)  # Point to first char.
+                0x0043c Load_byte(0, 6)                                  line: 582 Load_byte(R0, word_pointer)  # Load it.
+                0x00440 Sub_imm(0, 0, 0x24, u=False, v=False)            line: 583 Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
+                0x00444 NE_imm(0xf)                                      line: 584 NE_imm(_NUM_fin)
+                0x00448 Sub_imm(5, 5, 0x1, u=False, v=False)             line: 587 Sub_imm(word_counter, word_counter, 1)  # we have parsed one '$' char.
+      _NUM_hex: 0x0044c Add_imm(6, 6, 0x1, u=False, v=False)             line: 590 Add_imm(word_pointer, word_pointer, 1)  # Point to next char.
+                0x00450 Load_byte(0, 6)                                  line: 591 Load_byte(R0, word_pointer)  # Load it.
+                0x00454 Sub_imm(0, 0, 0x30, u=False, v=False)            line: 593 Sub_imm(R0, R0, ord('0'))
+                0x00458 LT_imm(0xa)                                      line: 594 LT_imm(_NUM_fin)  # Is its ASCII value lower than '0'?
+                0x0045c Sub_imm(1, 0, 0x9, u=False, v=False)             line: 596 Sub_imm(R1, R0, 9)  # Is it 0-9?
+                0x00460 LE_imm(0x5)                                      line: 597 LE_imm(_NUM_add)  # It is!
+                0x00464 Sub_imm(0, 0, 0x31, u=False, v=False)            line: 603 Sub_imm(R0, R0, 49)  # so now '1'..'6' -> 0..5
+                0x00468 LT_imm(0x6)                                      line: 604 LT_imm(_NUM_fin)  # Its ASCII value is less than 'a', nope out.
+                0x0046c Sub_imm(1, 0, 0x5, u=False, v=False)             line: 607 Sub_imm(R1, R0, 5)  # Is it a-f?
+                0x00470 GT_imm(0x4)                                      line: 608 GT_imm(_NUM_fin)  # nope, nope out
+                0x00474 Add_imm(0, 0, 0xa, u=False, v=False)             line: 610 Add_imm(R0, R0, 10)  # 0..5 -> 10..15
+      _NUM_add: 0x00478 Add(2, 2, 0, u=False)                            line: 613 Add( R2, R2, R0)  # Add it to the accumulator.
+                0x0047c Sub_imm(5, 5, 0x1, u=False, v=False)             line: 615 Sub_imm(word_counter, word_counter, 1)  # we have parsed a digit char.
+                0x00480 NE_imm(0x8)                                      line: 616 NE_imm(_NUM_foo)  # More digits? Keep going.
+      _NUM_fin: 0x00484 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00488 Store_word(2, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x0048c Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00490 Store_word(5, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00494 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00498 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0049c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x004a0 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      _NUM_foo: 0x004a4 Lsl_imm(2, 2, 0x4, u=False, v=False)             line: 625 Lsl_imm(R2, R2, 4)  # accumulator *= 16
+                0x004a8 T_imm(0xffffe8)                                  line: 626 T_imm(_NUM_hex)  # Go get the next digit.
+    CREATE_dfa: 0x004ac 0x00000420                                       line: 151     dw(LINK) -- (in def_)
+                0x004b0 0x45524306                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+        CREATE: 0x004b4 0x000004b8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x004b8 Mov_imm(0, 0x524, u=False, v=False)              line: 637 Mov_imm(R0, HERE__var)  # R0 <- &HERE
+                0x004bc Load_word(0, 0)                                  line: 638 Load_word(R0, R0)       # R0 <- ram[HERE]
+                0x004c0 Mov_imm(1, 0x550, u=False, v=False)              line: 640 Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
+                0x004c4 Load_word(2, 1)                                  line: 641 Load_word(R2, R1)        # R2 <- ram[LATEST]
+                0x004c8 Store_word(2, 0)                                 line: 643 Store_word(R2, R0)  # value of LATEST -> ram[HERE]
+                0x004cc Store_word(0, 1)                                 line: 644 Store_word(R0, R1)  # value of HERE (now LFA for new word) -> ram[LATEST_var]
+                0x004d0 Add_imm(0, 0, 0x4, u=False, v=False)             line: 646 Add_imm(R0, R0, 4)  # HERE += 4
+                0x004d4 Mov_imm(6, 0x32c, u=False, v=False)              line: 649 Mov_imm(word_pointer, WORD_BUFFER)
+                0x004d8 Load_word(1, 6)                                  line: 660 Load_word(R1, word_pointer)  # Get the word from WORD_BUFFER.
+                0x004dc Store_word(1, 0)                                 line: 661 Store_word(R1, R0)  # Store word to HERE.
+                0x004e0 Add_imm(0, 0, 0x4, u=False, v=False)             line: 662 Add_imm(R0, R0, 4)  # HERE += 4
+                0x004e4 Mov_imm(1, 0x524, u=False, v=False)              line: 672 Mov_imm(R1, HERE__var)  # R1 <- &HERE
+                0x004e8 Store_word(0, 1)                                 line: 673 Store_word(R0, R1)      # value of HERE -> ram[HERE]
+                0x004ec Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x004f0 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x004f4 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x004f8 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     HERE__dfa: 0x004fc 0x000004ac                                       line: 151     dw(LINK) -- (in def_)
+                0x00500 0x52454804                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         HERE_: 0x00504 0x00000508                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00508 Mov_imm(0, 0x524, u=False, v=False)              line: 191     Mov_imm(R0, LABEL_var) -- (in defvar)
+                0x0050c Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00510 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00514 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00518 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0051c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00520 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     HERE__var: 0x00524 0x000009fc                                       line: 196     dw(initial) -- (in defvar)
+    LATEST_dfa: 0x00528 0x000004fc                                       line: 151     dw(LINK) -- (in def_)
+                0x0052c 0x54414c06                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+        LATEST: 0x00530 0x00000534                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00534 Mov_imm(0, 0x550, u=False, v=False)              line: 191     Mov_imm(R0, LABEL_var) -- (in defvar)
+                0x00538 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x0053c Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00540 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00544 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00548 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0054c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+    LATEST_var: 0x00550 0x000009c8                                       line: 196     dw(initial) -- (in defvar)
+     STATE_dfa: 0x00554 0x00000528                                       line: 151     dw(LINK) -- (in def_)
+                0x00558 0x41545305                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         STATE: 0x0055c 0x00000560                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00560 Mov_imm(0, 0x57c, u=False, v=False)              line: 191     Mov_imm(R0, LABEL_var) -- (in defvar)
+                0x00564 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00568 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x0056c Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00570 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00574 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00578 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     STATE_var: 0x0057c 0x00000000                                       line: 196     dw(initial) -- (in defvar)
+   __DOCOL_dfa: 0x00580 0x00000554                                       line: 151     dw(LINK) -- (in def_)
+                0x00584 0x434f4405                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+       __DOCOL: 0x00588 0x0000058c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0058c Mov_imm(0, 0x28, u=False, v=False)               line: 200     Mov_imm(R0, value) -- (in defconst)
+                0x00590 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00594 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00598 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x0059c Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x005a0 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x005a4 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     COMMA_dfa: 0x005a8 0x00000580                                       line: 151     dw(LINK) -- (in def_)
+                0x005ac 0x00002c01                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         COMMA: 0x005b0 0x000005b4                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x005b4 Load_word(2, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x005b8 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x005bc Mov_imm(1, 0x5d4, u=False, v=False)              line: 700 Mov_imm(R1, _COMMA)
+                0x005c0 T_link(1)                                        line: 701 T_link(R1)
+                0x005c4 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x005c8 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x005cc Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x005d0 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+        _COMMA: 0x005d4 Mov_imm(0, 0x524, u=False, v=False)              line: 710 Mov_imm(R0, HERE__var)  # R0 <- &HERE
+                0x005d8 Load_word(1, 0)                                  line: 711 Load_word(R1, R0)       # R1 <- ram[HERE]
+                0x005dc Store_word(2, 1)                                 line: 712 Store_word(R2, R1)      # R2 -> ram[HERE]
+                0x005e0 Add_imm(1, 1, 0x4, u=False, v=False)             line: 713 Add_imm(R1, R1, 4)      # HERE += 4
+                0x005e4 Store_word(1, 0)                                 line: 714 Store_word(R1, R0)      # HERE -> ram[HERE]
+                0x005e8 T(15)                                            line: 715 T(15)  # return
+     LBRAC_dfa: 0x005ec 0x000005a8                                       line: 151     dw(LINK) -- (in def_)
+                0x005f0 0x00005b81                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         LBRAC: 0x005f4 0x000005f8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x005f8 Mov_imm(0, 0x57c, u=False, v=False)              line: 729 Mov_imm(R0, STATE_var)
+                0x005fc Mov_imm(1, 0x0, u=False, v=False)                line: 730 Mov_imm(R1, 0)
+                0x00600 Store_word(1, 0)                                 line: 731 Store_word(R1, R0)
+                0x00604 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00608 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0060c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00610 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     RBRAC_dfa: 0x00614 0x000005ec                                       line: 151     dw(LINK) -- (in def_)
+                0x00618 0x00005d01                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         RBRAC: 0x0061c 0x00000620                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00620 Mov_imm(0, 0x57c, u=False, v=False)              line: 735 Mov_imm(R0, STATE_var)
+                0x00624 Mov_imm(1, 0x1, u=False, v=False)                line: 736 Mov_imm(R1, 1)
+                0x00628 Store_word(1, 0)                                 line: 737 Store_word(R1, R0)
+                0x0062c Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00630 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00634 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00638 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     COLON_dfa: 0x0063c 0x00000614                                       line: 151     dw(LINK) -- (in def_)
+                0x00640 0x00003a01                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         COLON: 0x00644 0x00000028                                       line: 173     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
+                0x00648 0x00000354                                       line: 760 dw(WORD)  # "Get the name of the new word"
+                0x0064c 0x000004b4                                       line: 761 dw(CREATE)  # "CREATE the dictionary entry / header"
+                0x00650 0x000000c8                                       line: 762 dw(LIT)  # "Append DOCOL  (the codeword)."
+                0x00654 0x00000028                                       line: 763 dw(DOCOL)
+                0x00658 0x000005b0                                       line: 764 dw(COMMA)
+                0x0065c 0x00000530                                       line: 765 dw(LATEST)  # "Make the word hidden (see below for definition)."
+                0x00660 0x0000078c                                       line: 766 dw(FETCH)
+                0x00664 0x000006d8                                       line: 767 dw(HIDDEN)
+                0x00668 0x0000061c                                       line: 768 dw(RBRAC)  # "Go into compile mode."
+                0x0066c 0x000000a4                                       line: 769 dw(EXIT)  # "Return from the function."
+ SEMICOLON_dfa: 0x00670 0x0000063c                                       line: 151     dw(LINK) -- (in def_)
+                0x00674 0x00003b81                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+     SEMICOLON: 0x00678 0x00000028                                       line: 173     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
+                0x0067c 0x000000c8                                       line: 778 dw(LIT)  # "Append EXIT (so the word will return)."
+                0x00680 0x000000a4                                       line: 779 dw(EXIT)
+                0x00684 0x000005b0                                       line: 780 dw(COMMA)
+                0x00688 0x00000530                                       line: 781 dw(LATEST)  # "Toggle hidden flag -- unhide the word (see below for definition)."
+                0x0068c 0x0000078c                                       line: 782 dw(FETCH)
+                0x00690 0x000006d8                                       line: 783 dw(HIDDEN)
+                0x00694 0x000005f4                                       line: 784 dw(LBRAC)  # "Go back to IMMEDIATE mode."
+                0x00698 0x000000a4                                       line: 785 dw(EXIT)  # "Return from the function."
+ IMMEDIATE_dfa: 0x0069c 0x00000670                                       line: 151     dw(LINK) -- (in def_)
+                0x006a0 0x4d4d4989                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+     IMMEDIATE: 0x006a4 0x000006a8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x006a8 Mov_imm(0, 0x550, u=False, v=False)              line: 794 Mov_imm(R0, LATEST_var)  # R0 <- &LATEST
+                0x006ac Load_word(1, 0)                                  line: 795 Load_word(R1, R0)        # R1 <- ram[LATEST]
+                0x006b0 Add_imm(1, 1, 0x4, u=False, v=False)             line: 796 Add_imm(R1, R1, 4)       # "Point to name/flags byte."
+                0x006b4 Load_word(0, 1)                                  line: 797 Load_word(R0, R1)
+                0x006b8 Xor_imm(0, 0, 0x80, u=False, v=False)            line: 798 Xor_imm(R0, R0, F_IMMED) # Toggle IMMEDIATE bit.
+                0x006bc Store_word(0, 1)                                 line: 799 Store_word(R0, R1)
+                0x006c0 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x006c4 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x006c8 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x006cc T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+    HIDDEN_dfa: 0x006d0 0x0000069c                                       line: 151     dw(LINK) -- (in def_)
+                0x006d4 0x44494806                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+        HIDDEN: 0x006d8 0x000006dc                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x006dc Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x006e0 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x006e4 Add_imm(1, 1, 0x4, u=False, v=False)             line: 810 Add_imm(R1, R1, 4)  # "Point to name/flags byte."
+                0x006e8 Load_word(0, 1)                                  line: 811 Load_word(R0, R1)
+                0x006ec Xor_imm(0, 0, 0x20, u=False, v=False)            line: 812 Xor_imm(R0, R0, F_HIDDEN)  # "Toggle the HIDDEN bit."
+                0x006f0 Store_word(0, 1)                                 line: 813 Store_word(R0, R1)
+                0x006f4 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x006f8 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x006fc Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00700 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+      TICK_dfa: 0x00704 0x000006d0                                       line: 151     dw(LINK) -- (in def_)
+                0x00708 0x00002701                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+          TICK: 0x0070c 0x00000710                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00710 Load_word(0, 14)                                 line: 830 Load_word(R0, IP)   # Get the address of the next codeword.
+                0x00714 Add_imm(14, 14, 0x4, u=False, v=False)           line: 831 Add_imm(IP, IP, 4)  # Skip it.
+                0x00718 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x0071c Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00720 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00724 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00728 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x0072c T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+    BRANCH_dfa: 0x00730 0x00000704                                       line: 151     dw(LINK) -- (in def_)
+                0x00734 0x41524206                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+        BRANCH: 0x00738 0x0000073c                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x0073c Load_word(0, 14)                                 line: 842 Load_word(R0, IP)  # Get the offset.
+                0x00740 Add(14, 14, 0, u=False)                          line: 844 Add(IP, IP, R0)    # IP += offset
+                0x00744 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00748 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0074c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00750 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+   ZBRANCH_dfa: 0x00754 0x00000730                                       line: 151     dw(LINK) -- (in def_)
+                0x00758 0x52423007                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+       ZBRANCH: 0x0075c 0x00000760                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00760 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00764 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00768 Add_imm(0, 0, 0x0, u=False, v=False)             line: 855 Add_imm(R0, R0, 0)  # Set condition flags.
+                0x0076c EQ_imm(0xfffff3)                                 line: 856 EQ_imm(BRANCH + 4)  # Zero? Delegate to BRANCH.
+                0x00770 Add_imm(14, 14, 0x4, u=False, v=False)           line: 857 Add_imm(IP, IP, 4)  # Non-zero? Skip offset.
+                0x00774 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00778 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0077c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00780 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     FETCH_dfa: 0x00784 0x00000754                                       line: 151     dw(LINK) -- (in def_)
+                0x00788 0x00004001                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         FETCH: 0x0078c 0x00000790                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00790 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00794 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00798 Load_word(0, 0)                                  line: 868 Load_word(R0, R0)
+                0x0079c Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x007a0 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x007a4 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x007a8 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x007ac Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x007b0 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+     STORE_dfa: 0x007b4 0x00000784                                       line: 151     dw(LINK) -- (in def_)
+                0x007b8 0x00002101                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+         STORE: 0x007bc 0x000007c0                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x007c0 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x007c4 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x007c8 Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x007cc Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x007d0 Store_word(1, 0)                                 line: 881 Store_word(R1, R0)
+                0x007d4 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x007d8 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x007dc Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x007e0 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+ IS_NUMBER_dfa: 0x007e4 0x000007b4                                       line: 151     dw(LINK) -- (in def_)
+                0x007e8 0x003f2302                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+     IS_NUMBER: 0x007ec 0x000007f0                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x007f0 Mov_imm(6, 0x32c, u=False, v=False)              line: 897 Mov_imm(word_pointer, WORD_BUFFER)
+                0x007f4 Load_byte(0, 6, offset=0x1)                      line: 898 Load_byte(R0, word_pointer, 1)  # Load first char of word.
+                0x007f8 Sub_imm(0, 0, 0x24, u=False, v=False)            line: 899 Sub_imm(R0, R0, ord('$'))  # Is it a '$'?
+                0x007fc Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x00800 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x00804 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x00808 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x0080c Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00810 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+ INTERPRET_dfa: 0x00814 0x000007e4                                       line: 151     dw(LINK) -- (in def_)
+                0x00818 0x544e4909                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+     INTERPRET: 0x0081c 0x00000028                                       line: 173     dw(DOCOL)  # codeword points to DOCOL colon word mini-interpreter. -- (in defword)
+                0x00820 0x00000354                                       line: 910 dw(WORD)
+                0x00824 0x000007ec                                       line: 911 dw(IS_NUMBER)
+                0x00828 0x0000075c                                       line: 912 dw(ZBRANCH)
+                0x0082c 0x0000001c                                       line: 913 dw(s_to_u_32(4 * 7))  # It could be a number...
+                0x00830 0x000003d4                                       line: 916 dw(FIND)
+                0x00834 0x000009d0                                       line: 917 dw(DUP)
+                0x00838 0x0000075c                                       line: 918 dw(ZBRANCH)  # Zero means it wasn't in the dictionary,
+                0x0083c 0x0000001c                                       line: 919 dw(s_to_u_32(4 * 7))
+                0x00840 0x0000088c                                       line: 922 dw(_INTERP)
+                0x00844 0x000000a4                                       line: 923 dw(EXIT)
+                0x00848 0x00000428                                       line: 926 dw(NUMBER)
+                0x0084c 0x000009d0                                       line: 927 dw(DUP)
+                0x00850 0x0000075c                                       line: 928 dw(ZBRANCH)  # No chars left?  It is a number!
+                0x00854 0x00000008                                       line: 929 dw(s_to_u_32(4 * 2))
+                0x00858 0x000000a4                                       line: 933 dw(EXIT)
+                0x0085c 0x00000084                                       line: 936 dw(DROP)
+                0x00860 0x0000055c                                       line: 940 dw(STATE)
+                0x00864 0x0000078c                                       line: 941 dw(FETCH)
+                0x00868 0x0000075c                                       line: 942 dw(ZBRANCH)  #  STATE = 0 -> interpreting.
+                0x0086c 0x00000014                                       line: 943 dw(s_to_u_32(4 * 5))  # to EXIT
+                0x00870 0x000000c8                                       line: 946 dw(LIT)
+                0x00874 0x000000c8                                       line: 947 dw(LIT)
+                0x00878 0x000005b0                                       line: 948 dw(COMMA)  # write the address of the codeword of LIT
+                0x0087c 0x000005b0                                       line: 949 dw(COMMA)  # then the value itself.
+                0x00880 0x000000a4                                       line: 951 dw(EXIT)  # Just leave the number itself on the stack.
+   _INTERP_dfa: 0x00884 0x00000814                                       line: 151     dw(LINK) -- (in def_)
+                0x00888 0x4e495f27                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+       _INTERP: 0x0088c 0x00000890                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00890 Load_word(2, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00894 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00898 Mov_imm(0, 0x57c, u=False, v=False)              line: 959 Mov_imm(R0, STATE_var)  # R0 <- &STATE
+                0x0089c Load_word(0, 0)                                  line: 960 Load_word(R0, R0)  # R0 <- ram[STATE]
+                0x008a0 EQ_imm(0xa)                                      line: 961 EQ_imm(_intrp_exe)  # STATE = 0 -> interpreting.
+                0x008a4 Load_word(0, 2, offset=0x4)                      line: 962 Load_word(R0, R2, 4)  # R0 <- Name field
+                0x008a8 And_imm(0, 0, 0x80, u=False, v=False)            line: 963 And_imm(R0, R0, F_IMMED)
+                0x008ac NE_imm(0x7)                                      line: 964 NE_imm(_intrp_exe)  # word is IMMEDIATE.
+                0x008b0 Add_imm(2, 2, 0x8, u=False, v=False)             line: 967 Add_imm(R2, R2, 8)  # Point from LFA to codeword.
+                0x008b4 Mov_imm(1, 0x5d4, u=False, v=False)              line: 968 Mov_imm(R1, _COMMA)  # Call comma to store it and increment HERE.
+                0x008b8 T_link(1)                                        line: 969 T_link(R1)
+                0x008bc Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x008c0 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x008c4 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x008c8 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+    _intrp_exe: 0x008cc Add_imm(2, 2, 0x8, u=False, v=False)             line: 973 Add_imm(R2, R2, 8)  # Point to the codeword
+                0x008d0 Load_word(0, 2)                                  line: 974 Load_word(R0, R2)  # Get the address to which its codeword points...
+                0x008d4 Mov(3, 2, u=False)                               line: 975 Mov(next_function, R2)  # DOCOL depends on this.
+                0x008d8 T(0)                                             line: 976 T(R0)  # and jump to it.
+       PAI_dfa: 0x008dc 0x00000884                                       line: 151     dw(LINK) -- (in def_)
+                0x008e0 0x69617003                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           PAI: 0x008e4 0x000008e8                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x008e8 Mov_imm(0, 0xe, u=True, v=False)                 line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x008ec Ior_imm(0, 0, 0x7f00, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x008f0 Mov_imm(1, 0x1, u=True, v=False)                 line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x008f4 Ior_imm(1, 1, 0x8000, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x008f8 Mov_imm(8, 0xffff, u=True, v=False)              line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x008fc Ior_imm(8, 8, 0xffff, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x00900 Add(1, 1, 0, u=False)                            line: 998 Add(R1, R1, R0)
+                0x00904 Sub_imm(0, 0, 0x4e0, u=False, v=False)           line: 999 Sub_imm(R0, R0, 312 * 4)  # 312 words in font data.
+                0x00908 Mov_imm(2, 0x138, u=False, v=False)              line: 1000 Mov_imm(R2, 13 * 24)
+     _pai_loop: 0x0090c Load_word(7, 0)                                  line: 1003 Load_word(R7, R0)
+                0x00910 Xor(7, 7, 8, u=False)                            line: 1004 Xor(R7, R7, R8)  #  Reverse video.
+                0x00914 Store_word(7, 1)                                 line: 1005 Store_word(R7, R1)
+                0x00918 Add_imm(0, 0, 0x4, u=False, v=False)             line: 1006 Add_imm(R0, R0, 4)
+                0x0091c Sub_imm(1, 1, 0x80, u=False, v=False)            line: 1007 Sub_imm(R1, R1, 128)
+                0x00920 Sub_imm(2, 2, 0x1, u=False, v=False)             line: 1008 Sub_imm(R2, R2, 1)
+                0x00924 NE_imm(0xfffff9)                                 line: 1009 NE_imm(_pai_loop)
+                0x00928 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x0092c Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x00930 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x00934 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+PAINT_CHAR_dfa: 0x00938 0x000008dc                                       line: 151     dw(LINK) -- (in def_)
+                0x0093c 0x6961700a                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+    PAINT_CHAR: 0x00940 0x00000944                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x00944 Mov_imm(0, 0xe, u=True, v=False)                 line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x00948 Ior_imm(0, 0, 0x7a20, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x0094c Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00950 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00954 Sub_imm(1, 1, 0x21, u=False, v=False)            line: 1042 Sub_imm(R1, R1, ord('!'))  # R1 counts byte offset of char.
+                0x00958 Asr_imm(2, 1, 0x2, u=False, v=False)             line: 1044 Asr_imm(R2, R1, 2)     # R2 = R1 / 4  Trim the two least bits.
+                0x0095c Mul_imm(2, 2, 0x34, u=False, v=False)            line: 1045 Mul_imm(R2, R2, 52)    # R2 *= 13 words/char * 4 bytes/word.
+                0x00960 Add(0, 0, 2, u=False)                            line: 1046 Add(R0, R0, R2)        # Point R0 to char's first word in font.
+                0x00964 And_imm(1, 1, 0x3, u=False, v=False)             line: 1047 And_imm(R1, R1, 0b11)  # Which byte in the word?
+                0x00968 Add(0, 0, 1, u=False)                            line: 1048 Add(R0, R0, R1)        # Point R0 to char's first byte in font.
+                0x0096c Load_word(1, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00970 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x00974 Mov_imm(2, 0xe, u=True, v=False)                 line: 206     Mov_imm(reg, HIGH(word), u=1) -- (in move_immediate_word_to_register)
+                0x00978 Ior_imm(2, 2, 0x7f00, u=False, v=False)          line: 207     Ior_imm(reg, reg, LOW(word)) -- (in move_immediate_word_to_register)
+                0x0097c Add(1, 1, 2, u=False)                            line: 1052 Add(R1, R1, R2)     # R1 = x + DISPLAY_START
+                0x00980 Mov_imm(7, 0x2ff, u=False, v=False)              line: 1053 Mov_imm(R7, 767)    # Display width - 1 in pixels. (TODO don't hardcod3 this.)
+                0x00984 Load_word(2, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x00988 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x0098c Mul_imm(2, 2, 0xd, u=False, v=False)             line: 1055 Mul_imm(R2, R2, 13) # R2 = y in px  (13px/char height)
+                0x00990 Sub(2, 7, 2, u=False)                            line: 1056 Sub(R2, R7, R2)     # R2 = 768 - 1 - y
+                0x00994 Lsl_imm(2, 2, 0x7, u=False, v=False)             line: 1057 Lsl_imm(R2, R2, 7)  # R2 = (768 - 1 - y) * 128 bytes per line.
+                0x00998 Add(1, 1, 2, u=False)                            line: 1058 Add(R1, R1, R2)     # R1 = (768 - 1 - y) * 128 + x + DISPLAY_START
+                0x0099c Mov_imm(2, 0xd, u=False, v=False)                line: 1064 Mov_imm(R2, 13)  # Counter
+    _pchr_loop: 0x009a0 Load_byte(7, 0)                                  line: 1067 Load_byte(R7, R0)
+                0x009a4 Store_byte(7, 1)                                 line: 1069 Store_byte(R7, R1)
+                0x009a8 Add_imm(0, 0, 0x4, u=False, v=False)             line: 1070 Add_imm(R0, R0, 4)
+                0x009ac Sub_imm(1, 1, 0x80, u=False, v=False)            line: 1071 Sub_imm(R1, R1, 128)
+                0x009b0 Sub_imm(2, 2, 0x1, u=False, v=False)             line: 1072 Sub_imm(R2, R2, 1)
+                0x009b4 NE_imm(0xfffffa)                                 line: 1073 NE_imm(_pchr_loop)
+                0x009b8 Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x009bc Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x009c0 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x009c4 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)
+       DUP_dfa: 0x009c8 0x00000938                                       line: 151     dw(LINK) -- (in def_)
+                0x009cc 0x50554403                                       line: 160         dw((a<<24) + (b<<16) + (c<<8) + d) -- (in def_)
+           DUP: 0x009d0 0x000009d4                                       line: 181     dw(HERE() + 4)  # codeword points to ASM immediately following. -- (in defcode)
+                0x009d4 Load_word(0, 10)                                 line: 137     Load_word(reg, Dstack)      # reg <- RAM[Dstack] -- (in POP)
+                0x009d8 Add_imm(10, 10, 0x4, u=False, v=False)           line: 138     Add_imm(Dstack, Dstack, 4)  # Dstack += 4 -- (in POP)
+                0x009dc Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x009e0 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x009e4 Sub_imm(10, 10, 0x4, u=False, v=False)           line: 131     Sub_imm(Dstack, Dstack, 4)  # Dstack -= 4 -- (in PUSH)
+                0x009e8 Store_word(0, 10)                                line: 132     Store_word(reg, Dstack)     # reg -> RAM[Dstack] -- (in PUSH)
+                0x009ec Load_word(3, 14)                                 line: 111     Load_word(next_function, IP)        # next_function <- RAM[IP] -- (in NEXT)
+                0x009f0 Load_word(4, 3)                                  line: 112     Load_word(codeword, next_function)  # codeword <- RAM[next_function] -- (in NEXT)
+                0x009f4 Add_imm(14, 14, 0x4, u=False, v=False)           line: 113     Add_imm(IP, IP, 4)                  # IP += 4 -- (in NEXT)
+                0x009f8 T(4)                                             line: 114     T(codeword)                         # PC <- RAM[codeword] -- (in NEXT)

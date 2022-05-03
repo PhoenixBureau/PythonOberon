@@ -16,9 +16,9 @@
 : ( IMMEDIATE
 	$1  \ Count the number of '(' encountered.
 	BEGIN
-		KEY          \ Consume a character.
+		KEY        \ Consume a character.
 		DUP $28 =	 \ '(' is 0x28
-		IF           \ For opening parens
+		IF         \ For opening parens
 			DROP     \ drop the character
 			1+       \ increment the count.
 		ELSE
@@ -37,3 +37,8 @@ $3 Hi
 $4 Hi
 
 pai
+
+: CONSTANT WORD CREATE DOCOL , ' LIT , , ' EXIT ,	;
+: ALLOT H@ SWAP HERE +! ;
+: CELLS $4 * ;
+: VARIABLE 1 CELLS ALLOT CONSTANT ;

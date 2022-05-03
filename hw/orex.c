@@ -1,6 +1,6 @@
 /*
 
-	Copyright © 2019 Simon Forman
+	Copyright © 2022 Simon Forman
 
 	This file is part of PythonOberon.
 
@@ -52,7 +52,7 @@ int main(void) {
   PORTD = 0x00;
 	DDRD = 0xFF;
   PORTD = 0x33;
-  
+
   // For now park these ports.
 	DDRB = 0; PORTB = 0xFF;
 	DDRC = 0; PORTC = 0x7F;
@@ -60,7 +60,9 @@ int main(void) {
   
   // Turn on SPI (interrupts and enable.)
   SPCR = _BV(SPIE) | _BV(SPE) ;
-  // I think this will set up the Port B pins automatically.
+
+  // "Since it is not mandatory to send data back, the MISO channel can be configured either as output or input."
+  // https://ww1.microchip.com/downloads/en/Appnotes/TB3215-Getting-Started-with-SPI-90003215A.pdf
 
   
 	// Set sleep mode, enable interrupts and sleep, enter mainloop.

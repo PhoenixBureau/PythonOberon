@@ -33,6 +33,18 @@ between the machine & machine code on one side, and the higher-level
 interface and language(s) on the other, and bridge the gap.
 It's also just fun and cool.  Forth is awesome.  C. Moore is a genius.
 
+(
+    $00 $01 $02 $03 $04 $05 $06 $07 $08 $09 $0A $0B $0C $0D $0E $0F
+$00  00  01  02  03  04  05  06  07  08  09  0A  0B  0C  0D  0E  0F
+$10  10  11  12  13  14  15  16  17  18  19  1A  1B  1C  1D  1E  1F
+$20  20   !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+$30   0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+$40   @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+$50   P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+$60   `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+$70   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   7F
+
+)
 
 '''
 
@@ -183,6 +195,11 @@ def defvar(name, LABEL, flags=0, initial=0):
     label(LABEL_var)
     dw(initial)
 
+def defconst(name, LABEL, value, flags=0):
+    defcode(name, LABEL, flags)
+    Mov_imm(R0, value)
+    PUSH(R0)
+    NEXT()
 
 def move_immediate_word_to_register(reg, word):
     # TODO: check size & sign of word value?
@@ -296,6 +313,14 @@ PUSH(R1)
 NEXT()
 
 
+defcode(b'*', MUL)
+POP(R0)
+POP(R1)
+Mul(R1, R1, R0)
+PUSH(R1)
+NEXT()
+
+
 defcode(b'=', EQU)
 POP(R0)
 POP(R1)
@@ -318,6 +343,15 @@ defcode(b'1-', DECR)
 POP(R0)
 Sub_imm(R0, R0, 1)
 PUSH(R0)
+NEXT()
+
+
+defcode(b'+!', ADDSTORE)
+POP(R0)  # addr
+POP(R1)  # "the amount to add"
+Load_word(R2, R0)
+Add(R2, R2, R1)
+Store_word(R2, R0)
 NEXT()
 
 
@@ -653,6 +687,8 @@ defvar(b'HERE', HERE_, initial=END)
 defvar(b'LATEST', LATEST, initial=DUP_dfa)
 defvar(b'STATE', STATE)
 
+defconst(b'DOCOL', __DOCOL, DOCOL)
+
 
 ##   ___ ___  __  __ __  __   _
 ##  / __/ _ \|  \/  |  \/  | /_\
@@ -970,9 +1006,7 @@ Store_word(R7, R1)
 Add_imm(R0, R0, 4)
 Sub_imm(R1, R1, 128)
 Sub_imm(R2, R2, 1)
-EQ_imm(_pai_done)
-T_imm(_pai_loop)
-label(_pai_done)  # <-------------
+NE_imm(_pai_loop)
 NEXT()
 
 
@@ -1036,9 +1070,7 @@ Store_byte(R7, R1)
 Add_imm(R0, R0, 4)
 Sub_imm(R1, R1, 128)
 Sub_imm(R2, R2, 1)
-EQ_imm(_pchr_done)
-T_imm(_pchr_loop)
-label(_pchr_done)  # <-------------
+NE_imm(_pchr_loop)
 NEXT()
 
 
