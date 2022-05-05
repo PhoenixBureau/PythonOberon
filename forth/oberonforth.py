@@ -33,6 +33,27 @@ between the machine & machine code on one side, and the higher-level
 interface and language(s) on the other, and bridge the gap.
 It's also just fun and cool.  Forth is awesome.  C. Moore is a genius.
 
+Misc details:
+
+- The cell size is 4-byte word.
+- It doesn't use the built-in return stack machinery (R15)
+  (Although I do define a couple of small routines after Jones Forth,
+  they don't make any calls themselves so the "return stack" is just the
+  R15 register.)
+- It only stores the first three characters of word names.  Plus the
+  length, that's all the information FIND has.  Beware!
+- It reads input from the serial port (because PS2 keyboards are a bit
+  more complex than a stream of bytes.  It would be nice to support the
+  keyboard eventually.)
+- It doesn't support BASE, all integer literals start with '$' and
+  consist of 0-9a-f (no uppercase!) hex.
+- A simple 8x13 pixel font is loaded into RAM just below the display
+  space.  (See paint_char and pai below.)
+- It would be fun to do a direct-threaded version using the return
+  stack machinery (R15).
+-
+
+
 (
     $00 $01 $02 $03 $04 $05 $06 $07 $08 $09 $0A $0B $0C $0D $0E $0F
 $00  00  01  02  03  04  05  06  07  08  09  0A  0B  0C  0D  0E  0F
@@ -189,6 +210,8 @@ def defvar(name, LABEL, flags=0, initial=0):
     defcode(name, LABEL, flags)
     # Put the address of the variable on the stack.
     Mov_imm(R0, LABEL_var)
+    # We will not be allocating so many words that the "_var" address
+    # will ever be large enough to invalidate the above instruction.
     PUSH(R0)
     NEXT()
     # Reserve a word of RAM for the variable.
@@ -197,7 +220,7 @@ def defvar(name, LABEL, flags=0, initial=0):
 
 def defconst(name, LABEL, value, flags=0):
     defcode(name, LABEL, flags)
-    Mov_imm(R0, value)
+    move_immediate_word_to_register(R0, value)
     PUSH(R0)
     NEXT()
 
@@ -230,6 +253,17 @@ negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
 ## | '_ \/ -_) _` | | ' \
 ## |_.__/\___\__, |_|_||_|
 ##           |___/
+#
+# The bootloader stores a couple of system constants to the RAM in the
+# first few words.  Specifically:
+#     MemLim = 0E7EF0H; stackOrg = 80000H;
+#     SYSTEM.PUT(12, MemLim);
+#     SYSTEM.PUT(24, stackOrg);
+#
+# Any code in those locations will be clobbered!  So the first thing to
+# do is put a branch instruction there to GOTO main, then reserve some
+# space for the bootloader (I forget why 36 bytes instead of 24.)
+
 T_imm(main)
 label(_reserved, reserves=36)
 
@@ -238,6 +272,11 @@ label(_reserved, reserves=36)
 ## |   \ / _ \ / __/ _ \| |
 ## | |) | (_) | (_| (_) | |__
 ## |___/ \___/ \___\___/|____|
+#
+# "Do Colon Definition"
+# This is the common behaviour for all colon-defined Forth words.
+# It inserts its body list into the pending evaluation stack, I mean the
+# return stack.
 
 label(DOCOL)
 PUSHRSP(IP)  # Save current value of IP to the Return Stack.
@@ -500,7 +539,6 @@ T_link(R1)
 NE_imm(_find_length)  # No, keep getting chars to the buffer
 
 # Otherwise, if it's a space, save the length and return.
-# (WORD_BUFFER is a constant.)
 Mov_imm(word_pointer, WORD_BUFFER)
 Store_byte(word_counter, word_pointer)
 NEXT()
@@ -641,7 +679,7 @@ Mov_imm(R1, LATEST_var)  # R1 <- &LATEST
 Load_word(R2, R1)        # R2 <- ram[LATEST]
 
 Store_word(R2, R0)  # value of LATEST -> ram[HERE]
-Store_word(R0, R1)  # value of HERE (now LFA for new word) -> ram[LATEST_var]
+Store_word(R0, R1)  # value of HERE (now LFA for new word) -> ram[LATEST]
 
 Add_imm(R0, R0, 4)  # HERE += 4
 
@@ -654,12 +692,12 @@ Mov_imm(word_pointer, WORD_BUFFER)
 ##Load_byte(word_counter, word_pointer)
 ##And_imm(word_counter, word_counter, F_LENMASK)
 ##Asr_imm(word_counter, word_counter, 2)  # How many words?
-
 ##label(_CREATE_loop)  # <========================( _CREATE_loop )===
 
 Load_word(R1, word_pointer)  # Get the word from WORD_BUFFER.
 Store_word(R1, R0)  # Store word to HERE.
 Add_imm(R0, R0, 4)  # HERE += 4
+
 ##Sub_imm(word_counter, word_counter, 1)
 ##LT_imm(_CREATE_fin)  # There are no more words.
 ### There are more words.
@@ -707,11 +745,11 @@ NEXT()
 # Clobbers R0 and R1.
 # Used in _INTERP.
 label(_COMMA)
-Mov_imm(R0, HERE__var)  # R0 <- &HERE
-Load_word(R1, R0)       # R1 <- ram[HERE]
+Mov_imm(R0, HERE__var)  # R0 <- HERE__var
+Load_word(R1, R0)       # HERE <- ram[HERE__var]
 Store_word(R2, R1)      # R2 -> ram[HERE]
 Add_imm(R1, R1, 4)      # HERE += 4
-Store_word(R1, R0)      # HERE -> ram[HERE]
+Store_word(R1, R0)      # HERE -> ram[HERE__var]
 T(15)  # return
 
 
@@ -825,6 +863,8 @@ NEXT()
 # > This definition of ' uses a cheat which I copied from buzzard92.  As a result it only works in
 # > compiled code.  It is possible to write a version of ' based on WORD, FIND, >CFA which works in
 # > immediate mode too.
+#
+# I just noticed, isn't this just LIT?
 
 defcode(b"'", TICK)
 Load_word(R0, IP)   # Get the address of the next codeword.
@@ -940,6 +980,7 @@ dw(DROP)
 dw(STATE)
 dw(FETCH)
 dw(ZBRANCH)  #  STATE = 0 -> interpreting.
+# Just leave the number itself on the stack.
 dw(s_to_u_32(4 * 5))  # to EXIT
 
 # we are compiling
@@ -948,9 +989,14 @@ dw(LIT)
 dw(COMMA)  # write the address of the codeword of LIT
 dw(COMMA)  # then the value itself.
 
-dw(EXIT)  # Just leave the number itself on the stack.
+dw(EXIT)
 
 
+##     ___ _  _ _____ ___ ___ ___
+##    |_ _| \| |_   _| __| _ \ _ \
+##     | || .` | | | | _||   /  _/
+##  __|___|_|\_| |_| |___|_|_\_|
+## |___|
 defcode(b'_INTERP', _INTERP, F_HIDDEN)
 # Do the thing with the LFA in TOS.
 POP(R2)
@@ -976,11 +1022,15 @@ Mov(next_function, R2)  # DOCOL depends on this.
 T(R0)  # and jump to it.
 
 
-
+##  ___ ___ ___ ___ _      ___   __
+## |   \_ _/ __| _ \ |    /_\ \ / /
+## | |) | |\__ \  _/ |__ / _ \ V /
+## |___/___|___/_| |____/_/ \_\_|
 
 DISPLAY_START = 0xE7F00
 DISPLAY_LENGTH = 0x18000
-R7, R8 = 7, 8
+FONT_SIZE = 312 * 4  # 312 words of font data.
+R7, R8 = 7, 8  # We use a couple of extra registers.
 
 
 ##             _
@@ -1022,14 +1072,13 @@ NEXT()
 # 0, 0 is the upper left corner,
 # there are 1024/8 = 128 characters per line
 # and 768/13 ~= 59 lines.
-# So 0 <= x < 128 and 0 <= y < 58 (not checked.)
+# So 0 <= x < 128 and 0 <= y < 59 (not checked.)
 # The chr value should be ASCII.  (The font I'm
 # using includes Unicode characters but I
 # haven't worked out how I want to use them just
-# yet.
-# I'm thinking about a 32-bit parallel port?
+# yet.  I'm thinking about a 32-bit parallel port?
 # But then how to represent things like mode keys?
-# Press/release events? Maybe emulating the PS/2
+# Press/release events?  Maybe emulating the PS/2
 # isn't such a gnarly idea?)
 
 defcode(b'paint_char', PAINT_CHAR)
@@ -1073,6 +1122,9 @@ Sub_imm(R2, R2, 1)
 NE_imm(_pchr_loop)
 NEXT()
 
+
+# Rather than continue updating (or forgetting to update) LATEST
+# just put DUP at the end.
 
 ##  ___  _   _ ___
 ## |   \| | | | _ \

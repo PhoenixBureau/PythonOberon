@@ -81,6 +81,22 @@ class blong(binary_addressing_mixin, int):
 bint = blong
 
 
+'''
+I just found out:
+
+    >>> bin(23), bin(-23), bin(0xffff & -23)
+    ('0b10111', '-0b10111', '0b1111111111101001')
+
+Sonofabitch.
+
+
+I was reading MyHDL docs and ran accross this tidbit of Python lore.
+The Python builtin bin() renders negative numbers as negated binary literals,
+NOT the actual underlying bits, which are in two's complement already, with
+effectively infinite ones to the left, so to speak.  So I wasted a lot of
+time because it never occurred to me to check this.  D'oh!
+'''
+
 def python_int_to_signed_int(i, width=32):
     '''
     Given a Python integer, possibly negative, return the Python integer

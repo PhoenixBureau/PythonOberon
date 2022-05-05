@@ -36,7 +36,6 @@ $2 Hi
 $3 Hi
 $4 Hi
 
-pai
 
 : CONSTANT WORD CREATE DOCOL , ' LIT , , ' EXIT ,	;
 : ALLOT H@ SWAP HERE +! ;
@@ -46,4 +45,51 @@ pai
 
 $e7f00 CONSTANT DISPLAY_START
 $18000 CONSTANT DISPLAY_LENGTH  ( 1024 * 768 / 8 = 98304 )
+
+
+( Let's implement a Joy-in-Forth
+
+We're going to use the format specified in the book:
+https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-33.html#%_sec_5.3.1
+
+So we have a "vector" of heads and another "vector" of tails, which
+contain tagged pointers.  For now I think we want:
+
+- Numbers, both inline and indirect
+- List cells
+  - "the empty list is denoted by the pointer e0"
+- Symbols or Codewords
+- ?
+
+The first two decisions are where to put the lists and how long to make
+them.  We have plenty of room, and the data and return stacks can be
+moved, so let's just use ALLOT.  I think to start out 1024 cells should
+be fine.
+
+)
+
+1024 CELLS DUP 
+ALLOT CONSTANT HEADS
+ALLOT CONSTANT TAILS
+
+
+( From the book: "We presume that there is a special register,
+free, that always holds a pair pointer containing the next available
+index, and that we can increment the index part of that pointer to find
+the next free location." )
+
+VARIABLE free
+
+$0 free   
+
+pai
+
+
+
+
+
+
+
+
+
 
