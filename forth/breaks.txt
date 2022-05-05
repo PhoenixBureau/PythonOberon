@@ -1,3 +1,3 @@
 PC == 0x0
-PC == _FIND_1 + 1
-PC == CREATE + 1
+PC == (0x00934 >> 2) # end of pai.
+PC == MUL + 1

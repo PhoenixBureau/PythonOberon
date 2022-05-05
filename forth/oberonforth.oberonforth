@@ -40,7 +40,7 @@ $4 Hi
 : CONSTANT WORD CREATE DOCOL , ' LIT , , ' EXIT ,	;
 : ALLOT H@ SWAP HERE +! ;
 : CELLS $4 * ;
-: VARIABLE 1 CELLS ALLOT CONSTANT ;
+: VARIABLE $1 CELLS ALLOT CONSTANT ;
 
 
 $e7f00 CONSTANT DISPLAY_START
@@ -68,7 +68,7 @@ be fine.
 
 )
 
-1024 CELLS DUP 
+$400 CELLS DUP
 ALLOT CONSTANT HEADS
 ALLOT CONSTANT TAILS
 
@@ -80,9 +80,11 @@ the next free location." )
 
 VARIABLE free
 
-$0 free   
+$0 free !  \ Set the free pointer.
 
 pai
+
+
 
 
 
