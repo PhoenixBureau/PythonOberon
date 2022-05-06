@@ -82,6 +82,63 @@ VARIABLE free
 
 $0 free !  \ Set the free pointer.
 
+( For tagged pointers I'm going to try putting the tag in the upper, say,
+four bits, and let the rest be the offset or numeric value or whatever.
+For list cells let the four bits be all zeros.  See how that works out.
+
+So how do we create these things?  Normally there would be a text-to-Joy
+function but here there isn't enough infrastructure to do that yet.
+
+We can put a new, empty list onto the Forth stack by simply pushing zero.
+
+    $0
+
+Now how would we put a number onto that Joy stack from Forth?  First,
+convert the number to a Joy stack tagged pointer.  Let the MSB indicate
+that a value is a number.  So negtive numbers are already fine, and we
+just have to set the MSB of positive numbers, eh?
+
+    : nf2j DUP $0 >= IF $80000000 + THEN ;  / number Forth to Joy
+
+So now we have a pointer to a cons cell and a number "pointer" on the
+stack, How to cons them together?
+
+    : CONS ( tail head -- list ) 
+        / we are going to want to do 
+           head HEADS free @ + !
+           tail TAILS free @ + !
+           free @  / Keep the result list on the stack.
+           free $4 +!
+    ;
+
+While it would be neat to figure out a way to do all this and only fetch
+free once, it's easier to do this:
+
+    : f@+! free @ + ! ;  / Add free pointer to vector and store a value there.
+    : f@4! free @ free $4 +! ;  / Leave new list on stack, point to next free cell.
+
+    : CONS HEADS f@+! TAILS f@+! f@4! ;
+
+Eh?  And I bet there's a nice way to write f@4! too.
+Naming sucks (for me) but I feel this is a "Forthic"? "Forthionic"? way
+to do things.
+
+This is inefficient, but we will figure out ways to more easily specify
+more efficient forms as we get into Joy and higher order combinators.
+
+So:
+
+    $0 $123 nf2j CONS
+
+Should create a cons cell in the vectors and leave its pointer on the
+stack, eh?  You could then do:
+
+    $1 nf2j CONS $2 nf2j CONS $3 nf2j CONS
+
+To add three more numbers to the Joy stack.
+
+)
+
 pai
 
 

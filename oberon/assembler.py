@@ -571,7 +571,8 @@ def thunkify_arithmetic_logic(method):
     '''
     Wrap a method that uses :py:class:`ASM` to make bits.  If it's called with a
     :py:class:`LabelThunk` it sets up a fixup function that resolves the
-    actual instuction when the label is assigned to a concrete address.
+    actual instuction when the label is assigned to a concrete address via
+    the :py:method:`label` method.
     '''
     bits_maker = getattr(ASM, method.__name__)
 
@@ -747,7 +748,7 @@ class Assembler:
     #  Move instructions
 
     def Mov(self, a, c, v=0, u=0):
-        self.program[self.here] = ASM.Mov(a, c, u, v)
+        self.program[self.here] = ASM.Mov(a, c, v, u)
         self.here += 4
 
     def Mov_imm(self, a, K, v=0, u=0):
