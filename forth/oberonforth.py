@@ -368,6 +368,21 @@ Mov(R0, 0, u=True, v=True)  # Get flags, c register is ignored.
 Asr_imm(R0, R0, 30)  # Z is the 31st bit, penultimate from the MSB.
 And_imm(R0, R0, 1)  # Mask out N flag.
 Xor_imm(R0, R0, 1)  # flip the (shifted) Z bit.
+PUSH(R0)
+NEXT()
+
+
+defcode(b'>=', GTE)
+POP(R0)
+POP(R1)
+Sub(R1, R1, R0)
+GE_imm(_GTE_True)
+Mov_imm(R0, 0)
+T_imm(_GTE_fin)
+label(_GTE_True)
+Mov_imm(R0, 1)
+label(_GTE_fin)
+PUSH(R0)
 NEXT()
 
 
