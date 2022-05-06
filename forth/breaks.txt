@@ -1,3 +1,5 @@
 PC == 0x0
 PC == (0x00934 >> 2) # end of pai.
-PC == MUL + 1
+PC == TRAP + 1
+PC == _found
+PC == (0x0040c >> 2) # in word

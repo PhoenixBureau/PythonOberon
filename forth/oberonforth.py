@@ -367,7 +367,6 @@ Sub(R1, R1, R0)
 Mov(R0, 0, u=True, v=True)  # Get flags, c register is ignored.
 Asr_imm(R0, R0, 30)  # Z is the 31st bit, penultimate from the MSB.
 And_imm(R0, R0, 1)  # Mask out N flag.
-Xor_imm(R0, R0, 1)  # flip the (shifted) Z bit.
 PUSH(R0)
 NEXT()
 
@@ -1136,6 +1135,12 @@ Sub_imm(R1, R1, 128)
 Sub_imm(R2, R2, 1)
 NE_imm(_pchr_loop)
 NEXT()
+
+
+defcode(b'TRAP', TRAP)
+NEXT()
+
+
 
 
 # Rather than continue updating (or forgetting to update) LATEST
