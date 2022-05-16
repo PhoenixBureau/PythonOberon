@@ -33,7 +33,7 @@ RAM map::
     ║ 0x000E7F00   DISPLAY_START║
     ║      .     + 0x18000 bytes║
     ║      .     or 0x6000 words║
-    ║      .    or 1024x768x1px ║
+    ║      .     or 1024x768x1px║
     ║ 0x000FFF00  end of display║
     ║      .     │              ║
     ║ 0x00180000   MemSize      ║
