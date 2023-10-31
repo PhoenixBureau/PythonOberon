@@ -29,19 +29,19 @@ simple fractal structure that facilitates refactoring.
 
 Once you get used to it, the stack as sole (or nearly sole) interface
 between small programs seems to make it very easy to analyze, factor
-(there's that word again!) and compose mentally-convenient "chunks" of
+(there's that word again!) and compose mentally convenient "chunks" of
 program.  It favors small and simple interfaces even when dealing with
 large and complex datastructures and algorithms.
 
-The structure of Forth allows (even encourages) refacoring to a degree
+The structure of Forth allows (even encourages) refactoring to a degree
 that is rare in other languages.  (IIRC Forth is the origin of the formal
 idea of "refactoring" in programming, but I could be wrong about that.)
 This helps to keep programs simple and small both physically in terms of
 LoC and conceptually.  Each refactored definition becomes a new "unit" or
-"chunck" of thought, available to be plugged in where ever it would be
+"chunk" of thought, available to be plugged in where ever it would be
 useful.  As an example, I've already factored out to tiny little
 programs from the control-flow words, and another two just from the
-defintion of '(' for nested parentheses comments.
+definition of '(' for nested parentheses comments.
 
     : H@ HERE @ ;
     : kj DUP H@ SWAP - SWAP ! ;
@@ -73,7 +73,7 @@ As I said above, when I had finally tracked down the bug (and there were
 clues: the stack underflowed for one) and was musing on it later, it
 struck me that only such a bone-headed "D'oh!" kind of bug could lurk in
 this code base.  It's just too small.  I'm sure I have more bugs in the
-asembly code, but not too many, because there just isn't that much of it,
+assembly code, but not too many, because there just isn't that much of it,
 and the things that are in there are (again) all very small and simple.
 The core code right now is just over six hundred words of RAM.  It could
 almost fit in the bootloader ROM!  (But I'm not going to mess with that.
