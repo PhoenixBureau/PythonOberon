@@ -78,7 +78,12 @@ $70   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   7F
 
 
 # The chip uses two's complement.
-from oberon.util import s_to_u_32
+def s_to_u_32(n):
+    '''
+    Signed int to 32-bit unsigned int.
+    '''
+    assert -0x8000_0000 <= n <= 0x7fff_ffff
+    return n & 0xffff_ffff
 
 
 ##    _                     _    _
