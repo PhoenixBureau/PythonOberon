@@ -80,7 +80,7 @@ $70   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~   7F
 # The chip uses two's complement.
 def s_to_u_32(n):
     '''
-    Signed int to 32-bit unsigned int.
+    Signed Python int to 32-bit signed C int.
     '''
     assert -0x8000_0000 <= n <= 0x7fff_ffff
     return n & 0xffff_ffff
@@ -134,10 +134,7 @@ LINK = 0
 # Macros
 
 def NEXT():
-    Load_word(next_function, IP)        # next_function <- RAM[IP]
-    Load_word(codeword, next_function)  # codeword <- RAM[next_function]
-    Add_imm(IP, IP, 4)                  # IP += 4
-    T(codeword)                         # PC <- RAM[codeword]
+    T_imm(NEXT_)
 
 
 def PUSHRSP(reg):
@@ -271,6 +268,13 @@ negative_offset_20 = lambda n: s_to_u_32(n) & 0x0fffff
 
 T_imm(main)
 label(_reserved, reserves=36)
+
+
+label(NEXT_)
+Load_word(next_function, IP)        # next_function <- RAM[IP]
+Load_word(codeword, next_function)  # codeword <- RAM[next_function]
+Add_imm(IP, IP, 4)                  # IP += 4
+T(codeword)                         # PC <- RAM[codeword]
 
 
 ##  ___   ___   ___ ___  _

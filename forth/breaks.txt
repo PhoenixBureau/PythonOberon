@@ -1,5 +1,7 @@
 PC == 0x0
-PC == (0x00934 >> 2) # end of pai.
+PC == (0x007e4 >> 2) # end of pai.
 PC == TRAP + 1
-PC == _found
-PC == (0x0040c >> 2) # in word
+False # PC == _found
+False # PC == (0x0040c >> 2) # in word
+PC == (0x00154 >> 2)
+PC == (0x0023c >> 2)  # in KEY

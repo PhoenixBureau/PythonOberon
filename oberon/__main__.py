@@ -88,7 +88,7 @@ if hasattr(args, 'output'):  # We are assembling
         epilog=epilog,
         )
 
-else:  # We are emulating.
+elif hasattr(args, 'disk_image'):  # We are emulating.
 
     # Do not import this unless we need to, because pygame
     # prints a banner when imported.  This way you can use
@@ -100,3 +100,6 @@ else:  # We are emulating.
     cpu = make_cpu(args.disk_image, args.serial_in)
     # Details begin to be painted around 6.5M cycles.
     cycle(cpu, 8000000)
+
+else:
+    print('missing subcommand')

@@ -22,7 +22,7 @@ See also:
 Start with:
 
 ```
-python -i -m oberon
+python -i -m oberon emulate
 ```
 
 - If Pygame is available a screen will open of the standard dimensions of 1024 x 768 pixels.
