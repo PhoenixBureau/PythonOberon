@@ -239,7 +239,7 @@ class RISC(object):
                     res = self.C0
                 else:
                     # ... (~irc[0] ? H : {N, Z, C, OV, 20'b0, 8'b01010000})
-                    if not self.irc[0]:
+                    if not self.v:
                         res = self.H
                     else:
                         res = (
