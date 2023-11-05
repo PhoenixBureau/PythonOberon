@@ -161,6 +161,13 @@ def POP(reg):
     Add_imm(Dstack, Dstack, 4)  # Dstack += 4
 
 
+def PEEK(reg):
+    '''
+    Copy top of stack to register without changing stack.
+    '''
+    Load_word(reg, Dstack)      # reg <- RAM[Dstack]
+
+
 def def_(name, LABEL, flags=0):
     '''
     Set up dictionary link, name field, and label for word definitions.
@@ -1161,8 +1168,7 @@ NEXT()
 ## |___/ \___/|_|
 
 defcode(b'DUP', DUP)
-POP(R0)
-PUSH(R0)
+PEEK(R0)
 PUSH(R0)
 NEXT()
 
