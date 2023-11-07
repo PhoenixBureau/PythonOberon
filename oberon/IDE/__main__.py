@@ -76,8 +76,8 @@ cpu = newcpu(
 app = DebugApp(cpu)
 if args.symbol_file:
     app.set_symbols(*load_syms(args.symbol_file))
-#app.font['family'] = 'Inconsolata'
-app.font['size'] = 16
+app.font['family'] = 'DejaVu Sans Mono'
+app.font['size'] = 12
 if '-n' not in argv:
     app.tk.mainloop()
 

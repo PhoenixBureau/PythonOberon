@@ -161,9 +161,16 @@ def POP(reg):
     Add_imm(Dstack, Dstack, 4)  # Dstack += 4
 
 
+def POKE(reg):
+    '''
+    Store reg to top of stack without changing stack pointer.
+    '''
+    Store_word(reg, Dstack)     # reg -> RAM[Dstack]
+
+
 def PEEK(reg):
     '''
-    Copy top of stack to register without changing stack.
+    Load top of stack to register without changing stack pointer.
     '''
     Load_word(reg, Dstack)      # reg <- RAM[Dstack]
 
@@ -362,17 +369,17 @@ NEXT()
 
 defcode(b'-', SUB)
 POP(R0)
-POP(R1)
+PEEK(R1)
 Sub(R1, R1, R0)
-PUSH(R1)
+POKE(R1)
 NEXT()
 
 
 defcode(b'*', MUL)
 POP(R0)
-POP(R1)
+PEEK(R1)
 Mul(R1, R1, R0)
-PUSH(R1)
+POKE(R1)
 NEXT()
 
 
@@ -402,16 +409,16 @@ NEXT()
 
 
 defcode(b'1+', INCR)
-POP(R0)
+PEEK(R0)
 Add_imm(R0, R0, 1)
-PUSH(R0)
+POKE(R0)
 NEXT()
 
 
 defcode(b'1-', DECR)
-POP(R0)
+PEEK(R0)
 Sub_imm(R0, R0, 1)
-PUSH(R0)
+POKE(R0)
 NEXT()
 
 
@@ -934,9 +941,9 @@ NEXT()
 ## |_| |___| |_| \___|_||_|
 
 defcode(b'@', FETCH)
-POP(R0)
+PEEK(R0)
 Load_word(R0, R0)
-PUSH(R0)
+POKE(R0)
 NEXT()
 
 
